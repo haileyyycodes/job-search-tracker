@@ -10,6 +10,7 @@ export const applications: Application[] = [
     referral: true,
     referredBy: "Alex Chen",
     notes: "Referral from Alex on the design team. Culture seems collaborative.",
+    jobDescription: "",
     status: "interviewing",
     logo: "N",
     statusHistory: [
@@ -17,10 +18,12 @@ export const applications: Application[] = [
       { status: "interviewing", at: "Jun 18, 2026" },
     ],
     interviews: [
-      { type: "Screening Call", date: "Jun 18, 2026", notes: "30 min with recruiter, mostly logistics." },
-      { type: "Technical Interview", date: "Jul 2, 2026", notes: "Portfolio review + whiteboard exercise." },
+      { id: "iv1", type: "Screening Call", date: "Jun 18, 2026", notes: "30 min with recruiter, mostly logistics." },
+      { id: "iv2", type: "Technical Interview", date: "Jul 2, 2026", notes: "Portfolio review + whiteboard exercise." },
     ],
-    followUps: [{ date: "Jun 25, 2026", contact: "Alex Chen", info: "alex@northwind.co", notes: "Checked in on timeline." }],
+    followUps: [
+      { id: "fu1", date: "Jun 25, 2026", contact: "Alex Chen", info: "alex@northwind.co", notes: "Checked in on timeline." },
+    ],
   },
   {
     id: "2",
@@ -30,6 +33,7 @@ export const applications: Application[] = [
     link: "https://beacon.io/jobs/sfe",
     referral: false,
     notes: "Found via job board.",
+    jobDescription: "",
     status: "applied",
     logo: "B",
     statusHistory: [{ status: "applied", at: "Jul 10, 2026" }],
@@ -44,6 +48,7 @@ export const applications: Application[] = [
     link: "",
     referral: false,
     notes: "",
+    jobDescription: "",
     status: "rejected_no_interview",
     logo: "C",
     statusHistory: [
@@ -62,6 +67,7 @@ export const applications: Application[] = [
     referral: true,
     referredBy: "Priya Nair",
     notes: "Dream role — design systems + robotics.",
+    jobDescription: "",
     status: "offer_extended",
     logo: "F",
     statusHistory: [
@@ -70,13 +76,19 @@ export const applications: Application[] = [
       { status: "offer_extended", at: "Jun 28, 2026" },
     ],
     interviews: [
-      { type: "Screening Call", date: "May 29, 2026", notes: "" },
-      { type: "Onsite/Panel", date: "Jun 12, 2026", notes: "4 back-to-back interviews, went well." },
-      { type: "Behavioral", date: "Jun 20, 2026", notes: "Final round with VP Design." },
+      { id: "iv3", type: "Screening Call", date: "May 29, 2026", notes: "" },
+      { id: "iv4", type: "Onsite/Panel", date: "Jun 12, 2026", notes: "4 back-to-back interviews, went well." },
+      { id: "iv5", type: "Behavioral", date: "Jun 20, 2026", notes: "Final round with VP Design." },
     ],
     followUps: [
-      { date: "Jun 5, 2026", contact: "Priya Nair", info: "priya@fathomrobotics.com", notes: "" },
-      { date: "Jun 22, 2026", contact: "Recruiting team", info: "talent@fathomrobotics.com", notes: "Asked about offer timeline." },
+      { id: "fu2", date: "Jun 5, 2026", contact: "Priya Nair", info: "priya@fathomrobotics.com", notes: "" },
+      {
+        id: "fu3",
+        date: "Jun 22, 2026",
+        contact: "Recruiting team",
+        info: "talent@fathomrobotics.com",
+        notes: "Asked about offer timeline.",
+      },
     ],
   },
   {
@@ -87,6 +99,7 @@ export const applications: Application[] = [
     link: "",
     referral: false,
     notes: "",
+    jobDescription: "",
     status: "rejected_after_interview",
     logo: "L",
     statusHistory: [
@@ -94,7 +107,7 @@ export const applications: Application[] = [
       { status: "interviewing", at: "May 22, 2026" },
       { status: "rejected_after_interview", at: "Jun 1, 2026" },
     ],
-    interviews: [{ type: "Screening Call", date: "May 22, 2026", notes: "" }],
+    interviews: [{ id: "iv6", type: "Screening Call", date: "May 22, 2026", notes: "" }],
     followUps: [],
   },
   {
@@ -105,6 +118,7 @@ export const applications: Application[] = [
     link: "https://anchorsystems.com/jobs/9012",
     referral: false,
     notes: "Big comp bump if it works out.",
+    jobDescription: "",
     status: "applied",
     logo: "A",
     statusHistory: [{ status: "applied", at: "Jul 8, 2026" }],
@@ -120,13 +134,14 @@ export const applications: Application[] = [
     referral: true,
     referredBy: "Sam Lee",
     notes: "",
+    jobDescription: "",
     status: "interviewing",
     logo: "H",
     statusHistory: [
       { status: "applied", at: "Jun 28, 2026" },
       { status: "interviewing", at: "Jul 5, 2026" },
     ],
-    interviews: [{ type: "Screening Call", date: "Jul 5, 2026", notes: "" }],
+    interviews: [{ id: "iv7", type: "Screening Call", date: "Jul 5, 2026", notes: "" }],
     followUps: [],
   },
   {
@@ -137,6 +152,7 @@ export const applications: Application[] = [
     link: "",
     referral: false,
     notes: "",
+    jobDescription: "",
     status: "withdrawn",
     logo: "S",
     statusHistory: [
@@ -149,11 +165,46 @@ export const applications: Application[] = [
 ];
 
 export const initialTasks: Task[] = [
-  { id: "t1", applicationId: "2", dueDate: "Jul 17, 2026", note: "Follow up 7 days after applying", status: "active" },
-  { id: "t2", applicationId: "6", dueDate: "Jul 15, 2026", note: "Follow up 7 days after applying", status: "active" },
-  { id: "t3", applicationId: "1", dueDate: "Jul 9, 2026", note: "Check in after technical interview", status: "active" },
-  { id: "t4", applicationId: "4", dueDate: "Jun 22, 2026", note: "Ask about offer timeline", status: "dismissed" },
-  { id: "t5", applicationId: "7", dueDate: "Jul 12, 2026", note: "Follow up after screening call", status: "dismissed" },
+  {
+    id: "t1",
+    applicationId: "2",
+    dueDate: "Jul 17, 2026",
+    note: "Follow up 7 days after applying",
+    status: "active",
+    reminderRule: { type: "days_after_applied", days: 7 },
+  },
+  {
+    id: "t2",
+    applicationId: "6",
+    dueDate: "Jul 15, 2026",
+    note: "Follow up 7 days after applying",
+    status: "active",
+    reminderRule: { type: "days_after_applied", days: 7 },
+  },
+  {
+    id: "t3",
+    applicationId: "1",
+    dueDate: "Jul 9, 2026",
+    note: "Check in after technical interview",
+    status: "active",
+    reminderRule: { type: "manual" },
+  },
+  {
+    id: "t4",
+    applicationId: "4",
+    dueDate: "Jun 22, 2026",
+    note: "Ask about offer timeline",
+    status: "dismissed",
+    reminderRule: { type: "manual" },
+  },
+  {
+    id: "t5",
+    applicationId: "7",
+    dueDate: "Jul 12, 2026",
+    note: "Follow up after screening call",
+    status: "dismissed",
+    reminderRule: { type: "manual" },
+  },
 ];
 
 export const statusLabels: Record<Application["status"], string> = {

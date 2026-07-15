@@ -13,3 +13,10 @@ export function todayFormatted(): string {
   const now = new Date();
   return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+
+/** Adds `days` to a "Jul 15, 2026"-formatted date and returns the same format. */
+export function addDays(displayDate: string, days: number): string {
+  const date = new Date(displayDate);
+  date.setDate(date.getDate() + days);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}

@@ -26,10 +26,12 @@ const titles: Record<TrackerView, string> = {
 
 export function ApplicationTrackerApp() {
   const [view, setView] = useState<TrackerView>("dashboard");
-  const [selected, setSelected] = useState<Application | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [apps, setApps] = usePersistedState<Application[]>("harbor:applications", applications);
   const [tasks, setTasks] = usePersistedState<Task[]>("harbor:tasks", initialTasks);
+
+  const selectedApp = apps.find((a) => a.id === selectedId) ?? null;
 
   const dismissTask = (id: string) =>
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status: "dismissed" } : t)));
@@ -37,18 +39,18 @@ export function ApplicationTrackerApp() {
   const addApplication = (app: Application) => setApps((prev) => [app, ...prev]);
 
   const selectApp = (a: Application) => {
-    setSelected(a);
+    setSelectedId(a.id);
     setView("detail");
   };
 
   const backFromDetail = () => {
     setView("applications");
-    setSelected(null);
+    setSelectedId(null);
   };
 
   const changeView = (v: TrackerView) => {
     setView(v);
-    setSelected(null);
+    setSelectedId(null);
   };
 
   return (
@@ -69,7 +71,7 @@ export function ApplicationTrackerApp() {
         )}
         {view === "applications" && <ApplicationsListView apps={apps} onSelect={selectApp} />}
         {view === "detail" && (
-          <ApplicationDetailView app={selected} tasks={tasks} onBack={backFromDetail} onDismissTask={dismissTask} />
+          <ApplicationDetailView app={selectedApp} tasks={tasks} onBack={backFromDetail} onDismissTask={dismissTask} />
         )}
         {view === "interviews" && <InterviewsListView apps={apps} />}
         {view === "followups" && <FollowUpsListView apps={apps} />}
