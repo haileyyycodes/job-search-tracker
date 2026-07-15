@@ -43,6 +43,7 @@ export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDia
       role: form.role.trim(),
       dateApplied,
       link: form.link.trim(),
+      jobDescription: form.description.trim(),
       referral: form.referral,
       referredBy: form.referral ? form.referredBy.trim() || undefined : undefined,
       notes: form.notes.trim(),

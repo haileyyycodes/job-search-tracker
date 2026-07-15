@@ -14,12 +14,14 @@ export interface StatusHistoryEntry {
 }
 
 export interface Interview {
+  id: string;
   type: string;
   date: string;
   notes: string;
 }
 
 export interface FollowUp {
+  id: string;
   date: string;
   contact: string;
   info: string;
@@ -32,6 +34,7 @@ export interface Application {
   role: string;
   dateApplied: string;
   link: string;
+  jobDescription: string;
   referral: boolean;
   referredBy?: string;
   notes: string;
@@ -44,12 +47,15 @@ export interface Application {
 
 export type TaskStatus = "active" | "dismissed";
 
+export type ReminderRule = { type: "manual" } | { type: "days_after_applied"; days: number };
+
 export interface Task {
   id: string;
   applicationId: string;
   dueDate: string;
   note: string;
   status: TaskStatus;
+  reminderRule?: ReminderRule;
 }
 
 export type TrackerView = "dashboard" | "applications" | "detail" | "interviews" | "followups" | "tasks";
