@@ -47,6 +47,7 @@ export function TasksView({ apps, tasks, onDismissTask }: TasksViewProps) {
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 130px 1.4fr 100px 90px",
+          columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
           color: "var(--text-tertiary)",
@@ -68,6 +69,7 @@ export function TasksView({ apps, tasks, onDismissTask }: TasksViewProps) {
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 130px 1.4fr 100px 90px",
+          columnGap: 16,
             padding: "14px 4px",
             borderBottom: "1px solid var(--border-default)",
             alignItems: "center",

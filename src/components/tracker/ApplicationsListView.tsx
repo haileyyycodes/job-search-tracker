@@ -17,6 +17,12 @@ const statusOptions: SelectOption[] = [
   { value: "withdrawn", label: "Withdrawn" },
 ];
 
+const referralOptions: SelectOption[] = [
+  { value: "", label: "All referrals" },
+  { value: "yes", label: "Referred" },
+  { value: "no", label: "Not referred" },
+];
+
 interface ApplicationsListViewProps {
   apps: Application[];
   onSelect: (app: Application) => void;
@@ -25,10 +31,12 @@ interface ApplicationsListViewProps {
 export function ApplicationsListView({ apps, onSelect }: ApplicationsListViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
+  const [referral, setReferral] = useState("");
 
   const filtered = apps.filter(
     (a) =>
       (!status || a.status === status) &&
+      (!referral || (referral === "yes" ? a.referral : !a.referral)) &&
       (a.company.toLowerCase().includes(q.toLowerCase()) || a.role.toLowerCase().includes(q.toLowerCase()))
   );
 
@@ -46,11 +54,15 @@ export function ApplicationsListView({ apps, onSelect }: ApplicationsListViewPro
             placeholder="All statuses"
           />
         </div>
+        <div style={{ width: 180 }}>
+          <Select value={referral} options={referralOptions} onChange={setReferral} placeholder="All referrals" />
+        </div>
       </div>
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 170px 110px 90px 40px",
+          columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
           color: "var(--text-tertiary)",
@@ -73,6 +85,7 @@ export function ApplicationsListView({ apps, onSelect }: ApplicationsListViewPro
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 170px 110px 90px 40px",
+          columnGap: 16,
             alignItems: "center",
             padding: "14px 4px",
             borderBottom: "1px solid var(--border-default)",
