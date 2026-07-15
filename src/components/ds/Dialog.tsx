@@ -34,13 +34,14 @@ export function Dialog({ open, title, children, onClose, footer }: DialogProps) 
           background: "var(--bg-surface)",
           borderRadius: "var(--radius-l)",
           boxShadow: "var(--shadow-l)",
-          overflow: "hidden",
         }}
       >
         <div
           style={{
             padding: "18px 20px",
             borderBottom: "1px solid var(--border-default)",
+            borderTopLeftRadius: "var(--radius-l)",
+            borderTopRightRadius: "var(--radius-l)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -54,12 +55,22 @@ export function Dialog({ open, title, children, onClose, footer }: DialogProps) 
             ✕
           </button>
         </div>
-        <div style={{ padding: 20 }}>{children}</div>
+        <div
+          style={{
+            padding: 20,
+            borderBottomLeftRadius: footer ? undefined : "var(--radius-l)",
+            borderBottomRightRadius: footer ? undefined : "var(--radius-l)",
+          }}
+        >
+          {children}
+        </div>
         {footer && (
           <div
             style={{
               padding: "14px 20px",
               borderTop: "1px solid var(--border-default)",
+              borderBottomLeftRadius: "var(--radius-l)",
+              borderBottomRightRadius: "var(--radius-l)",
               display: "flex",
               justifyContent: "flex-end",
               gap: 8,

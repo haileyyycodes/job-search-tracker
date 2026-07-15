@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --white: #ffffff;
   --off-white: oklch(98.2% 0.006 95);
   --cream-100: oklch(96.5% 0.012 90);
@@ -112,12 +113,6 @@
   --text-mono-s: 500 13px/1.4 var(--font-mono);
   --tracking-tight: -0.02em;
   --tracking-wide: 0.04em;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
 }
 
 html,

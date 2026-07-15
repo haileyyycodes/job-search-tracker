@@ -13,7 +13,7 @@ import { TasksView } from "./TasksView";
 import { AddApplicationDialog } from "./AddApplicationDialog";
 import { applications, initialTasks } from "@/lib/data";
 import { usePersistedState } from "@/lib/usePersistedState";
-import type { Application, Task, TrackerView } from "@/lib/types";
+import type { Application, ApplicationStatus, FollowUp, Interview, ReminderRule, Task, TrackerView } from "@/lib/types";
 
 const titles: Record<TrackerView, string> = {
   dashboard: "Dashboard",
@@ -37,6 +37,42 @@ export function ApplicationTrackerApp() {
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status: "dismissed" } : t)));
 
   const addApplication = (app: Application) => setApps((prev) => [app, ...prev]);
+
+  const changeApplicationStatus = (appId: string, status: ApplicationStatus, at: string) =>
+    setApps((prev) =>
+      prev.map((a) => (a.id === appId ? { ...a, status, statusHistory: [...a.statusHistory, { status, at }] } : a))
+    );
+
+  const logInterview = (appId: string, interview: Omit<Interview, "id">) =>
+    setApps((prev) =>
+      prev.map((a) => {
+        if (a.id !== appId) return a;
+        const interviews = [...a.interviews, { id: crypto.randomUUID(), ...interview }];
+        if (a.status === "applied") {
+          return {
+            ...a,
+            interviews,
+            status: "interviewing",
+            statusHistory: [...a.statusHistory, { status: "interviewing", at: interview.date }],
+          };
+        }
+        return { ...a, interviews };
+      })
+    );
+
+  const logFollowUp = (appId: string, followUp: Omit<FollowUp, "id">) =>
+    setApps((prev) =>
+      prev.map((a) => (a.id === appId ? { ...a, followUps: [...a.followUps, { id: crypto.randomUUID(), ...followUp }] } : a))
+    );
+
+  const addTask = (applicationId: string, note: string, dueDate: string, reminderRule: ReminderRule) =>
+    setTasks((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), applicationId, dueDate, note, status: "active", reminderRule },
+    ]);
+
+  const editApplication = (updated: Application) =>
+    setApps((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
 
   const selectApp = (a: Application) => {
     setSelectedId(a.id);
@@ -71,7 +107,17 @@ export function ApplicationTrackerApp() {
         )}
         {view === "applications" && <ApplicationsListView apps={apps} onSelect={selectApp} />}
         {view === "detail" && (
-          <ApplicationDetailView app={selectedApp} tasks={tasks} onBack={backFromDetail} onDismissTask={dismissTask} />
+          <ApplicationDetailView
+            app={selectedApp}
+            tasks={tasks}
+            onBack={backFromDetail}
+            onDismissTask={dismissTask}
+            onChangeStatus={changeApplicationStatus}
+            onLogInterview={logInterview}
+            onLogFollowUp={logFollowUp}
+            onAddTask={addTask}
+            onEditApplication={editApplication}
+          />
         )}
         {view === "interviews" && <InterviewsListView apps={apps} />}
         {view === "followups" && <FollowUpsListView apps={apps} />}
