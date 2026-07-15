@@ -12,6 +12,7 @@ import { FollowUpsListView } from "./FollowUpsListView";
 import { TasksView } from "./TasksView";
 import { AddApplicationDialog } from "./AddApplicationDialog";
 import { applications, initialTasks } from "@/lib/data";
+import { usePersistedState } from "@/lib/usePersistedState";
 import type { Application, Task, TrackerView } from "@/lib/types";
 
 const titles: Record<TrackerView, string> = {
@@ -27,11 +28,13 @@ export function ApplicationTrackerApp() {
   const [view, setView] = useState<TrackerView>("dashboard");
   const [selected, setSelected] = useState<Application | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [apps] = useState<Application[]>(applications);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [apps, setApps] = usePersistedState<Application[]>("harbor:applications", applications);
+  const [tasks, setTasks] = usePersistedState<Task[]>("harbor:tasks", initialTasks);
 
   const dismissTask = (id: string) =>
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status: "dismissed" } : t)));
+
+  const addApplication = (app: Application) => setApps((prev) => [app, ...prev]);
 
   const selectApp = (a: Application) => {
     setSelected(a);
@@ -72,7 +75,7 @@ export function ApplicationTrackerApp() {
         {view === "followups" && <FollowUpsListView apps={apps} />}
         {view === "tasks" && <TasksView apps={apps} tasks={tasks} onDismissTask={dismissTask} />}
       </div>
-      <AddApplicationDialog open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddApplicationDialog open={addOpen} onClose={() => setAddOpen(false)} onAdd={addApplication} />
     </div>
   );
 }
