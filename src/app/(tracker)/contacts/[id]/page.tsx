@@ -29,12 +29,15 @@ export default function ContactDetailPage() {
       contact={contact}
       apps={data.apps}
       contacts={data.contacts}
+      companies={data.companies}
       networkingEvents={data.networkingEvents}
       onBack={() => router.push("/contacts")}
       onEditContact={data.editContact}
+      onCreateCompany={data.createCompany}
       onRequestDelete={ui.requestDeleteContact}
       onSelectApp={(a) => router.push(`/applications/${a.id}`)}
       onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
+      onSelectCompany={(c) => router.push(`/companies/${c.id}`)}
       onDeleteNetworkingEvent={data.deleteNetworkingEvent}
       onOpenLogNetworkingEvent={ui.openLogNetworkingEvent}
     />

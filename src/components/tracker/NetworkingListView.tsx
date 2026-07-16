@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Input, Select, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { networkingEventTypes } from "@/lib/data";
-import type { Application, Contact, NetworkingEvent } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 interface NetworkingListViewProps {
   events: NetworkingEvent[];
   contacts: Contact[];
   apps: Application[];
+  companies: Company[];
   onDelete: (id: string) => void;
   onSelectContact: (contact: Contact) => void;
   onSelectApp: (app: Application) => void;
@@ -17,7 +19,15 @@ interface NetworkingListViewProps {
 
 const typeOptions: SelectOption[] = [{ value: "", label: "All types" }, ...networkingEventTypes.map((t) => ({ value: t, label: t }))];
 
-export function NetworkingListView({ events, contacts, apps, onDelete, onSelectContact, onSelectApp }: NetworkingListViewProps) {
+export function NetworkingListView({
+  events,
+  contacts,
+  apps,
+  companies,
+  onDelete,
+  onSelectContact,
+  onSelectApp,
+}: NetworkingListViewProps) {
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
 
@@ -31,7 +41,7 @@ export function NetworkingListView({ events, contacts, apps, onDelete, onSelectC
       (e) =>
         (!type || e.type === type) &&
         (e.contactNames.some((n) => n.toLowerCase().includes(q.toLowerCase())) ||
-          (e.app ? e.app.company.toLowerCase().includes(q.toLowerCase()) : false))
+          (e.app ? companyName(e.app.companyId, companies).toLowerCase().includes(q.toLowerCase()) : false))
     );
   rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -106,7 +116,7 @@ export function NetworkingListView({ events, contacts, apps, onDelete, onSelectC
               cursor: e.app ? "pointer" : "default",
             }}
           >
-            {e.app ? `${e.app.company} — ${e.app.role}` : "—"}
+            {e.app ? `${companyName(e.app.companyId, companies)} — ${e.app.role}` : "—"}
           </span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{e.notes || "—"}</span>
           <IconButton aria-label="Delete networking event" icon={<span>✕</span>} onClick={() => onDelete(e.id)} />

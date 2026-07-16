@@ -7,6 +7,8 @@ import { ConfirmDeleteApplicationDialog } from "@/components/tracker/ConfirmDele
 import { ConfirmResetDemoDataDialog } from "@/components/tracker/ConfirmResetDemoDataDialog";
 import { AddContactDialog } from "@/components/tracker/AddContactDialog";
 import { ConfirmDeleteContactDialog } from "@/components/tracker/ConfirmDeleteContactDialog";
+import { AddCompanyDialog } from "@/components/tracker/AddCompanyDialog";
+import { ConfirmDeleteCompanyDialog } from "@/components/tracker/ConfirmDeleteCompanyDialog";
 import { LogNetworkingEventDialog } from "@/components/tracker/LogNetworkingEventDialog";
 import { useTrackerData } from "@/lib/useTrackerData";
 import { TrackerUIProvider, useTrackerUI } from "@/lib/TrackerUIContext";
@@ -41,6 +43,14 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
     ui.closeDeleteContact();
   };
 
+  const confirmDeleteCompany = () => {
+    if (!ui.deleteCompanyTarget) return;
+    const companyId = ui.deleteCompanyTarget.id;
+    data.deleteCompany(companyId);
+    if (pathname === `/companies/${companyId}`) router.push("/companies");
+    ui.closeDeleteCompany();
+  };
+
   const resetDemoData = () => {
     data.resetDemoData();
     router.push("/");
@@ -57,11 +67,14 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
         onAdd={data.addApplication}
         contacts={data.contacts}
         onCreateContact={data.createContact}
+        companies={data.companies}
+        onCreateCompany={data.createCompany}
       />
       {ui.deleteTarget && (
         <ConfirmDeleteApplicationDialog
           app={ui.deleteTarget}
           tasks={data.tasks}
+          companies={data.companies}
           onClose={ui.closeDeleteApplication}
           onConfirm={confirmDeleteApplication}
         />
@@ -69,7 +82,13 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
       {ui.resetConfirmOpen && (
         <ConfirmResetDemoDataDialog onClose={ui.closeResetConfirm} onConfirm={resetDemoData} />
       )}
-      <AddContactDialog open={ui.addContactOpen} onClose={ui.closeAddContact} onAdd={data.createContact} />
+      <AddContactDialog
+        open={ui.addContactOpen}
+        onClose={ui.closeAddContact}
+        onAdd={data.createContact}
+        companies={data.companies}
+        onCreateCompany={data.createCompany}
+      />
       {ui.deleteContactTarget && (
         <ConfirmDeleteContactDialog
           contact={ui.deleteContactTarget}
@@ -79,10 +98,21 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
           onConfirm={confirmDeleteContact}
         />
       )}
+      <AddCompanyDialog open={ui.addCompanyOpen} onClose={ui.closeAddCompany} onAdd={data.createCompany} />
+      {ui.deleteCompanyTarget && (
+        <ConfirmDeleteCompanyDialog
+          company={ui.deleteCompanyTarget}
+          apps={data.apps}
+          contacts={data.contacts}
+          onClose={ui.closeDeleteCompany}
+          onConfirm={confirmDeleteCompany}
+        />
+      )}
       {ui.networkingDialogOpen && (
         <LogNetworkingEventDialog
           contacts={data.contacts}
           apps={data.apps}
+          companies={data.companies}
           initialContactId={ui.networkingDialogContactId ?? undefined}
           onCreateContact={data.createContact}
           onClose={ui.closeLogNetworkingEvent}

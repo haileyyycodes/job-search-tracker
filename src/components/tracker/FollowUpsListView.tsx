@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Input } from "@/components/ds";
 import { isWithinDateRange } from "@/lib/date";
-import type { Application, Contact, FollowUp } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Contact, FollowUp } from "@/lib/types";
 
 interface FollowUpRow extends FollowUp {
   app: Application;
@@ -16,11 +17,12 @@ interface FollowUpRow extends FollowUp {
 interface FollowUpsListViewProps {
   apps: Application[];
   contacts: Contact[];
+  companies: Company[];
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
 }
 
-export function FollowUpsListView({ apps, contacts, onSelectApp, onSelectContact }: FollowUpsListViewProps) {
+export function FollowUpsListView({ apps, contacts, companies, onSelectApp, onSelectContact }: FollowUpsListViewProps) {
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -42,7 +44,8 @@ export function FollowUpsListView({ apps, contacts, onSelectApp, onSelectContact
   rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = rows.filter(
     (r) =>
-      (r.contactName.toLowerCase().includes(q.toLowerCase()) || r.app.company.toLowerCase().includes(q.toLowerCase())) &&
+      (r.contactName.toLowerCase().includes(q.toLowerCase()) ||
+        companyName(r.app.companyId, companies).toLowerCase().includes(q.toLowerCase())) &&
       isWithinDateRange(r.date, from, to)
   );
 
@@ -93,7 +96,7 @@ export function FollowUpsListView({ apps, contacts, onSelectApp, onSelectContact
         >
           <div onClick={() => onSelectApp(r.app)} style={{ cursor: "pointer" }}>
             <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{r.app.role}</div>
-            <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{r.app.company}</div>
+            <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{companyName(r.app.companyId, companies)}</div>
           </div>
           <span
             onClick={() => r.contact && onSelectContact(r.contact)}

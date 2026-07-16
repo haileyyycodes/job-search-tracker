@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card, IconButton } from "@/components/ds";
 import { EditContactDialog } from "./EditContactDialog";
-import type { Application, Contact, NetworkingEvent } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 interface FieldProps {
   label: string;
@@ -23,12 +24,15 @@ interface ContactDetailViewProps {
   contact: Contact | null;
   apps: Application[];
   contacts: Contact[];
+  companies: Company[];
   networkingEvents: NetworkingEvent[];
   onBack: () => void;
   onEditContact: (updated: Contact) => void;
+  onCreateCompany: (company: Company) => void;
   onRequestDelete: (contact: Contact) => void;
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
+  onSelectCompany: (company: Company) => void;
   onDeleteNetworkingEvent: (id: string) => void;
   onOpenLogNetworkingEvent: (initialContactId: string) => void;
 }
@@ -37,12 +41,15 @@ export function ContactDetailView({
   contact,
   apps,
   contacts,
+  companies,
   networkingEvents,
   onBack,
   onEditContact,
+  onCreateCompany,
   onRequestDelete,
   onSelectApp,
   onSelectContact,
+  onSelectCompany,
   onDeleteNetworkingEvent,
   onOpenLogNetworkingEvent,
 }: ContactDetailViewProps) {
@@ -93,9 +100,21 @@ export function ContactDetailView({
             </div>
             <div>
               <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{contact.name}</h1>
-              {(contact.employer || contact.role) && (
+              {(contact.companyId || contact.role) && (
                 <div style={{ font: "var(--text-body-m)", color: "var(--text-secondary)", marginTop: 2 }}>
-                  {[contact.role, contact.employer].filter(Boolean).join(" at ")}
+                  {contact.role}
+                  {contact.role && contact.companyId && " at "}
+                  {contact.companyId && (
+                    <span
+                      onClick={() => {
+                        const company = companies.find((c) => c.id === contact.companyId);
+                        if (company) onSelectCompany(company);
+                      }}
+                      style={{ color: "var(--text-link)", cursor: "pointer" }}
+                    >
+                      {companyName(contact.companyId, companies)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -161,7 +180,7 @@ export function ContactDetailView({
                 }}
               >
                 <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{a.role}</span>
-                <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{` — ${a.company}`}</span>
+                <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{` — ${companyName(a.companyId, companies)}`}</span>
               </div>
             ))}
           </Card>
@@ -183,7 +202,7 @@ export function ContactDetailView({
                     onClick={() => onSelectApp(f.app)}
                     style={{ font: "700 13px var(--font-body)", color: "var(--text-link)", cursor: "pointer" }}
                   >
-                    {f.app.company} — {f.app.role}
+                    {companyName(f.app.companyId, companies)} — {f.app.role}
                   </span>
                   <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
                 </div>
@@ -244,7 +263,7 @@ export function ContactDetailView({
                     <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
                       Re:{" "}
                       <span onClick={() => onSelectApp(linkedApp)} style={{ color: "var(--text-link)", cursor: "pointer" }}>
-                        {linkedApp.company} — {linkedApp.role}
+                        {companyName(linkedApp.companyId, companies)} — {linkedApp.role}
                       </span>
                     </div>
                   )}
@@ -260,6 +279,8 @@ export function ContactDetailView({
       {editDialogOpen && (
         <EditContactDialog
           contact={contact}
+          companies={companies}
+          onCreateCompany={onCreateCompany}
           onClose={() => setEditDialogOpen(false)}
           onSave={(updated) => {
             onEditContact(updated);

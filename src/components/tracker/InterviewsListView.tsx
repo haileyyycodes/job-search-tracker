@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Input, Select } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isWithinDateRange } from "@/lib/date";
-import type { Application, Interview } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Interview } from "@/lib/types";
 
 const typeOptions: SelectOption[] = [
   { value: "", label: "All types" },
@@ -22,10 +23,11 @@ interface InterviewRow extends Interview {
 
 interface InterviewsListViewProps {
   apps: Application[];
+  companies: Company[];
   onSelectApp: (app: Application) => void;
 }
 
-export function InterviewsListView({ apps, onSelectApp }: InterviewsListViewProps) {
+export function InterviewsListView({ apps, companies, onSelectApp }: InterviewsListViewProps) {
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [from, setFrom] = useState("");
@@ -37,7 +39,8 @@ export function InterviewsListView({ apps, onSelectApp }: InterviewsListViewProp
   const filtered = rows.filter(
     (r) =>
       (!type || r.type === type) &&
-      (r.app.company.toLowerCase().includes(q.toLowerCase()) || r.app.role.toLowerCase().includes(q.toLowerCase())) &&
+      (companyName(r.app.companyId, companies).toLowerCase().includes(q.toLowerCase()) ||
+        r.app.role.toLowerCase().includes(q.toLowerCase())) &&
       isWithinDateRange(r.date, from, to)
   );
 
@@ -90,7 +93,7 @@ export function InterviewsListView({ apps, onSelectApp }: InterviewsListViewProp
         >
           <div onClick={() => onSelectApp(r.app)} style={{ cursor: "pointer" }}>
             <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{r.app.role}</div>
-            <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{r.app.company}</div>
+            <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{companyName(r.app.companyId, companies)}</div>
           </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.type}</span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.date}</span>

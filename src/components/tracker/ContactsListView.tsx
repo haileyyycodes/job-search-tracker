@@ -2,19 +2,24 @@
 
 import { useState } from "react";
 import { Input, IconButton } from "@/components/ds";
-import type { Contact } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Company, Contact } from "@/lib/types";
 
 interface ContactsListViewProps {
   contacts: Contact[];
+  companies: Company[];
   onSelect: (contact: Contact) => void;
+  onSelectCompany: (company: Company) => void;
   onRequestDelete: (contact: Contact) => void;
 }
 
-export function ContactsListView({ contacts, onSelect, onRequestDelete }: ContactsListViewProps) {
+export function ContactsListView({ contacts, companies, onSelect, onSelectCompany, onRequestDelete }: ContactsListViewProps) {
   const [q, setQ] = useState("");
 
   const filtered = contacts.filter(
-    (c) => c.name.toLowerCase().includes(q.toLowerCase()) || (c.employer ?? "").toLowerCase().includes(q.toLowerCase())
+    (c) =>
+      c.name.toLowerCase().includes(q.toLowerCase()) ||
+      (c.companyId ? companyName(c.companyId, companies).toLowerCase().includes(q.toLowerCase()) : false)
   );
 
   return (
@@ -77,7 +82,20 @@ export function ContactsListView({ contacts, onSelect, onRequestDelete }: Contac
             <span style={{ font: "700 14px var(--font-body)", color: "var(--text-primary)" }}>{c.name}</span>
           </div>
           <div>
-            <div style={{ font: "var(--text-body-s)", color: "var(--text-primary)" }}>{c.employer || "—"}</div>
+            {c.companyId ? (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const company = companies.find((co) => co.id === c.companyId);
+                  if (company) onSelectCompany(company);
+                }}
+                style={{ font: "var(--text-body-s)", color: "var(--text-link)", cursor: "pointer", width: "fit-content" }}
+              >
+                {companyName(c.companyId, companies)}
+              </div>
+            ) : (
+              <div style={{ font: "var(--text-body-s)", color: "var(--text-primary)" }}>—</div>
+            )}
             {c.role && <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{c.role}</div>}
           </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>

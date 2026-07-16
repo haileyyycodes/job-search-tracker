@@ -5,7 +5,8 @@ import { Input, Select, StatusTag, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
-import type { Application, ApplicationStatus, Goals } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, ApplicationStatus, Company, Goals } from "@/lib/types";
 
 const statusOptions: SelectOption[] = [
   { value: "", label: "All statuses" },
@@ -28,12 +29,21 @@ const referralOptions: SelectOption[] = [
 
 interface ApplicationsListViewProps {
   apps: Application[];
+  companies: Company[];
   goals: Goals;
   onSelect: (app: Application) => void;
+  onSelectCompany: (company: Company) => void;
   onRequestDelete: (app: Application) => void;
 }
 
-export function ApplicationsListView({ apps, goals, onSelect, onRequestDelete }: ApplicationsListViewProps) {
+export function ApplicationsListView({
+  apps,
+  companies,
+  goals,
+  onSelect,
+  onSelectCompany,
+  onRequestDelete,
+}: ApplicationsListViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [referral, setReferral] = useState("");
@@ -42,7 +52,8 @@ export function ApplicationsListView({ apps, goals, onSelect, onRequestDelete }:
     (a) =>
       (!status || a.status === status) &&
       (!referral || (referral === "yes" ? a.referral : !a.referral)) &&
-      (a.company.toLowerCase().includes(q.toLowerCase()) || a.role.toLowerCase().includes(q.toLowerCase()))
+      (companyName(a.companyId, companies).toLowerCase().includes(q.toLowerCase()) ||
+        a.role.toLowerCase().includes(q.toLowerCase()))
   );
 
   return (
@@ -118,7 +129,21 @@ export function ApplicationsListView({ apps, goals, onSelect, onRequestDelete }:
             </div>
             <div>
               <div style={{ font: "700 14px var(--font-body)", color: "var(--text-primary)" }}>{a.role}</div>
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{a.company}</div>
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const company = companies.find((c) => c.id === a.companyId);
+                  if (company) onSelectCompany(company);
+                }}
+                style={{
+                  font: "var(--text-body-s)",
+                  color: "var(--text-link)",
+                  cursor: "pointer",
+                  width: "fit-content",
+                }}
+              >
+                {companyName(a.companyId, companies)}
+              </div>
             </div>
           </div>
           <StatusTag status={a.status} />

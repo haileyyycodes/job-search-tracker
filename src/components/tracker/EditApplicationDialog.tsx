@@ -5,7 +5,8 @@ import { Dialog, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { ApplicationFormFields, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
-import type { Application, Contact } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Contact } from "@/lib/types";
 
 interface EditApplicationDialogProps {
   app: Application;
@@ -13,12 +14,22 @@ interface EditApplicationDialogProps {
   onSave: (updated: Application) => void;
   contacts: Contact[];
   onCreateContact: (contact: Contact) => void;
+  companies: Company[];
+  onCreateCompany: (company: Company) => void;
 }
 
 /** Only ever rendered while the edit flow is open, so form state starts fresh from `app` every time. */
-export function EditApplicationDialog({ app, onClose, onSave, contacts, onCreateContact }: EditApplicationDialogProps) {
+export function EditApplicationDialog({
+  app,
+  onClose,
+  onSave,
+  contacts,
+  onCreateContact,
+  companies,
+  onCreateCompany,
+}: EditApplicationDialogProps) {
   const [form, setForm] = useState<ApplicationFormValues>({
-    company: app.company,
+    companyId: app.companyId,
     role: app.role,
     dateApplied: toDateInputValue(app.dateApplied),
     link: app.link,
@@ -42,7 +53,7 @@ export function EditApplicationDialog({ app, onClose, onSave, contacts, onCreate
     const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
     onSave({
       ...app,
-      company: form.company.trim(),
+      companyId: form.companyId,
       role: form.role.trim(),
       dateApplied,
       link: form.link.trim(),
@@ -55,7 +66,7 @@ export function EditApplicationDialog({ app, onClose, onSave, contacts, onCreate
       workArrangement: form.workArrangement || undefined,
       city: form.city.trim() || undefined,
       state: form.state.trim() || undefined,
-      logo: form.company.trim().charAt(0).toUpperCase() || app.logo,
+      logo: companyName(form.companyId, companies).charAt(0).toUpperCase() || app.logo,
     });
   };
 
@@ -82,6 +93,8 @@ export function EditApplicationDialog({ app, onClose, onSave, contacts, onCreate
         requireDateApplied={requireDateApplied}
         contacts={contacts}
         onCreateContact={onCreateContact}
+        companies={companies}
+        onCreateCompany={onCreateCompany}
       />
     </Dialog>
   );

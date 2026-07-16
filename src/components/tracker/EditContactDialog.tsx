@@ -4,23 +4,25 @@ import { useState } from "react";
 import { Dialog, Button } from "@/components/ds";
 import { ContactFormFields, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
-import type { Contact } from "@/lib/types";
+import type { Company, Contact } from "@/lib/types";
 
 interface EditContactDialogProps {
   contact: Contact;
   onClose: () => void;
   onSave: (updated: Contact) => void;
+  companies: Company[];
+  onCreateCompany: (company: Company) => void;
 }
 
 /** Only ever rendered while the edit flow is open, so form state starts fresh from `contact` every time. */
-export function EditContactDialog({ contact, onClose, onSave }: EditContactDialogProps) {
+export function EditContactDialog({ contact, onClose, onSave, companies, onCreateCompany }: EditContactDialogProps) {
   const [form, setForm] = useState<ContactFormValues>({
     name: contact.name,
     email: contact.email ?? "",
     phone: contact.phone ?? "",
     linkedInUrl: contact.linkedInUrl ?? "",
     website: contact.website ?? "",
-    employer: contact.employer ?? "",
+    companyId: contact.companyId ?? "",
     role: contact.role ?? "",
     notes: contact.notes,
   });
@@ -37,7 +39,7 @@ export function EditContactDialog({ contact, onClose, onSave }: EditContactDialo
       phone: form.phone.trim() || undefined,
       linkedInUrl: form.linkedInUrl.trim() || undefined,
       website: form.website.trim() || undefined,
-      employer: form.employer.trim() || undefined,
+      companyId: form.companyId || undefined,
       role: form.role.trim() || undefined,
       notes: form.notes.trim(),
     });
@@ -59,7 +61,13 @@ export function EditContactDialog({ contact, onClose, onSave }: EditContactDialo
         </>
       }
     >
-      <ContactFormFields form={form} setForm={setForm} submitted={submitted} />
+      <ContactFormFields
+        form={form}
+        setForm={setForm}
+        submitted={submitted}
+        companies={companies}
+        onCreateCompany={onCreateCompany}
+      />
     </Dialog>
   );
 }

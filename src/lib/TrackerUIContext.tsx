@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { Application, Contact } from "@/lib/types";
+import type { Application, Company, Contact } from "@/lib/types";
 
 interface TrackerUIContextValue {
   addOpen: boolean;
@@ -12,6 +12,10 @@ interface TrackerUIContextValue {
   openAddContact: () => void;
   closeAddContact: () => void;
 
+  addCompanyOpen: boolean;
+  openAddCompany: () => void;
+  closeAddCompany: () => void;
+
   deleteTarget: Application | null;
   requestDeleteApplication: (app: Application) => void;
   closeDeleteApplication: () => void;
@@ -19,6 +23,10 @@ interface TrackerUIContextValue {
   deleteContactTarget: Contact | null;
   requestDeleteContact: (contact: Contact) => void;
   closeDeleteContact: () => void;
+
+  deleteCompanyTarget: Company | null;
+  requestDeleteCompany: (company: Company) => void;
+  closeDeleteCompany: () => void;
 
   resetConfirmOpen: boolean;
   requestReset: () => void;
@@ -41,8 +49,10 @@ const TrackerUIContext = createContext<TrackerUIContextValue | null>(null);
 export function TrackerUIProvider({ children }: { children: ReactNode }) {
   const [addOpen, setAddOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Application | null>(null);
   const [deleteContactTarget, setDeleteContactTarget] = useState<Contact | null>(null);
+  const [deleteCompanyTarget, setDeleteCompanyTarget] = useState<Company | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [networkingDialogContactId, setNetworkingDialogContactId] = useState<string | null>(null);
   const [networkingDialogOpen, setNetworkingDialogOpen] = useState(false);
@@ -56,6 +66,10 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
     openAddContact: () => setAddContactOpen(true),
     closeAddContact: () => setAddContactOpen(false),
 
+    addCompanyOpen,
+    openAddCompany: () => setAddCompanyOpen(true),
+    closeAddCompany: () => setAddCompanyOpen(false),
+
     deleteTarget,
     requestDeleteApplication: setDeleteTarget,
     closeDeleteApplication: () => setDeleteTarget(null),
@@ -63,6 +77,10 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
     deleteContactTarget,
     requestDeleteContact: setDeleteContactTarget,
     closeDeleteContact: () => setDeleteContactTarget(null),
+
+    deleteCompanyTarget,
+    requestDeleteCompany: setDeleteCompanyTarget,
+    closeDeleteCompany: () => setDeleteCompanyTarget(null),
 
     resetConfirmOpen,
     requestReset: () => setResetConfirmOpen(true),

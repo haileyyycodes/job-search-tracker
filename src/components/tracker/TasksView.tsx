@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Input, Select, Button, IconButton } from "@/components/ds";
-import type { Application, Task, TaskStatus } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Task, TaskStatus } from "@/lib/types";
 
 interface TasksViewProps {
   apps: Application[];
+  companies: Company[];
   tasks: Task[];
   onDismissTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
@@ -14,7 +16,7 @@ interface TasksViewProps {
 
 type StatusFilter = TaskStatus | "all";
 
-export function TasksView({ apps, tasks, onDismissTask, onDeleteTask, onSelectApp }: TasksViewProps) {
+export function TasksView({ apps, companies, tasks, onDismissTask, onDeleteTask, onSelectApp }: TasksViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
 
@@ -23,7 +25,8 @@ export function TasksView({ apps, tasks, onDismissTask, onDeleteTask, onSelectAp
     (t) =>
       (status === "all" || t.status === status) &&
       t.app &&
-      (t.app.company.toLowerCase().includes(q.toLowerCase()) || t.note.toLowerCase().includes(q.toLowerCase()))
+      (companyName(t.app.companyId, companies).toLowerCase().includes(q.toLowerCase()) ||
+        t.note.toLowerCase().includes(q.toLowerCase()))
   );
   filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
@@ -81,7 +84,9 @@ export function TasksView({ apps, tasks, onDismissTask, onDeleteTask, onSelectAp
             <div style={{ font: "700 13px var(--font-body)", color: t.app ? "var(--text-link)" : "var(--text-primary)" }}>
               {t.app ? t.app.role : "—"}
             </div>
-            <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{t.app ? t.app.company : ""}</div>
+            <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
+              {t.app ? companyName(t.app.companyId, companies) : ""}
+            </div>
           </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{t.dueDate}</span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{t.note}</span>

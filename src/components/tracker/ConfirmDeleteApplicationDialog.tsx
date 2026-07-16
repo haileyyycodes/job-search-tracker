@@ -1,11 +1,13 @@
 "use client";
 
 import { Dialog, Button } from "@/components/ds";
-import type { Application, Task } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Task } from "@/lib/types";
 
 interface ConfirmDeleteApplicationDialogProps {
   app: Application;
   tasks: Task[];
+  companies: Company[];
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -21,7 +23,13 @@ function pluralize(count: number, noun: string): string {
 }
 
 /** Only ever rendered while a delete is pending, so there's no internal state to reset between opens. */
-export function ConfirmDeleteApplicationDialog({ app, tasks, onClose, onConfirm }: ConfirmDeleteApplicationDialogProps) {
+export function ConfirmDeleteApplicationDialog({
+  app,
+  tasks,
+  companies,
+  onClose,
+  onConfirm,
+}: ConfirmDeleteApplicationDialogProps) {
   const taskCount = tasks.filter((t) => t.applicationId === app.id).length;
   const cascadeParts = [
     app.interviews.length > 0 ? pluralize(app.interviews.length, "interview") : null,
@@ -49,7 +57,8 @@ export function ConfirmDeleteApplicationDialog({ app, tasks, onClose, onConfirm 
       }
     >
       <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
-        Delete <strong>{app.role}</strong> at <strong>{app.company}</strong>?{cascadeSentence}This can&rsquo;t be undone.
+        Delete <strong>{app.role}</strong> at <strong>{companyName(app.companyId, companies)}</strong>?{cascadeSentence}
+        This can&rsquo;t be undone.
       </div>
     </Dialog>
   );

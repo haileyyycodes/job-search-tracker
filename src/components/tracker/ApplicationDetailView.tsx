@@ -9,9 +9,11 @@ import { EditApplicationDialog } from "./EditApplicationDialog";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
+import { companyName } from "@/lib/companies";
 import type {
   Application,
   ApplicationStatus,
+  Company,
   Contact,
   Feedback,
   FollowUp,
@@ -41,9 +43,12 @@ interface ApplicationDetailViewProps {
   app: Application | null;
   tasks: Task[];
   contacts: Contact[];
+  companies: Company[];
   goals: Goals;
   onCreateContact: (contact: Contact) => void;
+  onCreateCompany: (company: Company) => void;
   onSelectContact: (contact: Contact) => void;
+  onSelectCompany: (company: Company) => void;
   onBack: () => void;
   onDismissTask: (id: string) => void;
   onChangeStatus: (appId: string, status: ApplicationStatus, at: string) => void;
@@ -61,9 +66,12 @@ export function ApplicationDetailView({
   app,
   tasks,
   contacts,
+  companies,
   goals,
   onCreateContact,
+  onCreateCompany,
   onSelectContact,
+  onSelectCompany,
   onBack,
   onDismissTask,
   onChangeStatus,
@@ -123,7 +131,21 @@ export function ApplicationDetailView({
           </div>
           <div>
             <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{app.role}</h1>
-            <div style={{ font: "var(--text-body-m)", color: "var(--text-secondary)", marginTop: 2 }}>{app.company}</div>
+            <div
+              onClick={() => {
+                const company = companies.find((c) => c.id === app.companyId);
+                if (company) onSelectCompany(company);
+              }}
+              style={{
+                font: "var(--text-body-m)",
+                color: "var(--text-link)",
+                marginTop: 2,
+                cursor: "pointer",
+                width: "fit-content",
+              }}
+            >
+              {companyName(app.companyId, companies)}
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -181,7 +203,10 @@ export function ApplicationDetailView({
                   )
                 }
               />
-              <Field label="Resume used" value={`resume_${app.company.split(" ")[0].toLowerCase()}.pdf`} />
+              <Field
+                label="Resume used"
+                value={`resume_${companyName(app.companyId, companies).split(" ")[0].toLowerCase()}.pdf`}
+              />
               <Field label="Location" value={formatLocation(app) || undefined} />
               <Field
                 label="Salary band"
@@ -421,8 +446,9 @@ export function ApplicationDetailView({
     {followUpDialogOpen && (
       <LogFollowUpDialog
         contacts={contacts}
+        companies={companies}
         onCreateContact={onCreateContact}
-        defaultCompany={app.company}
+        defaultCompanyId={app.companyId}
         onClose={() => setFollowUpDialogOpen(false)}
         onSave={(followUp) => {
           onLogFollowUp(app.id, followUp);
@@ -445,6 +471,8 @@ export function ApplicationDetailView({
         app={app}
         contacts={contacts}
         onCreateContact={onCreateContact}
+        companies={companies}
+        onCreateCompany={onCreateCompany}
         onClose={() => setEditDialogOpen(false)}
         onSave={(updated) => {
           onEditApplication(updated);

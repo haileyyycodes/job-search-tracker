@@ -12,6 +12,7 @@ interface SidebarItem {
 const items: SidebarItem[] = [
   { href: "/", label: "Dashboard", icon: "⌂" },
   { href: "/applications", label: "Applications", icon: "☰" },
+  { href: "/companies", label: "Companies", icon: "▣" },
   { href: "/interviews", label: "Interviews", icon: "◔" },
   { href: "/followups", label: "Follow-Ups", icon: "↻" },
   { href: "/tasks", label: "Tasks", icon: "☑" },

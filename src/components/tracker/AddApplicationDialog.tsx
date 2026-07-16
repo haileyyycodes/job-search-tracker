@@ -5,7 +5,8 @@ import { Dialog, Button, Select } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
 import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
-import type { Application, Contact } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Application, Company, Contact } from "@/lib/types";
 
 interface AddApplicationDialogProps {
   open: boolean;
@@ -13,6 +14,8 @@ interface AddApplicationDialogProps {
   onAdd: (app: Application) => void;
   contacts: Contact[];
   onCreateContact: (contact: Contact) => void;
+  companies: Company[];
+  onCreateCompany: (company: Company) => void;
 }
 
 const initialStatusOptions = [
@@ -20,7 +23,15 @@ const initialStatusOptions = [
   { value: "todo", label: "To do — queue for later" },
 ];
 
-export function AddApplicationDialog({ open, onClose, onAdd, contacts, onCreateContact }: AddApplicationDialogProps) {
+export function AddApplicationDialog({
+  open,
+  onClose,
+  onAdd,
+  contacts,
+  onCreateContact,
+  companies,
+  onCreateCompany,
+}: AddApplicationDialogProps) {
   const [status, setStatus] = useState<"todo" | "applied">("applied");
   const [form, setForm] = useState<ApplicationFormValues>(emptyApplicationForm);
   const [submitted, setSubmitted] = useState(false);
@@ -40,7 +51,7 @@ export function AddApplicationDialog({ open, onClose, onAdd, contacts, onCreateC
     const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
     const newApp: Application = {
       id: crypto.randomUUID(),
-      company: form.company.trim(),
+      companyId: form.companyId,
       role: form.role.trim(),
       dateApplied,
       link: form.link.trim(),
@@ -54,7 +65,7 @@ export function AddApplicationDialog({ open, onClose, onAdd, contacts, onCreateC
       city: form.city.trim() || undefined,
       state: form.state.trim() || undefined,
       status,
-      logo: form.company.trim().charAt(0).toUpperCase() || "?",
+      logo: companyName(form.companyId, companies).charAt(0).toUpperCase() || "?",
       statusHistory:
         status === "todo" ? [{ status: "todo", at: todayFormatted() }] : [{ status: "applied", at: dateApplied }],
       interviews: [],
@@ -95,6 +106,8 @@ export function AddApplicationDialog({ open, onClose, onAdd, contacts, onCreateC
           requireDateApplied={requireDateApplied}
           contacts={contacts}
           onCreateContact={onCreateContact}
+          companies={companies}
+          onCreateCompany={onCreateCompany}
         />
       </div>
     </Dialog>

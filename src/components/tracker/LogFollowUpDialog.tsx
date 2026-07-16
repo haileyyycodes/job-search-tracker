@@ -4,18 +4,26 @@ import { useState } from "react";
 import { Dialog, Input, Button } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
 import { ContactPicker } from "./ContactPicker";
-import type { Contact, FollowUp } from "@/lib/types";
+import type { Company, Contact, FollowUp } from "@/lib/types";
 
 interface LogFollowUpDialogProps {
   contacts: Contact[];
+  companies: Company[];
   onCreateContact: (contact: Contact) => void;
-  defaultCompany?: string;
+  defaultCompanyId?: string;
   onClose: () => void;
   onSave: (followUp: Omit<FollowUp, "id">) => void;
 }
 
 /** Only ever rendered while the log-follow-up flow is open. */
-export function LogFollowUpDialog({ contacts, onCreateContact, defaultCompany, onClose, onSave }: LogFollowUpDialogProps) {
+export function LogFollowUpDialog({
+  contacts,
+  companies,
+  onCreateContact,
+  defaultCompanyId,
+  onClose,
+  onSave,
+}: LogFollowUpDialogProps) {
   const [contactId, setContactId] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [notes, setNotes] = useState("");
@@ -49,10 +57,11 @@ export function LogFollowUpDialog({ contacts, onCreateContact, defaultCompany, o
         <ContactPicker
           label="Contacted person"
           contacts={contacts}
+          companies={companies}
           value={contactId}
           onChange={setContactId}
           onCreateContact={onCreateContact}
-          defaultCompany={defaultCompany}
+          defaultCompanyId={defaultCompanyId}
           error={submitted && !contactId ? "Required" : undefined}
         />
         <Input label="Date" type="date" value={dateInput} onChange={setDateInput} hint="Defaults to today if left blank" />

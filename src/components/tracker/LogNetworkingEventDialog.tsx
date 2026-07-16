@@ -5,14 +5,16 @@ import { Dialog, Select, Input, Button } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
 import { networkingEventTypes } from "@/lib/data";
+import { companyName } from "@/lib/companies";
 import { ContactMultiPicker } from "./ContactMultiPicker";
-import type { Application, Contact, NetworkingEvent } from "@/lib/types";
+import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 const typeOptions: SelectOption[] = networkingEventTypes.map((t) => ({ value: t, label: t }));
 
 interface LogNetworkingEventDialogProps {
   contacts: Contact[];
   apps: Application[];
+  companies: Company[];
   initialContactId?: string;
   onClose: () => void;
   onCreateContact: (contact: Contact) => void;
@@ -23,6 +25,7 @@ interface LogNetworkingEventDialogProps {
 export function LogNetworkingEventDialog({
   contacts,
   apps,
+  companies,
   initialContactId,
   onClose,
   onCreateContact,
@@ -37,7 +40,7 @@ export function LogNetworkingEventDialog({
 
   const applicationOptions: SelectOption[] = [
     { value: "", label: "No application" },
-    ...apps.map((a) => ({ value: a.id, label: `${a.company} — ${a.role}` })),
+    ...apps.map((a) => ({ value: a.id, label: `${companyName(a.companyId, companies)} — ${a.role}` })),
   ];
 
   const handleSave = () => {
@@ -68,6 +71,7 @@ export function LogNetworkingEventDialog({
         <ContactMultiPicker
           label="Who did you meet with?"
           contacts={contacts}
+          companies={companies}
           value={contactIds}
           onChange={setContactIds}
           onCreateContact={onCreateContact}

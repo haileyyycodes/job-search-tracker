@@ -3,6 +3,8 @@
 import type { Dispatch, SetStateAction } from "react";
 import { Input } from "@/components/ds";
 import { isValidEmail, isValidUrl } from "@/lib/validation";
+import { CompanyPicker } from "./CompanyPicker";
+import type { Company } from "@/lib/types";
 
 export interface ContactFormValues {
   name: string;
@@ -10,7 +12,7 @@ export interface ContactFormValues {
   phone: string;
   linkedInUrl: string;
   website: string;
-  employer: string;
+  companyId: string;
   role: string;
   notes: string;
 }
@@ -21,7 +23,7 @@ export const emptyContactForm: ContactFormValues = {
   phone: "",
   linkedInUrl: "",
   website: "",
-  employer: "",
+  companyId: "",
   role: "",
   notes: "",
 };
@@ -39,10 +41,12 @@ interface ContactFormFieldsProps {
   form: ContactFormValues;
   setForm: Dispatch<SetStateAction<ContactFormValues>>;
   submitted: boolean;
+  companies: Company[];
+  onCreateCompany: (company: Company) => void;
 }
 
 /** Field set shared between AddContactDialog and EditContactDialog. */
-export function ContactFormFields({ form, setForm, submitted }: ContactFormFieldsProps) {
+export function ContactFormFields({ form, setForm, submitted, companies, onCreateCompany }: ContactFormFieldsProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}>
       <Input
@@ -85,12 +89,13 @@ export function ContactFormFields({ form, setForm, submitted }: ContactFormField
         onChange={(v) => setForm((f) => ({ ...f, website: v }))}
         error={submitted && form.website.trim() && !isValidUrl(form.website.trim()) ? "Enter a valid URL" : undefined}
       />
-      <Input
+      <CompanyPicker
         label="Employer"
-        placeholder="e.g. Northwind Co."
-        hint="Optional"
-        value={form.employer}
-        onChange={(v) => setForm((f) => ({ ...f, employer: v }))}
+        companies={companies}
+        value={form.companyId}
+        onChange={(id) => setForm((f) => ({ ...f, companyId: id }))}
+        onCreateCompany={onCreateCompany}
+        placeholder="Optional — search companies…"
       />
       <Input
         label="Role"
