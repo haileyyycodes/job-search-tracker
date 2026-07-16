@@ -8,6 +8,7 @@ interface StatusConfig {
 }
 
 const config: Record<ApplicationStatus, StatusConfig> = {
+  todo: { fg: "var(--status-saved-fg)", bg: "var(--status-saved-bg)", dot: "var(--ink-400)", label: "To do" },
   applied: { fg: "var(--status-applied-fg)", bg: "var(--status-applied-bg)", dot: "var(--blue-600)", label: "Applied" },
   interviewing: { fg: "var(--status-interview-fg)", bg: "var(--status-interview-bg)", dot: "var(--yellow-600)", label: "Interviewing" },
   rejected_no_interview: { fg: "var(--status-rejected-fg)", bg: "var(--status-rejected-bg)", dot: "var(--red-600)", label: "Rejected" },
@@ -17,6 +18,10 @@ const config: Record<ApplicationStatus, StatusConfig> = {
   offer_declined: { fg: "var(--status-saved-fg)", bg: "var(--status-saved-bg)", dot: "var(--ink-500)", label: "Offer declined" },
   withdrawn: { fg: "var(--status-saved-fg)", bg: "var(--status-saved-bg)", dot: "var(--ink-500)", label: "Withdrawn" },
 };
+
+export function statusDotColor(status: ApplicationStatus): string {
+  return config[status].dot;
+}
 
 interface StatusTagProps {
   status: ApplicationStatus;

@@ -7,6 +7,7 @@ import type { Application, ApplicationStatus } from "@/lib/types";
 
 const statusOptions: SelectOption[] = [
   { value: "", label: "All statuses" },
+  { value: "todo", label: "To do" },
   { value: "applied", label: "Applied" },
   { value: "interviewing", label: "Interviewing" },
   { value: "offer_extended", label: "Offer extended" },
@@ -26,9 +27,10 @@ const referralOptions: SelectOption[] = [
 interface ApplicationsListViewProps {
   apps: Application[];
   onSelect: (app: Application) => void;
+  onRequestDelete: (app: Application) => void;
 }
 
-export function ApplicationsListView({ apps, onSelect }: ApplicationsListViewProps) {
+export function ApplicationsListView({ apps, onSelect, onRequestDelete }: ApplicationsListViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [referral, setReferral] = useState("");
@@ -115,11 +117,18 @@ export function ApplicationsListView({ apps, onSelect }: ApplicationsListViewPro
             </div>
           </div>
           <StatusTag status={a.status} />
-          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{a.dateApplied}</span>
+          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{a.dateApplied || "—"}</span>
           <span style={{ font: "var(--text-body-s)", color: a.referral ? "var(--green-600)" : "var(--text-tertiary)" }}>
             {a.referral ? "Yes" : "No"}
           </span>
-          <IconButton aria-label="More" icon={<span>⋯</span>} />
+          <IconButton
+            aria-label="Delete application"
+            icon={<span>✕</span>}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRequestDelete(a);
+            }}
+          />
         </div>
       ))}
       {filtered.length === 0 && (

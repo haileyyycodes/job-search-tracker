@@ -17,9 +17,10 @@ const items: SidebarItem[] = [
 interface SidebarProps {
   view: TrackerView;
   setView: (view: TrackerView) => void;
+  onRequestReset: () => void;
 }
 
-export function Sidebar({ view, setView }: SidebarProps) {
+export function Sidebar({ view, setView, onRequestReset }: SidebarProps) {
   return (
     <div
       style={{
@@ -95,6 +96,20 @@ export function Sidebar({ view, setView }: SidebarProps) {
         </div>
         <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>Jordan A.</span>
       </div>
+      <button
+        onClick={onRequestReset}
+        style={{
+          background: "none",
+          border: "none",
+          textAlign: "left",
+          padding: "6px 8px",
+          font: "var(--text-caption)",
+          color: "var(--text-tertiary)",
+          cursor: "pointer",
+        }}
+      >
+        Reset demo data
+      </button>
     </div>
   );
 }

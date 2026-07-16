@@ -41,3 +41,29 @@ export function isWithinDateRange(displayDate: string, fromInputValue: string, t
   if (toInputValue && time > new Date(formatDateInput(toInputValue)).getTime()) return false;
   return true;
 }
+
+/** Monday 00:00 of the week containing `date`. */
+function startOfCalendarWeek(date: Date): Date {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d;
+}
+
+/** True if a "Jul 15, 2026"-formatted date falls in the same Monday-Sunday week as today. */
+export function isInCurrentCalendarWeek(displayDate: string): boolean {
+  const date = new Date(displayDate);
+  const weekStart = startOfCalendarWeek(new Date());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  return date >= weekStart && date < weekEnd;
+}
+
+/** Whole days from today until a "Jul 15, 2026"-formatted date (negative if in the past). */
+export function daysUntil(displayDate: string): number {
+  const target = new Date(displayDate);
+  target.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}

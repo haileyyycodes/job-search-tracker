@@ -162,6 +162,52 @@ export const applications: Application[] = [
     interviews: [],
     followUps: [],
   },
+  {
+    id: "9",
+    company: "Pinehurst Studio",
+    role: "Design Lead",
+    dateApplied: "",
+    link: "https://pinehurststudio.com/careers/design-lead",
+    referral: false,
+    notes: "Saw this posted on a design job board — looks like a strong fit for portfolio work.",
+    jobDescription: "",
+    status: "todo",
+    logo: "P",
+    statusHistory: [{ status: "todo", at: "Jul 12, 2026" }],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "10",
+    company: "Vantage Robotics",
+    role: "Product Designer",
+    dateApplied: "",
+    link: "",
+    referral: true,
+    referredBy: "Jordan A.",
+    notes: "Jordan offered to refer me — need to get an updated resume together first.",
+    jobDescription: "",
+    status: "todo",
+    logo: "V",
+    statusHistory: [{ status: "todo", at: "Jul 13, 2026" }],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "11",
+    company: "Meridian Health",
+    role: "UX Researcher",
+    dateApplied: "",
+    link: "https://meridianhealth.com/jobs/ux-researcher",
+    referral: false,
+    notes: "",
+    jobDescription: "",
+    status: "todo",
+    logo: "M",
+    statusHistory: [{ status: "todo", at: "Jul 14, 2026" }],
+    interviews: [],
+    followUps: [],
+  },
 ];
 
 export const initialTasks: Task[] = [
@@ -208,6 +254,7 @@ export const initialTasks: Task[] = [
 ];
 
 export const statusLabels: Record<Application["status"], string> = {
+  todo: "To do",
   applied: "Applied",
   interviewing: "Interviewing",
   offer_extended: "Offer extended",
@@ -219,6 +266,7 @@ export const statusLabels: Record<Application["status"], string> = {
 };
 
 export const statusOrder: Application["status"][] = [
+  "todo",
   "applied",
   "interviewing",
   "offer_extended",

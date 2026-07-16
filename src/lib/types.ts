@@ -1,4 +1,5 @@
 export type ApplicationStatus =
+  | "todo"
   | "applied"
   | "interviewing"
   | "offer_extended"
@@ -59,3 +60,10 @@ export interface Task {
 }
 
 export type TrackerView = "dashboard" | "applications" | "detail" | "interviews" | "followups" | "tasks";
+
+export interface Goals {
+  salaryMin?: number;
+  salaryMax?: number;
+  applicationsPerWeekTarget?: number;
+  targetOfferDate?: string;
+}

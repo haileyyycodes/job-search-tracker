@@ -30,17 +30,22 @@ interface ApplicationFormFieldsProps {
   form: ApplicationFormValues;
   setForm: Dispatch<SetStateAction<ApplicationFormValues>>;
   submitted: boolean;
+  requireDateApplied?: boolean;
 }
 
-/** Company, job title, and date applied are required; the link, if provided, must be a well-formed URL. */
-export function isApplicationFormValid(form: ApplicationFormValues): boolean {
-  if (!form.company.trim() || !form.role.trim() || !form.dateApplied) return false;
+/**
+ * Company and job title are always required; date applied is required unless the application is
+ * still queued as "to do" (not applied yet). The link, if provided, must be a well-formed URL.
+ */
+export function isApplicationFormValid(form: ApplicationFormValues, requireDateApplied = true): boolean {
+  if (!form.company.trim() || !form.role.trim()) return false;
+  if (requireDateApplied && !form.dateApplied) return false;
   if (form.link.trim() && !isValidUrl(form.link.trim())) return false;
   return true;
 }
 
 /** Field set shared between AddApplicationDialog and EditApplicationDialog. */
-export function ApplicationFormFields({ form, setForm, submitted }: ApplicationFormFieldsProps) {
+export function ApplicationFormFields({ form, setForm, submitted, requireDateApplied = true }: ApplicationFormFieldsProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflow: "auto" }}>
       <Input
@@ -58,11 +63,12 @@ export function ApplicationFormFields({ form, setForm, submitted }: ApplicationF
         error={submitted && !form.role.trim() ? "Required" : undefined}
       />
       <Input
-        label="Date applied"
+        label={requireDateApplied ? "Date applied" : "Date applied (optional)"}
         type="date"
         value={form.dateApplied}
         onChange={(v) => setForm((f) => ({ ...f, dateApplied: v }))}
-        error={submitted && !form.dateApplied ? "Required" : undefined}
+        error={submitted && requireDateApplied && !form.dateApplied ? "Required" : undefined}
+        hint={!requireDateApplied ? "Leave blank until you actually apply" : undefined}
       />
       <Input
         label="Application link"

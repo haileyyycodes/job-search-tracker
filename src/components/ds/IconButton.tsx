@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { MouseEvent, ReactNode, useState } from "react";
 
 export type IconButtonVariant = "primary" | "secondary" | "ghost";
 export type IconButtonSize = "sm" | "md" | "lg";
@@ -19,7 +19,7 @@ interface IconButtonProps {
   variant?: IconButtonVariant;
   size?: IconButtonSize;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export function IconButton({

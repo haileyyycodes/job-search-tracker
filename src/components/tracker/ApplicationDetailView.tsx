@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Button, Card, StatusTag } from "@/components/ds";
+import { Button, Card, IconButton, StatusTag, statusDotColor } from "@/components/ds";
 import { statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
@@ -32,6 +32,9 @@ interface ApplicationDetailViewProps {
   onLogFollowUp: (appId: string, followUp: Omit<FollowUp, "id">) => void;
   onAddTask: (appId: string, note: string, dueDate: string, reminderRule: ReminderRule) => void;
   onEditApplication: (updated: Application) => void;
+  onRequestDelete: (app: Application) => void;
+  onDeleteInterview: (appId: string, interviewId: string) => void;
+  onDeleteFollowUp: (appId: string, followUpId: string) => void;
 }
 
 export function ApplicationDetailView({
@@ -44,6 +47,9 @@ export function ApplicationDetailView({
   onLogFollowUp,
   onAddTask,
   onEditApplication,
+  onRequestDelete,
+  onDeleteInterview,
+  onDeleteFollowUp,
 }: ApplicationDetailViewProps) {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
@@ -102,6 +108,9 @@ export function ApplicationDetailView({
           <Button variant="secondary" size="sm" onClick={() => setEditDialogOpen(true)}>
             Edit
           </Button>
+          <Button variant="danger" size="sm" onClick={() => onRequestDelete(app)}>
+            Delete
+          </Button>
         </div>
       </div>
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
@@ -155,9 +164,19 @@ export function ApplicationDetailView({
                 key={iv.id ?? i}
                 style={{ padding: "10px 0", borderBottom: i < app.interviews.length - 1 ? "1px solid var(--border-default)" : "none" }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{iv.type}</span>
-                  <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
+                    {iv.id && (
+                      <IconButton
+                        aria-label="Delete interview"
+                        icon={<span>✕</span>}
+                        size="sm"
+                        onClick={() => onDeleteInterview(app.id, iv.id)}
+                      />
+                    )}
+                  </div>
                 </div>
                 {iv.notes && (
                   <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{iv.notes}</div>
@@ -180,9 +199,19 @@ export function ApplicationDetailView({
                 key={f.id ?? i}
                 style={{ padding: "10px 0", borderBottom: i < app.followUps.length - 1 ? "1px solid var(--border-default)" : "none" }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{f.contact}</span>
-                  <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
+                    {f.id && (
+                      <IconButton
+                        aria-label="Delete follow-up"
+                        icon={<span>✕</span>}
+                        size="sm"
+                        onClick={() => onDeleteFollowUp(app.id, f.id)}
+                      />
+                    )}
+                  </div>
                 </div>
                 <div style={{ font: "var(--text-mono-s)", color: "var(--text-tertiary)" }}>{f.info}</div>
                 {f.notes && (
@@ -225,14 +254,34 @@ export function ApplicationDetailView({
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {app.statusHistory.map((s, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, paddingBottom: 14 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--blue-500)", marginTop: 4 }} />
+              <div key={i} style={{ display: "flex", gap: 12 }}>
+                <div style={{ position: "relative", width: 8 }}>
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: statusDotColor(s.status),
+                      marginTop: 4,
+                      position: "relative",
+                      zIndex: 1,
+                    }}
+                  />
                   {i < app.statusHistory.length - 1 && (
-                    <div style={{ width: 1, flex: 1, background: "var(--border-default)", marginTop: 2 }} />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 12,
+                        bottom: -8,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: 1,
+                        background: "var(--border-default)",
+                      }}
+                    />
                   )}
                 </div>
-                <div>
+                <div style={{ paddingBottom: 14 }}>
                   <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>
                     {statusLabels[s.status]}
                   </div>

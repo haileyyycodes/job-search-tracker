@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Button } from "@/components/ds";
-import { formatDateInput } from "@/lib/date";
+import { Dialog, Button, Select } from "@/components/ds";
+import { formatDateInput, todayFormatted } from "@/lib/date";
 import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import type { Application } from "@/lib/types";
@@ -13,11 +13,19 @@ interface AddApplicationDialogProps {
   onAdd: (app: Application) => void;
 }
 
+const initialStatusOptions = [
+  { value: "applied", label: "Applied" },
+  { value: "todo", label: "To do — queue for later" },
+];
+
 export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDialogProps) {
+  const [status, setStatus] = useState<"todo" | "applied">("applied");
   const [form, setForm] = useState<ApplicationFormValues>(emptyApplicationForm);
   const [submitted, setSubmitted] = useState(false);
+  const requireDateApplied = status === "applied";
 
   const resetAndClose = () => {
+    setStatus("applied");
     setForm(emptyApplicationForm);
     setSubmitted(false);
     onClose();
@@ -25,9 +33,9 @@ export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDia
 
   const handleSave = () => {
     setSubmitted(true);
-    if (!isApplicationFormValid(form)) return;
+    if (!isApplicationFormValid(form, requireDateApplied)) return;
 
-    const dateApplied = formatDateInput(form.dateApplied);
+    const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
     const newApp: Application = {
       id: crypto.randomUUID(),
       company: form.company.trim(),
@@ -38,9 +46,10 @@ export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDia
       referral: form.referral,
       referredBy: form.referral ? form.referredBy.trim() || undefined : undefined,
       notes: form.notes.trim(),
-      status: "applied",
+      status,
       logo: form.company.trim().charAt(0).toUpperCase() || "?",
-      statusHistory: [{ status: "applied", at: dateApplied }],
+      statusHistory:
+        status === "todo" ? [{ status: "todo", at: todayFormatted() }] : [{ status: "applied", at: dateApplied }],
       interviews: [],
       followUps: [],
     };
@@ -60,12 +69,20 @@ export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDia
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
-            Save application
+            {status === "todo" ? "Add to queue" : "Save application"}
           </Button>
         </>
       }
     >
-      <ApplicationFormFields form={form} setForm={setForm} submitted={submitted} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Select
+          label="Status"
+          value={status}
+          options={initialStatusOptions}
+          onChange={(v) => setStatus(v as "todo" | "applied")}
+        />
+        <ApplicationFormFields form={form} setForm={setForm} submitted={submitted} requireDateApplied={requireDateApplied} />
+      </div>
     </Dialog>
   );
 }

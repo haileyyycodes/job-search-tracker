@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, Button } from "@/components/ds";
+import { Input, Select, Button, IconButton } from "@/components/ds";
 import type { Application, Task, TaskStatus } from "@/lib/types";
 
 interface TasksViewProps {
   apps: Application[];
   tasks: Task[];
   onDismissTask: (id: string) => void;
+  onDeleteTask: (id: string) => void;
 }
 
 type StatusFilter = TaskStatus | "all";
 
-export function TasksView({ apps, tasks, onDismissTask }: TasksViewProps) {
+export function TasksView({ apps, tasks, onDismissTask, onDeleteTask }: TasksViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
 
@@ -46,7 +47,7 @@ export function TasksView({ apps, tasks, onDismissTask }: TasksViewProps) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 130px 1.4fr 100px 90px",
+          gridTemplateColumns: "1fr 130px 1.4fr 100px 150px",
           columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
@@ -68,7 +69,7 @@ export function TasksView({ apps, tasks, onDismissTask }: TasksViewProps) {
           key={t.id}
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 130px 1.4fr 100px 90px",
+            gridTemplateColumns: "1fr 130px 1.4fr 100px 150px",
           columnGap: 16,
             padding: "14px 4px",
             borderBottom: "1px solid var(--border-default)",
@@ -90,11 +91,14 @@ export function TasksView({ apps, tasks, onDismissTask }: TasksViewProps) {
           >
             {t.status === "active" ? "Active" : "Dismissed"}
           </span>
-          {t.status === "active" ? (
-            <Button size="sm" variant="secondary" onClick={() => onDismissTask(t.id)}>
-              Dismiss
-            </Button>
-          ) : null}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {t.status === "active" && (
+              <Button size="sm" variant="secondary" onClick={() => onDismissTask(t.id)}>
+                Dismiss
+              </Button>
+            )}
+            <IconButton aria-label="Delete task" icon={<span>✕</span>} size="sm" onClick={() => onDeleteTask(t.id)} />
+          </div>
         </div>
       ))}
       {filtered.length === 0 && (

@@ -26,12 +26,13 @@ export function EditApplicationDialog({ app, onClose, onSave }: EditApplicationD
     notes: app.notes,
   });
   const [submitted, setSubmitted] = useState(false);
+  const requireDateApplied = app.status !== "todo";
 
   const handleSave = () => {
     setSubmitted(true);
-    if (!isApplicationFormValid(form)) return;
+    if (!isApplicationFormValid(form, requireDateApplied)) return;
 
-    const dateApplied = formatDateInput(form.dateApplied);
+    const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
     onSave({
       ...app,
       company: form.company.trim(),
@@ -62,7 +63,7 @@ export function EditApplicationDialog({ app, onClose, onSave }: EditApplicationD
         </>
       }
     >
-      <ApplicationFormFields form={form} setForm={setForm} submitted={submitted} />
+      <ApplicationFormFields form={form} setForm={setForm} submitted={submitted} requireDateApplied={requireDateApplied} />
     </Dialog>
   );
 }
