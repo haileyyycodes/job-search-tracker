@@ -1,4 +1,5 @@
 export type ApplicationStatus =
+  | "todo"
   | "applied"
   | "interviewing"
   | "offer_extended"
@@ -23,10 +24,16 @@ export interface Interview {
 export interface FollowUp {
   id: string;
   date: string;
-  contact: string;
-  info: string;
+  contactId: string;
   notes: string;
 }
+
+export interface Feedback {
+  text: string;
+  date: string;
+}
+
+export type WorkArrangement = "onsite" | "remote" | "hybrid";
 
 export interface Application {
   id: string;
@@ -36,13 +43,40 @@ export interface Application {
   link: string;
   jobDescription: string;
   referral: boolean;
-  referredBy?: string;
+  referredByContactId?: string;
   notes: string;
   status: ApplicationStatus;
   logo: string;
   statusHistory: StatusHistoryEntry[];
   interviews: Interview[];
   followUps: FollowUp[];
+  feedback?: Feedback;
+  salaryMin?: number;
+  salaryMax?: number;
+  workArrangement?: WorkArrangement;
+  city?: string;
+  state?: string;
+}
+
+export interface Contact {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  linkedInUrl?: string;
+  website?: string;
+  employer?: string;
+  role?: string;
+  notes: string;
+}
+
+export interface NetworkingEvent {
+  id: string;
+  contactIds: string[];
+  type: string;
+  date: string;
+  applicationId?: string;
+  notes: string;
 }
 
 export type TaskStatus = "active" | "dismissed";
@@ -58,4 +92,9 @@ export interface Task {
   reminderRule?: ReminderRule;
 }
 
-export type TrackerView = "dashboard" | "applications" | "detail" | "interviews" | "followups" | "tasks";
+export interface Goals {
+  salaryMin?: number;
+  salaryMax?: number;
+  applicationsPerWeekTarget?: number;
+  targetOfferDate?: string;
+}

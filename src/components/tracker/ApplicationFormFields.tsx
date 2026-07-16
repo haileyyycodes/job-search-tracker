@@ -1,8 +1,17 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { Input, Switch } from "@/components/ds";
+import { Input, Select, Switch } from "@/components/ds";
+import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
+import { ContactPicker } from "./ContactPicker";
+import type { Contact, WorkArrangement } from "@/lib/types";
+
+const workArrangementOptions: SelectOption[] = [
+  { value: "onsite", label: "Onsite" },
+  { value: "remote", label: "Remote" },
+  { value: "hybrid", label: "Hybrid" },
+];
 
 export interface ApplicationFormValues {
   company: string;
@@ -11,8 +20,13 @@ export interface ApplicationFormValues {
   link: string;
   description: string;
   referral: boolean;
-  referredBy: string;
+  referredByContactId: string;
   notes: string;
+  salaryMin: string;
+  salaryMax: string;
+  workArrangement: WorkArrangement | "";
+  city: string;
+  state: string;
 }
 
 export const emptyApplicationForm: ApplicationFormValues = {
@@ -22,27 +36,56 @@ export const emptyApplicationForm: ApplicationFormValues = {
   link: "",
   description: "",
   referral: false,
-  referredBy: "",
+  referredByContactId: "",
   notes: "",
+  salaryMin: "",
+  salaryMax: "",
+  workArrangement: "",
+  city: "",
+  state: "",
 };
 
 interface ApplicationFormFieldsProps {
   form: ApplicationFormValues;
   setForm: Dispatch<SetStateAction<ApplicationFormValues>>;
   submitted: boolean;
+  requireDateApplied?: boolean;
+  contacts: Contact[];
+  onCreateContact: (contact: Contact) => void;
 }
 
-/** Company, job title, and date applied are required; the link, if provided, must be a well-formed URL. */
-export function isApplicationFormValid(form: ApplicationFormValues): boolean {
-  if (!form.company.trim() || !form.role.trim() || !form.dateApplied) return false;
+/**
+ * Company and job title are always required; date applied is required unless the application is
+ * still queued as "to do" (not applied yet). The link, if provided, must be a well-formed URL.
+ * Salary: max cannot be set without a min, and min must be <= max (mirrors the Goals salary validation).
+ */
+export function isApplicationFormValid(form: ApplicationFormValues, requireDateApplied = true): boolean {
+  if (!form.company.trim() || !form.role.trim()) return false;
+  if (requireDateApplied && !form.dateApplied) return false;
   if (form.link.trim() && !isValidUrl(form.link.trim())) return false;
+  const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
+  const max = form.salaryMax.trim() ? Number(form.salaryMax) : undefined;
+  if (max != null && min == null) return false;
+  if (min != null && max != null && min > max) return false;
   return true;
 }
 
 /** Field set shared between AddApplicationDialog and EditApplicationDialog. */
-export function ApplicationFormFields({ form, setForm, submitted }: ApplicationFormFieldsProps) {
+export function ApplicationFormFields({
+  form,
+  setForm,
+  submitted,
+  requireDateApplied = true,
+  contacts,
+  onCreateContact,
+}: ApplicationFormFieldsProps) {
+  const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
+  const max = form.salaryMax.trim() ? Number(form.salaryMax) : undefined;
+  const maxWithoutMin = max != null && min == null;
+  const minAboveMax = min != null && max != null && min > max;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflow: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}>
       <Input
         label="Company"
         placeholder="e.g. Northwind Co."
@@ -58,11 +101,12 @@ export function ApplicationFormFields({ form, setForm, submitted }: ApplicationF
         error={submitted && !form.role.trim() ? "Required" : undefined}
       />
       <Input
-        label="Date applied"
+        label={requireDateApplied ? "Date applied" : "Date applied (optional)"}
         type="date"
         value={form.dateApplied}
         onChange={(v) => setForm((f) => ({ ...f, dateApplied: v }))}
-        error={submitted && !form.dateApplied ? "Required" : undefined}
+        error={submitted && requireDateApplied && !form.dateApplied ? "Required" : undefined}
+        hint={!requireDateApplied ? "Leave blank until you actually apply" : undefined}
       />
       <Input
         label="Application link"
@@ -72,6 +116,51 @@ export function ApplicationFormFields({ form, setForm, submitted }: ApplicationF
         onChange={(v) => setForm((f) => ({ ...f, link: v }))}
         error={submitted && form.link.trim() && !isValidUrl(form.link.trim()) ? "Enter a valid URL" : undefined}
       />
+      <div style={{ display: "flex", gap: 12 }}>
+        <Input
+          label="Salary band — minimum"
+          type="number"
+          placeholder="e.g. 100000"
+          hint="Optional"
+          value={form.salaryMin}
+          onChange={(v) => setForm((f) => ({ ...f, salaryMin: v }))}
+          error={submitted && minAboveMax ? "Must be ≤ maximum" : undefined}
+        />
+        <Input
+          label="Salary band — maximum"
+          type="number"
+          placeholder="e.g. 140000"
+          hint="Optional"
+          value={form.salaryMax}
+          onChange={(v) => setForm((f) => ({ ...f, salaryMax: v }))}
+          error={submitted && maxWithoutMin ? "Enter a minimum first" : undefined}
+        />
+      </div>
+      <Select
+        label="Work arrangement"
+        value={form.workArrangement}
+        options={workArrangementOptions}
+        onChange={(v) => setForm((f) => ({ ...f, workArrangement: v as WorkArrangement }))}
+        placeholder="Not specified"
+      />
+      {(form.workArrangement === "onsite" || form.workArrangement === "hybrid") && (
+        <div style={{ display: "flex", gap: 12 }}>
+          <Input
+            label="City"
+            placeholder="e.g. Detroit"
+            hint="Optional"
+            value={form.city}
+            onChange={(v) => setForm((f) => ({ ...f, city: v }))}
+          />
+          <Input
+            label="State"
+            placeholder="e.g. MI"
+            hint="Optional"
+            value={form.state}
+            onChange={(v) => setForm((f) => ({ ...f, state: v }))}
+          />
+        </div>
+      )}
       <div>
         <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
           Resume
@@ -104,11 +193,13 @@ export function ApplicationFormFields({ form, setForm, submitted }: ApplicationF
         onChange={(checked) => setForm((f) => ({ ...f, referral: checked }))}
       />
       {form.referral && (
-        <Input
+        <ContactPicker
           label="Referred by"
-          placeholder="Name of referrer"
-          value={form.referredBy}
-          onChange={(v) => setForm((f) => ({ ...f, referredBy: v }))}
+          contacts={contacts}
+          value={form.referredByContactId}
+          onChange={(id) => setForm((f) => ({ ...f, referredByContactId: id }))}
+          onCreateContact={onCreateContact}
+          defaultCompany={form.company.trim()}
         />
       )}
       <div>

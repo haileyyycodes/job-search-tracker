@@ -1,12 +1,27 @@
 import { useState, type ReactNode } from "react";
-import { Button, Card, StatusTag } from "@/components/ds";
+import { Button, Card, IconButton, StatusTag, statusDotColor } from "@/components/ds";
 import { statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
 import { LogFollowUpDialog } from "./LogFollowUpDialog";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { EditApplicationDialog } from "./EditApplicationDialog";
-import type { Application, ApplicationStatus, FollowUp, Interview, ReminderRule, Task } from "@/lib/types";
+import { FeedbackDialog } from "./FeedbackDialog";
+import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel } from "@/lib/salary";
+import { formatLocation } from "@/lib/location";
+import type {
+  Application,
+  ApplicationStatus,
+  Contact,
+  Feedback,
+  FollowUp,
+  Goals,
+  Interview,
+  ReminderRule,
+  Task,
+} from "@/lib/types";
+
+const rejectionStatuses: ApplicationStatus[] = ["rejected_no_interview", "rejected_after_interview"];
 
 interface FieldProps {
   label: string;
@@ -25,6 +40,10 @@ function Field({ label, value }: FieldProps) {
 interface ApplicationDetailViewProps {
   app: Application | null;
   tasks: Task[];
+  contacts: Contact[];
+  goals: Goals;
+  onCreateContact: (contact: Contact) => void;
+  onSelectContact: (contact: Contact) => void;
   onBack: () => void;
   onDismissTask: (id: string) => void;
   onChangeStatus: (appId: string, status: ApplicationStatus, at: string) => void;
@@ -32,11 +51,19 @@ interface ApplicationDetailViewProps {
   onLogFollowUp: (appId: string, followUp: Omit<FollowUp, "id">) => void;
   onAddTask: (appId: string, note: string, dueDate: string, reminderRule: ReminderRule) => void;
   onEditApplication: (updated: Application) => void;
+  onRequestDelete: (app: Application) => void;
+  onDeleteInterview: (appId: string, interviewId: string) => void;
+  onDeleteFollowUp: (appId: string, followUpId: string) => void;
+  onSaveFeedback: (appId: string, feedback: Feedback) => void;
 }
 
 export function ApplicationDetailView({
   app,
   tasks,
+  contacts,
+  goals,
+  onCreateContact,
+  onSelectContact,
   onBack,
   onDismissTask,
   onChangeStatus,
@@ -44,12 +71,17 @@ export function ApplicationDetailView({
   onLogFollowUp,
   onAddTask,
   onEditApplication,
+  onRequestDelete,
+  onDeleteInterview,
+  onDeleteFollowUp,
+  onSaveFeedback,
 }: ApplicationDetailViewProps) {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
 
   if (!app) return null;
   const myTasks = tasks.filter((t) => t.applicationId === app.id);
@@ -102,6 +134,9 @@ export function ApplicationDetailView({
           <Button variant="secondary" size="sm" onClick={() => setEditDialogOpen(true)}>
             Edit
           </Button>
+          <Button variant="danger" size="sm" onClick={() => onRequestDelete(app)}>
+            Delete
+          </Button>
         </div>
       </div>
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
@@ -121,8 +156,51 @@ export function ApplicationDetailView({
                   )
                 }
               />
-              <Field label="Referral" value={app.referral ? `Yes — ${app.referredBy}` : "No"} />
+              <Field
+                label="Referral"
+                value={
+                  app.referral ? (
+                    (() => {
+                      const referrer = contacts.find((c) => c.id === app.referredByContactId);
+                      return referrer ? (
+                        <>
+                          Yes —{" "}
+                          <span
+                            onClick={() => onSelectContact(referrer)}
+                            style={{ color: "var(--text-link)", cursor: "pointer" }}
+                          >
+                            {referrer.name}
+                          </span>
+                        </>
+                      ) : (
+                        "Yes — Unknown contact"
+                      );
+                    })()
+                  ) : (
+                    "No"
+                  )
+                }
+              />
               <Field label="Resume used" value={`resume_${app.company.split(" ")[0].toLowerCase()}.pdf`} />
+              <Field label="Location" value={formatLocation(app) || undefined} />
+              <Field
+                label="Salary band"
+                value={
+                  formatSalaryRange(app.salaryMin, app.salaryMax) ? (
+                    (() => {
+                      const match = getSalaryMatch(app, goals);
+                      const color = salaryMatchColor(match);
+                      const label = salaryMatchLabel(match);
+                      return (
+                        <span style={{ color }}>
+                          {formatSalaryRange(app.salaryMin, app.salaryMax)}
+                          {label ? ` — ${label}` : ""}
+                        </span>
+                      );
+                    })()
+                  ) : undefined
+                }
+              />
             </div>
             {app.notes && (
               <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
@@ -130,6 +208,26 @@ export function ApplicationDetailView({
               </div>
             )}
           </Card>
+          {rejectionStatuses.includes(app.status) && (
+            <Card padding="md">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Feedback</div>
+                <Button variant="ghost" size="sm" onClick={() => setFeedbackDialogOpen(true)}>
+                  {app.feedback ? "Edit feedback" : "Add feedback"}
+                </Button>
+              </div>
+              {app.feedback ? (
+                <>
+                  <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{app.feedback.text}</div>
+                  <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginTop: 8 }}>
+                    Received {app.feedback.date}
+                  </div>
+                </>
+              ) : (
+                <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No feedback yet.</div>
+              )}
+            </Card>
+          )}
           {app.jobDescription && (
             <Card padding="md">
               <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
@@ -155,9 +253,19 @@ export function ApplicationDetailView({
                 key={iv.id ?? i}
                 style={{ padding: "10px 0", borderBottom: i < app.interviews.length - 1 ? "1px solid var(--border-default)" : "none" }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{iv.type}</span>
-                  <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
+                    {iv.id && (
+                      <IconButton
+                        aria-label="Delete interview"
+                        icon={<span>✕</span>}
+                        size="sm"
+                        onClick={() => onDeleteInterview(app.id, iv.id)}
+                      />
+                    )}
+                  </div>
                 </div>
                 {iv.notes && (
                   <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{iv.notes}</div>
@@ -175,21 +283,47 @@ export function ApplicationDetailView({
             {app.followUps.length === 0 && (
               <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No follow-ups logged yet.</div>
             )}
-            {app.followUps.map((f, i) => (
-              <div
-                key={f.id ?? i}
-                style={{ padding: "10px 0", borderBottom: i < app.followUps.length - 1 ? "1px solid var(--border-default)" : "none" }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{f.contact}</span>
-                  <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
+            {app.followUps.map((f, i) => {
+              const c = contacts.find((contact) => contact.id === f.contactId);
+              return (
+                <div
+                  key={f.id ?? i}
+                  style={{ padding: "10px 0", borderBottom: i < app.followUps.length - 1 ? "1px solid var(--border-default)" : "none" }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span
+                      onClick={() => c && onSelectContact(c)}
+                      style={{
+                        font: "700 13px var(--font-body)",
+                        color: c ? "var(--text-link)" : "var(--text-primary)",
+                        cursor: c ? "pointer" : "default",
+                      }}
+                    >
+                      {c?.name ?? "Unknown contact"}
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
+                      {f.id && (
+                        <IconButton
+                          aria-label="Delete follow-up"
+                          icon={<span>✕</span>}
+                          size="sm"
+                          onClick={() => onDeleteFollowUp(app.id, f.id)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {(c?.email || c?.phone) && (
+                    <div style={{ font: "var(--text-mono-s)", color: "var(--text-tertiary)" }}>
+                      {[c?.email, c?.phone].filter(Boolean).join(" · ")}
+                    </div>
+                  )}
+                  {f.notes && (
+                    <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{f.notes}</div>
+                  )}
                 </div>
-                <div style={{ font: "var(--text-mono-s)", color: "var(--text-tertiary)" }}>{f.info}</div>
-                {f.notes && (
-                  <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{f.notes}</div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </Card>
           <Card padding="md">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -225,14 +359,34 @@ export function ApplicationDetailView({
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {app.statusHistory.map((s, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, paddingBottom: 14 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--blue-500)", marginTop: 4 }} />
+              <div key={i} style={{ display: "flex", gap: 12 }}>
+                <div style={{ position: "relative", width: 8 }}>
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: statusDotColor(s.status),
+                      marginTop: 4,
+                      position: "relative",
+                      zIndex: 1,
+                    }}
+                  />
                   {i < app.statusHistory.length - 1 && (
-                    <div style={{ width: 1, flex: 1, background: "var(--border-default)", marginTop: 2 }} />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 12,
+                        bottom: -8,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: 1,
+                        background: "var(--border-default)",
+                      }}
+                    />
                   )}
                 </div>
-                <div>
+                <div style={{ paddingBottom: 14 }}>
                   <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>
                     {statusLabels[s.status]}
                   </div>
@@ -266,6 +420,9 @@ export function ApplicationDetailView({
     )}
     {followUpDialogOpen && (
       <LogFollowUpDialog
+        contacts={contacts}
+        onCreateContact={onCreateContact}
+        defaultCompany={app.company}
         onClose={() => setFollowUpDialogOpen(false)}
         onSave={(followUp) => {
           onLogFollowUp(app.id, followUp);
@@ -286,10 +443,22 @@ export function ApplicationDetailView({
     {editDialogOpen && (
       <EditApplicationDialog
         app={app}
+        contacts={contacts}
+        onCreateContact={onCreateContact}
         onClose={() => setEditDialogOpen(false)}
         onSave={(updated) => {
           onEditApplication(updated);
           setEditDialogOpen(false);
+        }}
+      />
+    )}
+    {feedbackDialogOpen && (
+      <FeedbackDialog
+        feedback={app.feedback}
+        onClose={() => setFeedbackDialogOpen(false)}
+        onSave={(feedback) => {
+          onSaveFeedback(app.id, feedback);
+          setFeedbackDialogOpen(false);
         }}
       />
     )}

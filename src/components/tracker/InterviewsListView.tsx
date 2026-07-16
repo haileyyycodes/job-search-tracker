@@ -22,9 +22,10 @@ interface InterviewRow extends Interview {
 
 interface InterviewsListViewProps {
   apps: Application[];
+  onSelectApp: (app: Application) => void;
 }
 
-export function InterviewsListView({ apps }: InterviewsListViewProps) {
+export function InterviewsListView({ apps, onSelectApp }: InterviewsListViewProps) {
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [from, setFrom] = useState("");
@@ -87,8 +88,8 @@ export function InterviewsListView({ apps }: InterviewsListViewProps) {
             alignItems: "start",
           }}
         >
-          <div>
-            <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{r.app.role}</div>
+          <div onClick={() => onSelectApp(r.app)} style={{ cursor: "pointer" }}>
+            <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{r.app.role}</div>
             <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{r.app.company}</div>
           </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.type}</span>

@@ -1,4 +1,79 @@
-import type { Application, Task } from "./types";
+import type { Application, Contact, Goals, NetworkingEvent, Task } from "./types";
+
+export const contacts: Contact[] = [
+  {
+    id: "c1",
+    name: "Alex Chen",
+    email: "alex@northwind.co",
+    employer: "Northwind Co.",
+    role: "Product Design",
+    notes: "On the design team at Northwind. Referred me to the Product Designer role.",
+  },
+  {
+    id: "c2",
+    name: "Priya Nair",
+    email: "priya@fathomrobotics.com",
+    employer: "Fathom Robotics",
+    role: "Engineering Manager",
+    notes: "Referred me to the Design Systems Lead role. Great signal on interview loop timing.",
+  },
+  {
+    id: "c3",
+    name: "Jamie Osei",
+    email: "talent@fathomrobotics.com",
+    employer: "Fathom Robotics",
+    role: "Recruiter",
+    notes: "",
+  },
+  {
+    id: "c4",
+    name: "Sam Lee",
+    employer: "Harborlight Media",
+    role: "Content Lead",
+    notes: "Referred me to the Content Designer role.",
+  },
+  {
+    id: "c5",
+    name: "Jordan A.",
+    employer: "Vantage Robotics",
+    role: "Product Design",
+    notes: "Offered to refer me to Vantage Robotics — need an updated resume first.",
+  },
+  {
+    id: "c6",
+    name: "Morgan Reyes",
+    linkedInUrl: "https://linkedin.com/in/morganreyes",
+    employer: "Indie",
+    role: "Former manager",
+    notes: "Former manager, now doing independent consulting. Good for general career advice.",
+  },
+];
+
+export const networkingEvents: NetworkingEvent[] = [
+  {
+    id: "ne1",
+    contactIds: ["c1"],
+    type: "Coffee chat",
+    date: "Jun 20, 2026",
+    applicationId: "1",
+    notes: "Caught up on how the interview loop is going.",
+  },
+  {
+    id: "ne2",
+    contactIds: ["c6"],
+    type: "Video call",
+    date: "Jul 5, 2026",
+    notes: "Quarterly catch-up — talked about the broader job market and design leadership roles.",
+  },
+  {
+    id: "ne3",
+    contactIds: ["c2", "c3"],
+    type: "In-person meetup",
+    date: "Jun 30, 2026",
+    applicationId: "4",
+    notes: "Grabbed coffee near their office after the onsite. Good signal on offer timeline.",
+  },
+];
 
 export const applications: Application[] = [
   {
@@ -8,11 +83,16 @@ export const applications: Application[] = [
     dateApplied: "Jun 10, 2026",
     link: "https://northwind.co/careers/1234",
     referral: true,
-    referredBy: "Alex Chen",
+    referredByContactId: "c1",
     notes: "Referral from Alex on the design team. Culture seems collaborative.",
     jobDescription: "",
     status: "interviewing",
     logo: "N",
+    salaryMin: 115000,
+    salaryMax: 140000,
+    workArrangement: "hybrid",
+    city: "Detroit",
+    state: "MI",
     statusHistory: [
       { status: "applied", at: "Jun 10, 2026" },
       { status: "interviewing", at: "Jun 18, 2026" },
@@ -22,7 +102,7 @@ export const applications: Application[] = [
       { id: "iv2", type: "Technical Interview", date: "Jul 2, 2026", notes: "Portfolio review + whiteboard exercise." },
     ],
     followUps: [
-      { id: "fu1", date: "Jun 25, 2026", contact: "Alex Chen", info: "alex@northwind.co", notes: "Checked in on timeline." },
+      { id: "fu1", date: "Jun 25, 2026", contactId: "c1", notes: "Checked in on timeline." },
     ],
   },
   {
@@ -36,6 +116,7 @@ export const applications: Application[] = [
     jobDescription: "",
     status: "applied",
     logo: "B",
+    workArrangement: "remote",
     statusHistory: [{ status: "applied", at: "Jul 10, 2026" }],
     interviews: [],
     followUps: [],
@@ -57,6 +138,10 @@ export const applications: Application[] = [
     ],
     interviews: [],
     followUps: [],
+    feedback: {
+      text: "Went with a candidate who had more direct healthcare research experience.",
+      date: "Jun 18, 2026",
+    },
   },
   {
     id: "4",
@@ -65,11 +150,16 @@ export const applications: Application[] = [
     dateApplied: "May 20, 2026",
     link: "https://fathomrobotics.com/careers/dsl",
     referral: true,
-    referredBy: "Priya Nair",
+    referredByContactId: "c2",
     notes: "Dream role — design systems + robotics.",
     jobDescription: "",
     status: "offer_extended",
     logo: "F",
+    salaryMin: 150000,
+    salaryMax: 175000,
+    workArrangement: "onsite",
+    city: "Ann Arbor",
+    state: "MI",
     statusHistory: [
       { status: "applied", at: "May 20, 2026" },
       { status: "interviewing", at: "May 29, 2026" },
@@ -81,14 +171,8 @@ export const applications: Application[] = [
       { id: "iv5", type: "Behavioral", date: "Jun 20, 2026", notes: "Final round with VP Design." },
     ],
     followUps: [
-      { id: "fu2", date: "Jun 5, 2026", contact: "Priya Nair", info: "priya@fathomrobotics.com", notes: "" },
-      {
-        id: "fu3",
-        date: "Jun 22, 2026",
-        contact: "Recruiting team",
-        info: "talent@fathomrobotics.com",
-        notes: "Asked about offer timeline.",
-      },
+      { id: "fu2", date: "Jun 5, 2026", contactId: "c2", notes: "" },
+      { id: "fu3", date: "Jun 22, 2026", contactId: "c3", notes: "Asked about offer timeline." },
     ],
   },
   {
@@ -109,6 +193,10 @@ export const applications: Application[] = [
     ],
     interviews: [{ id: "iv6", type: "Screening Call", date: "May 22, 2026", notes: "" }],
     followUps: [],
+    feedback: {
+      text: "Strong portfolio, but they wanted someone with deeper design systems depth for this role.",
+      date: "Jun 4, 2026",
+    },
   },
   {
     id: "6",
@@ -121,6 +209,9 @@ export const applications: Application[] = [
     jobDescription: "",
     status: "applied",
     logo: "A",
+    salaryMin: 90000,
+    salaryMax: 110000,
+    workArrangement: "remote",
     statusHistory: [{ status: "applied", at: "Jul 8, 2026" }],
     interviews: [],
     followUps: [],
@@ -132,11 +223,14 @@ export const applications: Application[] = [
     dateApplied: "Jun 28, 2026",
     link: "https://harborlightmedia.com/careers",
     referral: true,
-    referredBy: "Sam Lee",
+    referredByContactId: "c4",
     notes: "",
     jobDescription: "",
     status: "interviewing",
     logo: "H",
+    workArrangement: "hybrid",
+    city: "Chicago",
+    state: "IL",
     statusHistory: [
       { status: "applied", at: "Jun 28, 2026" },
       { status: "interviewing", at: "Jul 5, 2026" },
@@ -159,6 +253,53 @@ export const applications: Application[] = [
       { status: "applied", at: "Apr 30, 2026" },
       { status: "withdrawn", at: "May 10, 2026" },
     ],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "9",
+    company: "Pinehurst Studio",
+    role: "Design Lead",
+    dateApplied: "",
+    link: "https://pinehurststudio.com/careers/design-lead",
+    referral: false,
+    notes: "Saw this posted on a design job board — looks like a strong fit for portfolio work.",
+    jobDescription: "",
+    status: "todo",
+    logo: "P",
+    statusHistory: [{ status: "todo", at: "Jul 12, 2026" }],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "10",
+    company: "Vantage Robotics",
+    role: "Product Designer",
+    dateApplied: "",
+    link: "",
+    referral: true,
+    referredByContactId: "c5",
+    notes: "Jordan offered to refer me — need to get an updated resume together first.",
+    jobDescription: "",
+    status: "todo",
+    logo: "V",
+    salaryMin: 130000,
+    statusHistory: [{ status: "todo", at: "Jul 13, 2026" }],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "11",
+    company: "Meridian Health",
+    role: "UX Researcher",
+    dateApplied: "",
+    link: "https://meridianhealth.com/jobs/ux-researcher",
+    referral: false,
+    notes: "",
+    jobDescription: "",
+    status: "todo",
+    logo: "M",
+    statusHistory: [{ status: "todo", at: "Jul 14, 2026" }],
     interviews: [],
     followUps: [],
   },
@@ -207,7 +348,15 @@ export const initialTasks: Task[] = [
   },
 ];
 
+export const initialGoals: Goals = {
+  salaryMin: 120000,
+  salaryMax: 150000,
+  applicationsPerWeekTarget: 5,
+  targetOfferDate: "Aug 15, 2026",
+};
+
 export const statusLabels: Record<Application["status"], string> = {
+  todo: "To do",
   applied: "Applied",
   interviewing: "Interviewing",
   offer_extended: "Offer extended",
@@ -218,7 +367,17 @@ export const statusLabels: Record<Application["status"], string> = {
   withdrawn: "Withdrawn",
 };
 
+export const networkingEventTypes: string[] = [
+  "Coffee chat",
+  "Video call",
+  "Phone call",
+  "In-person meetup",
+  "Conference/event",
+  "Other",
+];
+
 export const statusOrder: Application["status"][] = [
+  "todo",
   "applied",
   "interviewing",
   "offer_extended",
