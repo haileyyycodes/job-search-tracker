@@ -9,11 +9,12 @@ interface TasksViewProps {
   tasks: Task[];
   onDismissTask: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  onSelectApp: (app: Application) => void;
 }
 
 type StatusFilter = TaskStatus | "all";
 
-export function TasksView({ apps, tasks, onDismissTask, onDeleteTask }: TasksViewProps) {
+export function TasksView({ apps, tasks, onDismissTask, onDeleteTask, onSelectApp }: TasksViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
 
@@ -76,8 +77,10 @@ export function TasksView({ apps, tasks, onDismissTask, onDeleteTask }: TasksVie
             alignItems: "center",
           }}
         >
-          <div>
-            <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{t.app ? t.app.role : "—"}</div>
+          <div onClick={() => t.app && onSelectApp(t.app)} style={{ cursor: t.app ? "pointer" : "default" }}>
+            <div style={{ font: "700 13px var(--font-body)", color: t.app ? "var(--text-link)" : "var(--text-primary)" }}>
+              {t.app ? t.app.role : "—"}
+            </div>
             <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{t.app ? t.app.company : ""}</div>
           </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{t.dueDate}</span>

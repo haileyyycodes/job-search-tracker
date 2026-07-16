@@ -12,6 +12,8 @@ const items: SidebarItem[] = [
   { key: "interviews", label: "Interviews", icon: "◔" },
   { key: "followups", label: "Follow-Ups", icon: "↻" },
   { key: "tasks", label: "Tasks", icon: "☑" },
+  { key: "contacts", label: "Contacts", icon: "◎" },
+  { key: "networking", label: "Networking", icon: "⇄" },
 ];
 
 interface SidebarProps {

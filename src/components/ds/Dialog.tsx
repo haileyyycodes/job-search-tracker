@@ -29,11 +29,12 @@ export function Dialog({ open, title, children, onClose, footer }: DialogProps) 
       <div
         onClick={stop}
         style={{
-          width: 420,
+          width: 480,
           maxWidth: "90vw",
           background: "var(--bg-surface)",
           borderRadius: "var(--radius-l)",
           boxShadow: "var(--shadow-l)",
+          overflowX: "hidden",
         }}
       >
         <div

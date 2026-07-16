@@ -5,7 +5,7 @@ import { StatusTag } from "@/components/ds";
 import { statusOrder } from "@/lib/data";
 import { daysUntil, isInCurrentCalendarWeek } from "@/lib/date";
 import { GoalsEditDialog } from "./GoalsEditDialog";
-import type { Application, Goals, Task } from "@/lib/types";
+import type { Application, Feedback, Goals, Task } from "@/lib/types";
 
 function formatCurrency(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -89,6 +89,11 @@ export function DashboardView({ apps, tasks, goals, onDismissTask, onSelectApp, 
   const weeklyCount = apps.filter((a) => isInCurrentCalendarWeek(a.dateApplied)).length;
   const acceptedOfferDate = earliestAcceptedOfferDate(apps);
   const overdue = !acceptedOfferDate && goals.targetOfferDate != null && daysUntil(goals.targetOfferDate) < 0;
+
+  const recentFeedback = apps
+    .filter((a): a is Application & { feedback: Feedback } => a.feedback != null)
+    .sort((a, b) => new Date(b.feedback.date).getTime() - new Date(a.feedback.date).getTime())
+    .slice(0, 5);
 
   return (
     <>
@@ -294,6 +299,39 @@ export function DashboardView({ apps, tasks, goals, onDismissTask, onSelectApp, 
           </div>
         </Card>
       </div>
+      <Card padding="md">
+        <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
+          Recent feedback
+        </div>
+        {recentFeedback.length === 0 ? (
+          <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No feedback yet.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+            {recentFeedback.map((a) => (
+              <div
+                key={a.id}
+                onClick={() => onSelectApp(a)}
+                style={{
+                  padding: 14,
+                  border: "1px solid var(--border-default)",
+                  borderRadius: "var(--radius-s)",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>
+                  {a.company} — {a.role}
+                </div>
+                <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
+                  {a.feedback.text}
+                </div>
+                <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginTop: 6 }}>
+                  Received {a.feedback.date}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
     {goalsDialogOpen && (
       <GoalsEditDialog

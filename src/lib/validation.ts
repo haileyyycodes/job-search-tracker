@@ -6,3 +6,7 @@ export function isValidUrl(value: string): boolean {
     return false;
   }
 }
+
+export function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}

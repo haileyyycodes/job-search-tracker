@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Input, Select, StatusTag, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
-import type { Application, ApplicationStatus } from "@/lib/types";
+import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
+import { formatLocation } from "@/lib/location";
+import type { Application, ApplicationStatus, Goals } from "@/lib/types";
 
 const statusOptions: SelectOption[] = [
   { value: "", label: "All statuses" },
@@ -26,11 +28,12 @@ const referralOptions: SelectOption[] = [
 
 interface ApplicationsListViewProps {
   apps: Application[];
+  goals: Goals;
   onSelect: (app: Application) => void;
   onRequestDelete: (app: Application) => void;
 }
 
-export function ApplicationsListView({ apps, onSelect, onRequestDelete }: ApplicationsListViewProps) {
+export function ApplicationsListView({ apps, goals, onSelect, onRequestDelete }: ApplicationsListViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [referral, setReferral] = useState("");
@@ -63,7 +66,7 @@ export function ApplicationsListView({ apps, onSelect, onRequestDelete }: Applic
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 170px 110px 90px 40px",
+          gridTemplateColumns: "1fr 150px 100px 130px 120px 80px 40px",
           columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
@@ -77,6 +80,8 @@ export function ApplicationsListView({ apps, onSelect, onRequestDelete }: Applic
         <span>Role</span>
         <span>Status</span>
         <span>Applied</span>
+        <span>Location</span>
+        <span>Salary</span>
         <span>Referral</span>
         <span />
       </div>
@@ -86,7 +91,7 @@ export function ApplicationsListView({ apps, onSelect, onRequestDelete }: Applic
           onClick={() => onSelect(a)}
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 170px 110px 90px 40px",
+            gridTemplateColumns: "1fr 150px 100px 130px 120px 80px 40px",
           columnGap: 16,
             alignItems: "center",
             padding: "14px 4px",
@@ -118,6 +123,17 @@ export function ApplicationsListView({ apps, onSelect, onRequestDelete }: Applic
           </div>
           <StatusTag status={a.status} />
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{a.dateApplied || "—"}</span>
+          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
+            {formatLocation(a) || "—"}
+          </span>
+          <span
+            style={{
+              font: "var(--text-body-s)",
+              color: salaryMatchColor(getSalaryMatch(a, goals)),
+            }}
+          >
+            {formatSalaryRange(a.salaryMin, a.salaryMax) || "—"}
+          </span>
           <span style={{ font: "var(--text-body-s)", color: a.referral ? "var(--green-600)" : "var(--text-tertiary)" }}>
             {a.referral ? "Yes" : "No"}
           </span>

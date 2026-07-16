@@ -3,27 +3,30 @@
 import { useState } from "react";
 import { Dialog, Input, Button } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
-import type { FollowUp } from "@/lib/types";
+import { ContactPicker } from "./ContactPicker";
+import type { Contact, FollowUp } from "@/lib/types";
 
 interface LogFollowUpDialogProps {
+  contacts: Contact[];
+  onCreateContact: (contact: Contact) => void;
+  defaultCompany?: string;
   onClose: () => void;
   onSave: (followUp: Omit<FollowUp, "id">) => void;
 }
 
 /** Only ever rendered while the log-follow-up flow is open. */
-export function LogFollowUpDialog({ onClose, onSave }: LogFollowUpDialogProps) {
-  const [contact, setContact] = useState("");
-  const [info, setInfo] = useState("");
+export function LogFollowUpDialog({ contacts, onCreateContact, defaultCompany, onClose, onSave }: LogFollowUpDialogProps) {
+  const [contactId, setContactId] = useState("");
   const [dateInput, setDateInput] = useState("");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const handleSave = () => {
     setSubmitted(true);
-    if (!contact.trim()) return;
+    if (!contactId) return;
 
     const date = dateInput ? formatDateInput(dateInput) : todayFormatted();
-    onSave({ date, contact: contact.trim(), info: info.trim(), notes: notes.trim() });
+    onSave({ date, contactId, notes: notes.trim() });
   };
 
   return (
@@ -43,18 +46,14 @@ export function LogFollowUpDialog({ onClose, onSave }: LogFollowUpDialogProps) {
       }
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <Input
+        <ContactPicker
           label="Contacted person"
-          placeholder="e.g. Alex Chen"
-          value={contact}
-          onChange={setContact}
-          error={submitted && !contact.trim() ? "Required" : undefined}
-        />
-        <Input
-          label="Contact info"
-          placeholder="Email or phone"
-          value={info}
-          onChange={setInfo}
+          contacts={contacts}
+          value={contactId}
+          onChange={setContactId}
+          onCreateContact={onCreateContact}
+          defaultCompany={defaultCompany}
+          error={submitted && !contactId ? "Required" : undefined}
         />
         <Input label="Date" type="date" value={dateInput} onChange={setDateInput} hint="Defaults to today if left blank" />
         <div>

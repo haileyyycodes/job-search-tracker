@@ -20,7 +20,7 @@ export function Select({ label, value, options = [], onChange, placeholder = "Se
   const sel = options.find((o) => o.value === value);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%", minWidth: 0 }}>
       {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
       <button
         type="button"

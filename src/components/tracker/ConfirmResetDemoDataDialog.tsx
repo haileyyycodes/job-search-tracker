@@ -25,8 +25,8 @@ export function ConfirmResetDemoDataDialog({ onClose, onConfirm }: ConfirmResetD
       }
     >
       <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
-        This replaces every application, task, and goal with the original demo data. Any changes you&rsquo;ve made will
-        be lost. This can&rsquo;t be undone.
+        This replaces every application, task, goal, contact, and networking event with the original demo data. Any
+        changes you&rsquo;ve made will be lost. This can&rsquo;t be undone.
       </div>
     </Dialog>
   );

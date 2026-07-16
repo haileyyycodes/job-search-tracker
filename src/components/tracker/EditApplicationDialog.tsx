@@ -5,16 +5,18 @@ import { Dialog, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { ApplicationFormFields, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
-import type { Application } from "@/lib/types";
+import type { Application, Contact } from "@/lib/types";
 
 interface EditApplicationDialogProps {
   app: Application;
   onClose: () => void;
   onSave: (updated: Application) => void;
+  contacts: Contact[];
+  onCreateContact: (contact: Contact) => void;
 }
 
 /** Only ever rendered while the edit flow is open, so form state starts fresh from `app` every time. */
-export function EditApplicationDialog({ app, onClose, onSave }: EditApplicationDialogProps) {
+export function EditApplicationDialog({ app, onClose, onSave, contacts, onCreateContact }: EditApplicationDialogProps) {
   const [form, setForm] = useState<ApplicationFormValues>({
     company: app.company,
     role: app.role,
@@ -22,8 +24,13 @@ export function EditApplicationDialog({ app, onClose, onSave }: EditApplicationD
     link: app.link,
     description: app.jobDescription ?? "",
     referral: app.referral,
-    referredBy: app.referredBy ?? "",
+    referredByContactId: app.referredByContactId ?? "",
     notes: app.notes,
+    salaryMin: app.salaryMin != null ? String(app.salaryMin) : "",
+    salaryMax: app.salaryMax != null ? String(app.salaryMax) : "",
+    workArrangement: app.workArrangement ?? "",
+    city: app.city ?? "",
+    state: app.state ?? "",
   });
   const [submitted, setSubmitted] = useState(false);
   const requireDateApplied = app.status !== "todo";
@@ -41,8 +48,13 @@ export function EditApplicationDialog({ app, onClose, onSave }: EditApplicationD
       link: form.link.trim(),
       jobDescription: form.description.trim(),
       referral: form.referral,
-      referredBy: form.referral ? form.referredBy.trim() || undefined : undefined,
+      referredByContactId: form.referral ? form.referredByContactId || undefined : undefined,
       notes: form.notes.trim(),
+      salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
+      salaryMax: form.salaryMax.trim() ? Number(form.salaryMax) : undefined,
+      workArrangement: form.workArrangement || undefined,
+      city: form.city.trim() || undefined,
+      state: form.state.trim() || undefined,
       logo: form.company.trim().charAt(0).toUpperCase() || app.logo,
     });
   };
@@ -63,7 +75,14 @@ export function EditApplicationDialog({ app, onClose, onSave }: EditApplicationD
         </>
       }
     >
-      <ApplicationFormFields form={form} setForm={setForm} submitted={submitted} requireDateApplied={requireDateApplied} />
+      <ApplicationFormFields
+        form={form}
+        setForm={setForm}
+        submitted={submitted}
+        requireDateApplied={requireDateApplied}
+        contacts={contacts}
+        onCreateContact={onCreateContact}
+      />
     </Dialog>
   );
 }

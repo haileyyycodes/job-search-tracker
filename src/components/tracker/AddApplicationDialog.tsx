@@ -5,12 +5,14 @@ import { Dialog, Button, Select } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
 import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
-import type { Application } from "@/lib/types";
+import type { Application, Contact } from "@/lib/types";
 
 interface AddApplicationDialogProps {
   open: boolean;
   onClose: () => void;
   onAdd: (app: Application) => void;
+  contacts: Contact[];
+  onCreateContact: (contact: Contact) => void;
 }
 
 const initialStatusOptions = [
@@ -18,7 +20,7 @@ const initialStatusOptions = [
   { value: "todo", label: "To do — queue for later" },
 ];
 
-export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDialogProps) {
+export function AddApplicationDialog({ open, onClose, onAdd, contacts, onCreateContact }: AddApplicationDialogProps) {
   const [status, setStatus] = useState<"todo" | "applied">("applied");
   const [form, setForm] = useState<ApplicationFormValues>(emptyApplicationForm);
   const [submitted, setSubmitted] = useState(false);
@@ -44,8 +46,13 @@ export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDia
       link: form.link.trim(),
       jobDescription: form.description.trim(),
       referral: form.referral,
-      referredBy: form.referral ? form.referredBy.trim() || undefined : undefined,
+      referredByContactId: form.referral ? form.referredByContactId || undefined : undefined,
       notes: form.notes.trim(),
+      salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
+      salaryMax: form.salaryMax.trim() ? Number(form.salaryMax) : undefined,
+      workArrangement: form.workArrangement || undefined,
+      city: form.city.trim() || undefined,
+      state: form.state.trim() || undefined,
       status,
       logo: form.company.trim().charAt(0).toUpperCase() || "?",
       statusHistory:
@@ -81,7 +88,14 @@ export function AddApplicationDialog({ open, onClose, onAdd }: AddApplicationDia
           options={initialStatusOptions}
           onChange={(v) => setStatus(v as "todo" | "applied")}
         />
-        <ApplicationFormFields form={form} setForm={setForm} submitted={submitted} requireDateApplied={requireDateApplied} />
+        <ApplicationFormFields
+          form={form}
+          setForm={setForm}
+          submitted={submitted}
+          requireDateApplied={requireDateApplied}
+          contacts={contacts}
+          onCreateContact={onCreateContact}
+        />
       </div>
     </Dialog>
   );

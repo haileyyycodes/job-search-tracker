@@ -3,28 +3,46 @@
 import { useState } from "react";
 import { Input } from "@/components/ds";
 import { isWithinDateRange } from "@/lib/date";
-import type { Application, FollowUp } from "@/lib/types";
+import type { Application, Contact, FollowUp } from "@/lib/types";
 
 interface FollowUpRow extends FollowUp {
   app: Application;
+  contact: Contact | undefined;
+  contactName: string;
+  contactInfo: string;
   key: string;
 }
 
 interface FollowUpsListViewProps {
   apps: Application[];
+  contacts: Contact[];
+  onSelectApp: (app: Application) => void;
+  onSelectContact: (contact: Contact) => void;
 }
 
-export function FollowUpsListView({ apps }: FollowUpsListViewProps) {
+export function FollowUpsListView({ apps, contacts, onSelectApp, onSelectContact }: FollowUpsListViewProps) {
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
   const rows: FollowUpRow[] = [];
-  apps.forEach((a) => a.followUps.forEach((f, idx) => rows.push({ ...f, app: a, key: `${a.id}-${idx}` })));
+  apps.forEach((a) =>
+    a.followUps.forEach((f, idx) => {
+      const c = contacts.find((contact) => contact.id === f.contactId);
+      rows.push({
+        ...f,
+        app: a,
+        contact: c,
+        contactName: c?.name ?? "Unknown contact",
+        contactInfo: [c?.email, c?.phone].filter(Boolean).join(" · "),
+        key: `${a.id}-${idx}`,
+      });
+    })
+  );
   rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filtered = rows.filter(
     (r) =>
-      (r.contact.toLowerCase().includes(q.toLowerCase()) || r.app.company.toLowerCase().includes(q.toLowerCase())) &&
+      (r.contactName.toLowerCase().includes(q.toLowerCase()) || r.app.company.toLowerCase().includes(q.toLowerCase())) &&
       isWithinDateRange(r.date, from, to)
   );
 
@@ -73,13 +91,22 @@ export function FollowUpsListView({ apps }: FollowUpsListViewProps) {
             alignItems: "start",
           }}
         >
-          <div>
-            <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{r.app.role}</div>
+          <div onClick={() => onSelectApp(r.app)} style={{ cursor: "pointer" }}>
+            <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{r.app.role}</div>
             <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{r.app.company}</div>
           </div>
-          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.contact}</span>
+          <span
+            onClick={() => r.contact && onSelectContact(r.contact)}
+            style={{
+              font: "var(--text-body-s)",
+              color: r.contact ? "var(--text-link)" : "var(--text-secondary)",
+              cursor: r.contact ? "pointer" : "default",
+            }}
+          >
+            {r.contactName}
+          </span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.date}</span>
-          <span style={{ font: "var(--text-mono-s)", color: "var(--text-secondary)" }}>{r.info}</span>
+          <span style={{ font: "var(--text-mono-s)", color: "var(--text-secondary)" }}>{r.contactInfo || "—"}</span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{r.notes || "—"}</span>
         </div>
       ))}

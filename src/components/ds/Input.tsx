@@ -35,7 +35,7 @@ export function Input({
   const h = heightMap[size];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", minWidth: 0 }}>
       {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
       <div
         style={{
