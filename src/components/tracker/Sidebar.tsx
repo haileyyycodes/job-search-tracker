@@ -1,28 +1,32 @@
-import type { TrackerView } from "@/lib/types";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface SidebarItem {
-  key: TrackerView;
+  href: string;
   label: string;
   icon: string;
 }
 
 const items: SidebarItem[] = [
-  { key: "dashboard", label: "Dashboard", icon: "⌂" },
-  { key: "applications", label: "Applications", icon: "☰" },
-  { key: "interviews", label: "Interviews", icon: "◔" },
-  { key: "followups", label: "Follow-Ups", icon: "↻" },
-  { key: "tasks", label: "Tasks", icon: "☑" },
-  { key: "contacts", label: "Contacts", icon: "◎" },
-  { key: "networking", label: "Networking", icon: "⇄" },
+  { href: "/", label: "Dashboard", icon: "⌂" },
+  { href: "/applications", label: "Applications", icon: "☰" },
+  { href: "/interviews", label: "Interviews", icon: "◔" },
+  { href: "/followups", label: "Follow-Ups", icon: "↻" },
+  { href: "/tasks", label: "Tasks", icon: "☑" },
+  { href: "/contacts", label: "Contacts", icon: "◎" },
+  { href: "/networking", label: "Networking", icon: "⇄" },
 ];
 
 interface SidebarProps {
-  view: TrackerView;
-  setView: (view: TrackerView) => void;
   onRequestReset: () => void;
 }
 
-export function Sidebar({ view, setView, onRequestReset }: SidebarProps) {
+export function Sidebar({ onRequestReset }: SidebarProps) {
+  const pathname = usePathname();
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
   return (
     <div
       style={{
@@ -49,9 +53,9 @@ export function Sidebar({ view, setView, onRequestReset }: SidebarProps) {
         Harbor
       </div>
       {items.map((it) => (
-        <button
-          key={it.key}
-          onClick={() => setView(it.key)}
+        <Link
+          key={it.href}
+          href={it.href}
           style={{
             display: "flex",
             alignItems: "center",
@@ -60,16 +64,16 @@ export function Sidebar({ view, setView, onRequestReset }: SidebarProps) {
             border: "none",
             borderRadius: "var(--radius-s)",
             textAlign: "left",
-            background: view === it.key ? "var(--blue-100)" : "transparent",
-            color: view === it.key ? "var(--blue-700)" : "var(--text-secondary)",
+            background: isActive(it.href) ? "var(--blue-100)" : "transparent",
+            color: isActive(it.href) ? "var(--blue-700)" : "var(--text-secondary)",
             font: "var(--text-body-m)",
-            fontWeight: view === it.key ? 700 : 400,
-            cursor: "pointer",
+            fontWeight: isActive(it.href) ? 700 : 400,
+            textDecoration: "none",
           }}
         >
           <span style={{ width: 16, textAlign: "center" }}>{it.icon}</span>
           {it.label}
-        </button>
+        </Link>
       ))}
       <div
         style={{

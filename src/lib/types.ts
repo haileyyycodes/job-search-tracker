@@ -92,17 +92,6 @@ export interface Task {
   reminderRule?: ReminderRule;
 }
 
-export type TrackerView =
-  | "dashboard"
-  | "applications"
-  | "detail"
-  | "interviews"
-  | "followups"
-  | "tasks"
-  | "contacts"
-  | "contact-detail"
-  | "networking";
-
 export interface Goals {
   salaryMin?: number;
   salaryMax?: number;
