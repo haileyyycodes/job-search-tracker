@@ -22,9 +22,10 @@ const items: SidebarItem[] = [
 
 interface SidebarProps {
   onRequestReset: () => void;
+  onRequestClearAll: () => void;
 }
 
-export function Sidebar({ onRequestReset }: SidebarProps) {
+export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
@@ -116,6 +117,20 @@ export function Sidebar({ onRequestReset }: SidebarProps) {
         }}
       >
         Reset demo data
+      </button>
+      <button
+        onClick={onRequestClearAll}
+        style={{
+          background: "none",
+          border: "none",
+          textAlign: "left",
+          padding: "6px 8px",
+          font: "var(--text-caption)",
+          color: "var(--text-tertiary)",
+          cursor: "pointer",
+        }}
+      >
+        Clear all data
       </button>
     </div>
   );

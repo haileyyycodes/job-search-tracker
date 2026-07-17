@@ -32,6 +32,10 @@ interface TrackerUIContextValue {
   requestReset: () => void;
   closeResetConfirm: () => void;
 
+  clearAllConfirmOpen: boolean;
+  requestClearAll: () => void;
+  closeClearAllConfirm: () => void;
+
   networkingDialogOpen: boolean;
   networkingDialogContactId: string | null;
   openLogNetworkingEvent: (initialContactId?: string) => void;
@@ -54,6 +58,7 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
   const [deleteContactTarget, setDeleteContactTarget] = useState<Contact | null>(null);
   const [deleteCompanyTarget, setDeleteCompanyTarget] = useState<Company | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [clearAllConfirmOpen, setClearAllConfirmOpen] = useState(false);
   const [networkingDialogContactId, setNetworkingDialogContactId] = useState<string | null>(null);
   const [networkingDialogOpen, setNetworkingDialogOpen] = useState(false);
 
@@ -85,6 +90,10 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
     resetConfirmOpen,
     requestReset: () => setResetConfirmOpen(true),
     closeResetConfirm: () => setResetConfirmOpen(false),
+
+    clearAllConfirmOpen,
+    requestClearAll: () => setClearAllConfirmOpen(true),
+    closeClearAllConfirm: () => setClearAllConfirmOpen(false),
 
     networkingDialogOpen,
     networkingDialogContactId,

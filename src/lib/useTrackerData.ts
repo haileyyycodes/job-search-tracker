@@ -152,6 +152,15 @@ export function useTrackerData() {
     setCompanies(initialCompanies);
   };
 
+  const clearAllData = () => {
+    setApps([]);
+    setTasks([]);
+    setGoals({});
+    setContacts([]);
+    setNetworkingEvents([]);
+    setCompanies([]);
+  };
+
   return {
     apps,
     tasks,
@@ -182,5 +191,6 @@ export function useTrackerData() {
     deleteCompany,
     promoteToTarget,
     resetDemoData,
+    clearAllData,
   };
 }
