@@ -10,6 +10,7 @@ import { FeedbackDialog } from "./FeedbackDialog";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
+import { formatResponseTime } from "@/lib/responseTime";
 import type {
   Application,
   ApplicationStatus,
@@ -166,6 +167,7 @@ export function ApplicationDetailView({
         <Card padding="md">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <Field label="Date applied" value={app.dateApplied} />
+              <Field label="Response time" value={formatResponseTime(app)} />
               <Field
                 label="Application link"
                 value={

@@ -43,11 +43,51 @@ export function isWithinDateRange(displayDate: string, fromInputValue: string, t
 }
 
 /** Monday 00:00 of the week containing `date`. */
-function startOfCalendarWeek(date: Date): Date {
+export function startOfCalendarWeek(date: Date): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
   return d;
+}
+
+export interface WeekBucket {
+  weekStart: Date;
+  label: string;
+  count: number;
+}
+
+/**
+ * Buckets "Jul 15, 2026"-formatted dates into the last `weeks` Monday-Sunday calendar weeks
+ * (oldest first, ending with the current week), including weeks with zero matches so a trend
+ * chart has a continuous x-axis.
+ */
+export function bucketByCalendarWeek(dates: string[], weeks: number): WeekBucket[] {
+  const currentWeekStart = startOfCalendarWeek(new Date());
+  const buckets: WeekBucket[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const weekStart = new Date(currentWeekStart);
+    weekStart.setDate(weekStart.getDate() - i * 7);
+    buckets.push({
+      weekStart,
+      label: weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      count: 0,
+    });
+  }
+
+  for (const raw of dates) {
+    if (!raw) continue;
+    const time = new Date(raw).getTime();
+    for (const bucket of buckets) {
+      const weekEnd = new Date(bucket.weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      if (time >= bucket.weekStart.getTime() && time < weekEnd.getTime()) {
+        bucket.count++;
+        break;
+      }
+    }
+  }
+
+  return buckets;
 }
 
 /** True if a "Jul 15, 2026"-formatted date falls in the same Monday-Sunday week as today. */
@@ -66,4 +106,20 @@ export function daysUntil(displayDate: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
+
+/** Whole days between two "Jul 15, 2026"-formatted dates (`to` minus `from`). */
+export function daysBetween(from: string, to: string): number {
+  const fromDate = new Date(from);
+  fromDate.setHours(0, 0, 0, 0);
+  const toDate = new Date(to);
+  toDate.setHours(0, 0, 0, 0);
+  return Math.round((toDate.getTime() - fromDate.getTime()) / 86400000);
+}
+
+/** True if a "Jul 15, 2026"-formatted date falls in the same calendar month (and year) as today. */
+export function isInCurrentCalendarMonth(displayDate: string): boolean {
+  const date = new Date(displayDate);
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ds";
 import { TopBar } from "@/components/tracker/TopBar";
 import { DashboardView } from "@/components/tracker/DashboardView";
@@ -10,7 +9,6 @@ import { useTrackerUI } from "@/lib/TrackerUIContext";
 export default function DashboardPage() {
   const data = useTrackerData();
   const ui = useTrackerUI();
-  const router = useRouter();
 
   return (
     <>
@@ -21,11 +19,8 @@ export default function DashboardPage() {
       </TopBar>
       <DashboardView
         apps={data.apps}
-        companies={data.companies}
-        tasks={data.tasks}
         goals={data.goals}
-        onDismissTask={data.dismissTask}
-        onSelectApp={(a) => router.push(`/applications/${a.id}`)}
+        networkingEvents={data.networkingEvents}
         onSaveGoals={data.setGoals}
       />
     </>

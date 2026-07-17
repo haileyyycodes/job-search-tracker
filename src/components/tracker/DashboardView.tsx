@@ -3,10 +3,10 @@ import { Card } from "@/components/ds";
 import { Button } from "@/components/ds";
 import { StatusTag } from "@/components/ds";
 import { statusOrder } from "@/lib/data";
-import { daysUntil, isInCurrentCalendarWeek } from "@/lib/date";
-import { companyName } from "@/lib/companies";
+import { bucketByCalendarWeek, daysUntil, isInCurrentCalendarMonth, isInCurrentCalendarWeek } from "@/lib/date";
+import { getResponseDays } from "@/lib/responseTime";
 import { GoalsEditDialog } from "./GoalsEditDialog";
-import type { Application, Company, Feedback, Goals, Task } from "@/lib/types";
+import type { Application, Goals, NetworkingEvent } from "@/lib/types";
 
 function formatCurrency(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -31,6 +31,12 @@ function earliestAcceptedOfferDate(apps: Application[]): string | null {
   }
   return earliest;
 }
+
+const sectionHeaderStyle = {
+  font: "700 15px var(--font-display)",
+  color: "var(--text-primary)",
+  marginBottom: 12,
+} as const;
 
 interface StatCardProps {
   label: string;
@@ -59,13 +65,76 @@ function StatCard({ label, value, sub }: StatCardProps) {
   );
 }
 
+const VELOCITY_WEEKS = 8;
+
+interface VelocityChartProps {
+  buckets: { weekStart: Date; label: string; count: number }[];
+  weeklyTarget?: number;
+}
+
+function VelocityChart({ buckets, weeklyTarget }: VelocityChartProps) {
+  const chartHeight = 120;
+  const maxCount = Math.max(1, weeklyTarget ?? 0, ...buckets.map((b) => b.count));
+  const targetPct = weeklyTarget != null ? Math.min(100, (weeklyTarget / maxCount) * 100) : null;
+
+  return (
+    <Card padding="md">
+      <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
+        Application velocity
+      </div>
+      <div style={{ position: "relative", height: chartHeight, marginBottom: 8 }}>
+        {targetPct != null && (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: `${targetPct}%`,
+              borderTop: "1.5px dashed var(--text-tertiary)",
+            }}
+          />
+        )}
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: "100%" }}>
+          {buckets.map((b, i) => {
+            const pct = Math.max((b.count / maxCount) * 100, b.count > 0 ? 4 : 0);
+            return (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, height: "100%", justifyContent: "flex-end" }}>
+                <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{b.count > 0 ? b.count : ""}</span>
+                <div
+                  style={{
+                    width: "100%",
+                    maxWidth: 32,
+                    height: `${pct}%`,
+                    minHeight: b.count > 0 ? 3 : 1,
+                    background: b.count > 0 ? "var(--blue-400)" : "var(--ink-100)",
+                    borderRadius: "3px 3px 0 0",
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        {buckets.map((b, i) => (
+          <div key={i} style={{ flex: 1, textAlign: "center", font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
+            {b.label}
+          </div>
+        ))}
+      </div>
+      {weeklyTarget != null && (
+        <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginTop: 10 }}>
+          Dashed line marks your weekly target of {weeklyTarget}.
+        </div>
+      )}
+    </Card>
+  );
+}
+
 interface DashboardViewProps {
   apps: Application[];
-  companies: Company[];
-  tasks: Task[];
   goals: Goals;
-  onDismissTask: (id: string) => void;
-  onSelectApp: (app: Application) => void;
+  networkingEvents: NetworkingEvent[];
   onSaveGoals: (goals: Goals) => void;
 }
 
@@ -73,7 +142,7 @@ const reachedInterview = (a: Application) => a.statusHistory.some((s) => s.statu
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
-export function DashboardView({ apps, companies, tasks, goals, onDismissTask, onSelectApp, onSaveGoals }: DashboardViewProps) {
+export function DashboardView({ apps, goals, networkingEvents, onSaveGoals }: DashboardViewProps) {
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const total = apps.length;
   const todoCount = apps.filter((a) => a.status === "todo").length;
@@ -83,19 +152,23 @@ export function DashboardView({ apps, companies, tasks, goals, onDismissTask, on
   const offerCount = apps.filter((a) => ["offer_extended", "offer_accepted", "offer_declined"].includes(a.status)).length;
   const referred = submittedApps.filter((a) => a.referral);
   const notReferred = submittedApps.filter((a) => !a.referral);
-  const activeTasks = tasks
-    .filter((t) => t.status === "active")
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+  const responseDaysList = apps.map(getResponseDays).filter((d): d is number => d != null);
+  const avgResponseDays = responseDaysList.length
+    ? Math.round(responseDaysList.reduce((sum, d) => sum + d, 0) / responseDaysList.length)
+    : null;
+
+  const eventsThisMonth = networkingEvents.filter((e) => isInCurrentCalendarMonth(e.date));
+  const contactsMetThisMonth = new Set(eventsThisMonth.flatMap((e) => e.contactIds)).size;
 
   const salaryText = salaryGoalText(goals);
   const weeklyCount = apps.filter((a) => isInCurrentCalendarWeek(a.dateApplied)).length;
+  const velocityBuckets = bucketByCalendarWeek(
+    apps.filter((a) => a.dateApplied).map((a) => a.dateApplied),
+    VELOCITY_WEEKS
+  );
   const acceptedOfferDate = earliestAcceptedOfferDate(apps);
   const overdue = !acceptedOfferDate && goals.targetOfferDate != null && daysUntil(goals.targetOfferDate) < 0;
-
-  const recentFeedback = apps
-    .filter((a): a is Application & { feedback: Feedback } => a.feedback != null)
-    .sort((a, b) => new Date(b.feedback.date).getTime() - new Date(a.feedback.date).getTime())
-    .slice(0, 5);
 
   return (
     <>
@@ -205,25 +278,47 @@ export function DashboardView({ apps, companies, tasks, goals, onDismissTask, on
           </Card>
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
-        <StatCard
-          label="Interview rate"
-          value={`${interviewRate}%`}
-          sub={`${interviewedCount} of ${submittedApps.length} applications`}
-        />
-        <StatCard label="Job offers" value={offerCount} sub="Offer extended or later" />
-        <StatCard
-          label="Interview rate by referral"
-          value={`${rateOf(referred)}% / ${rateOf(notReferred)}%`}
-          sub="Referred vs. non-referred"
-        />
-        <StatCard label="Applications to submit" value={todoCount} sub="Queued and ready to go" />
+      <VelocityChart buckets={velocityBuckets} weeklyTarget={goals.applicationsPerWeekTarget} />
+      <div>
+        <div style={sectionHeaderStyle}>Pipeline performance</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16 }}>
+          <StatCard
+            label="Interview rate"
+            value={`${interviewRate}%`}
+            sub={`${interviewedCount} of ${submittedApps.length} applications`}
+          />
+          <StatCard label="Job offers" value={offerCount} sub="Offer extended or later" />
+          <StatCard
+            label="Interview rate by referral"
+            value={`${rateOf(referred)}% / ${rateOf(notReferred)}%`}
+            sub="Referred vs. non-referred"
+          />
+          <StatCard label="Applications to submit" value={todoCount} sub="Queued and ready to go" />
+          <StatCard
+            label="Avg. response time"
+            value={avgResponseDays != null ? `${avgResponseDays} days` : "—"}
+            sub={
+              avgResponseDays != null
+                ? `Based on ${responseDaysList.length} application${responseDaysList.length === 1 ? "" : "s"}`
+                : "No responses yet"
+            }
+          />
+        </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, alignItems: "start" }}>
-        <Card padding="md">
-          <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
-            Status breakdown
+      <div>
+        <div style={sectionHeaderStyle}>Networking activity</div>
+        <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ flex: "0 1 260px" }}>
+            <StatCard label="Networking events" value={eventsThisMonth.length} sub="Logged this month" />
           </div>
+          <div style={{ flex: "0 1 260px" }}>
+            <StatCard label="Contacts met" value={contactsMetThisMonth} sub="Unique contacts this month" />
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style={sectionHeaderStyle}>Status breakdown</div>
+        <Card padding="md">
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {statusOrder
               .filter((s) => apps.some((a) => a.status === s))
@@ -253,87 +348,7 @@ export function DashboardView({ apps, companies, tasks, goals, onDismissTask, on
               })}
           </div>
         </Card>
-        <Card padding="md">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Pending follow-ups</div>
-            <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{activeTasks.length}</span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {activeTasks.length === 0 && (
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No pending follow-ups.</div>
-            )}
-            {activeTasks.map((t) => {
-              const app = apps.find((a) => a.id === t.applicationId);
-              return (
-                <div
-                  key={t.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 10,
-                    paddingBottom: 10,
-                    borderBottom: "1px solid var(--border-default)",
-                  }}
-                >
-                  <div style={{ minWidth: 0, cursor: "pointer" }} onClick={() => app && onSelectApp(app)}>
-                    <div
-                      style={{
-                        font: "700 13px var(--font-body)",
-                        color: "var(--text-primary)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {app ? `${companyName(app.companyId, companies)} — ${app.role}` : "—"}
-                    </div>
-                    <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
-                      {t.note} · due {t.dueDate}
-                    </div>
-                  </div>
-                  <Button size="sm" variant="secondary" onClick={() => onDismissTask(t.id)}>
-                    Dismiss
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
       </div>
-      <Card padding="md">
-        <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
-          Recent feedback
-        </div>
-        {recentFeedback.length === 0 ? (
-          <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No feedback yet.</div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-            {recentFeedback.map((a) => (
-              <div
-                key={a.id}
-                onClick={() => onSelectApp(a)}
-                style={{
-                  padding: 14,
-                  border: "1px solid var(--border-default)",
-                  borderRadius: "var(--radius-s)",
-                  cursor: "pointer",
-                }}
-              >
-                <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>
-                  {companyName(a.companyId, companies)} — {a.role}
-                </div>
-                <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
-                  {a.feedback.text}
-                </div>
-                <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginTop: 6 }}>
-                  Received {a.feedback.date}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
     </div>
     {goalsDialogOpen && (
       <GoalsEditDialog
