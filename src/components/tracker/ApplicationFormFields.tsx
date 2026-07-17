@@ -5,7 +5,8 @@ import { Input, Select, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
 import { ContactPicker } from "./ContactPicker";
-import type { Contact, WorkArrangement } from "@/lib/types";
+import { CompanyPicker } from "./CompanyPicker";
+import type { Company, Contact, WorkArrangement } from "@/lib/types";
 
 const workArrangementOptions: SelectOption[] = [
   { value: "onsite", label: "Onsite" },
@@ -14,7 +15,7 @@ const workArrangementOptions: SelectOption[] = [
 ];
 
 export interface ApplicationFormValues {
-  company: string;
+  companyId: string;
   role: string;
   dateApplied: string;
   link: string;
@@ -30,7 +31,7 @@ export interface ApplicationFormValues {
 }
 
 export const emptyApplicationForm: ApplicationFormValues = {
-  company: "",
+  companyId: "",
   role: "",
   dateApplied: "",
   link: "",
@@ -52,6 +53,8 @@ interface ApplicationFormFieldsProps {
   requireDateApplied?: boolean;
   contacts: Contact[];
   onCreateContact: (contact: Contact) => void;
+  companies: Company[];
+  onCreateCompany: (company: Company) => void;
 }
 
 /**
@@ -60,7 +63,7 @@ interface ApplicationFormFieldsProps {
  * Salary: max cannot be set without a min, and min must be <= max (mirrors the Goals salary validation).
  */
 export function isApplicationFormValid(form: ApplicationFormValues, requireDateApplied = true): boolean {
-  if (!form.company.trim() || !form.role.trim()) return false;
+  if (!form.companyId || !form.role.trim()) return false;
   if (requireDateApplied && !form.dateApplied) return false;
   if (form.link.trim() && !isValidUrl(form.link.trim())) return false;
   const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
@@ -78,6 +81,8 @@ export function ApplicationFormFields({
   requireDateApplied = true,
   contacts,
   onCreateContact,
+  companies,
+  onCreateCompany,
 }: ApplicationFormFieldsProps) {
   const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
   const max = form.salaryMax.trim() ? Number(form.salaryMax) : undefined;
@@ -86,12 +91,13 @@ export function ApplicationFormFields({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}>
-      <Input
+      <CompanyPicker
         label="Company"
-        placeholder="e.g. Northwind Co."
-        value={form.company}
-        onChange={(v) => setForm((f) => ({ ...f, company: v }))}
-        error={submitted && !form.company.trim() ? "Required" : undefined}
+        companies={companies}
+        value={form.companyId}
+        onChange={(id) => setForm((f) => ({ ...f, companyId: id }))}
+        onCreateCompany={onCreateCompany}
+        error={submitted && !form.companyId ? "Required" : undefined}
       />
       <Input
         label="Job title"
@@ -196,10 +202,11 @@ export function ApplicationFormFields({
         <ContactPicker
           label="Referred by"
           contacts={contacts}
+          companies={companies}
           value={form.referredByContactId}
           onChange={(id) => setForm((f) => ({ ...f, referredByContactId: id }))}
           onCreateContact={onCreateContact}
-          defaultCompany={form.company.trim()}
+          defaultCompanyId={form.companyId || undefined}
         />
       )}
       <div>

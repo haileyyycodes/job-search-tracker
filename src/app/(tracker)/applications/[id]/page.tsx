@@ -29,9 +29,12 @@ export default function ApplicationDetailPage() {
       app={app}
       tasks={data.tasks}
       contacts={data.contacts}
+      companies={data.companies}
       goals={data.goals}
       onCreateContact={data.createContact}
+      onCreateCompany={data.createCompany}
       onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
+      onSelectCompany={(c) => router.push(`/companies/${c.id}`)}
       onBack={() => router.push("/applications")}
       onDismissTask={data.dismissTask}
       onChangeStatus={data.changeApplicationStatus}

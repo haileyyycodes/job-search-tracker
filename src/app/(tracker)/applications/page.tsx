@@ -21,8 +21,10 @@ export default function ApplicationsPage() {
       </TopBar>
       <ApplicationsListView
         apps={data.apps}
+        companies={data.companies}
         goals={data.goals}
         onSelect={(a) => router.push(`/applications/${a.id}`)}
+        onSelectCompany={(c) => router.push(`/companies/${c.id}`)}
         onRequestDelete={ui.requestDeleteApplication}
       />
     </>

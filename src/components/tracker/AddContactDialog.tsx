@@ -4,15 +4,17 @@ import { useState } from "react";
 import { Dialog, Button } from "@/components/ds";
 import { ContactFormFields, emptyContactForm, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
-import type { Contact } from "@/lib/types";
+import type { Company, Contact } from "@/lib/types";
 
 interface AddContactDialogProps {
   open: boolean;
   onClose: () => void;
   onAdd: (contact: Contact) => void;
+  companies: Company[];
+  onCreateCompany: (company: Company) => void;
 }
 
-export function AddContactDialog({ open, onClose, onAdd }: AddContactDialogProps) {
+export function AddContactDialog({ open, onClose, onAdd, companies, onCreateCompany }: AddContactDialogProps) {
   const [form, setForm] = useState<ContactFormValues>(emptyContactForm);
   const [submitted, setSubmitted] = useState(false);
 
@@ -33,7 +35,7 @@ export function AddContactDialog({ open, onClose, onAdd }: AddContactDialogProps
       phone: form.phone.trim() || undefined,
       linkedInUrl: form.linkedInUrl.trim() || undefined,
       website: form.website.trim() || undefined,
-      employer: form.employer.trim() || undefined,
+      companyId: form.companyId || undefined,
       role: form.role.trim() || undefined,
       notes: form.notes.trim(),
     });
@@ -56,7 +58,13 @@ export function AddContactDialog({ open, onClose, onAdd }: AddContactDialogProps
         </>
       }
     >
-      <ContactFormFields form={form} setForm={setForm} submitted={submitted} />
+      <ContactFormFields
+        form={form}
+        setForm={setForm}
+        submitted={submitted}
+        companies={companies}
+        onCreateCompany={onCreateCompany}
+      />
     </Dialog>
   );
 }

@@ -21,6 +21,7 @@ export default function DashboardPage() {
       </TopBar>
       <DashboardView
         apps={data.apps}
+        companies={data.companies}
         tasks={data.tasks}
         goals={data.goals}
         onDismissTask={data.dismissTask}

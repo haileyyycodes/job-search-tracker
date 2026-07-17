@@ -14,6 +14,7 @@ export default function TasksPage() {
       <TopBar title="Tasks" />
       <TasksView
         apps={data.apps}
+        companies={data.companies}
         tasks={data.tasks}
         onDismissTask={data.dismissTask}
         onDeleteTask={data.deleteTask}

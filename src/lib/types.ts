@@ -35,9 +35,27 @@ export interface Feedback {
 
 export type WorkArrangement = "onsite" | "remote" | "hybrid";
 
+export type CompanyStatus = "researching" | "watching" | "applied" | "not_pursuing";
+
+export interface CompanyLocation {
+  city: string;
+  state: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  isTarget: boolean;
+  status: CompanyStatus;
+  industry?: string;
+  website?: string;
+  locations: CompanyLocation[];
+  notes: string;
+}
+
 export interface Application {
   id: string;
-  company: string;
+  companyId: string;
   role: string;
   dateApplied: string;
   link: string;
@@ -65,7 +83,7 @@ export interface Contact {
   phone?: string;
   linkedInUrl?: string;
   website?: string;
-  employer?: string;
+  companyId?: string;
   role?: string;
   notes: string;
 }

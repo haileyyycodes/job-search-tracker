@@ -2,6 +2,7 @@
 
 import {
   applications,
+  companies as initialCompanies,
   initialTasks,
   initialGoals,
   contacts as initialContacts,
@@ -11,6 +12,7 @@ import { usePersistedState } from "@/lib/usePersistedState";
 import type {
   Application,
   ApplicationStatus,
+  Company,
   Contact,
   Feedback,
   FollowUp,
@@ -36,16 +38,35 @@ export function useTrackerData() {
     "harbor:networkingEvents",
     initialNetworkingEvents
   );
+  const [companies, setCompanies] = usePersistedState<Company[]>("harbor:companies", initialCompanies);
 
   const dismissTask = (id: string) =>
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status: "dismissed" } : t)));
 
-  const addApplication = (app: Application) => setApps((prev) => [app, ...prev]);
+  /** The first time an application actually gets applied to (not just queued), advance its company past researching/watching. */
+  const advanceCompanyStatusIfApplied = (companyId: string, status: ApplicationStatus) => {
+    if (status === "todo") return;
+    setCompanies((prev) =>
+      prev.map((c) =>
+        c.id === companyId && (c.status === "researching" || c.status === "watching")
+          ? { ...c, status: "applied" }
+          : c
+      )
+    );
+  };
 
-  const changeApplicationStatus = (appId: string, status: ApplicationStatus, at: string) =>
+  const addApplication = (app: Application) => {
+    setApps((prev) => [app, ...prev]);
+    advanceCompanyStatusIfApplied(app.companyId, app.status);
+  };
+
+  const changeApplicationStatus = (appId: string, status: ApplicationStatus, at: string) => {
     setApps((prev) =>
       prev.map((a) => (a.id === appId ? { ...a, status, statusHistory: [...a.statusHistory, { status, at }] } : a))
     );
+    const app = apps.find((a) => a.id === appId);
+    if (app) advanceCompanyStatusIfApplied(app.companyId, status);
+  };
 
   const logInterview = (appId: string, interview: Omit<Interview, "id">) =>
     setApps((prev) =>
@@ -75,8 +96,10 @@ export function useTrackerData() {
       { id: crypto.randomUUID(), applicationId, dueDate, note, status: "active", reminderRule },
     ]);
 
-  const editApplication = (updated: Application) =>
+  const editApplication = (updated: Application) => {
     setApps((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+    advanceCompanyStatusIfApplied(updated.companyId, updated.status);
+  };
 
   const saveFeedback = (appId: string, feedback: Feedback) =>
     setApps((prev) => prev.map((a) => (a.id === appId ? { ...a, feedback } : a)));
@@ -110,12 +133,32 @@ export function useTrackerData() {
 
   const deleteNetworkingEvent = (id: string) => setNetworkingEvents((prev) => prev.filter((e) => e.id !== id));
 
+  const createCompany = (company: Company) => setCompanies((prev) => [...prev, company]);
+
+  const editCompany = (updated: Company) =>
+    setCompanies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+
+  const deleteCompany = (companyId: string) => setCompanies((prev) => prev.filter((c) => c.id !== companyId));
+
+  const promoteToTarget = (companyId: string) =>
+    setCompanies((prev) => prev.map((c) => (c.id === companyId ? { ...c, isTarget: true } : c)));
+
   const resetDemoData = () => {
     setApps(applications);
     setTasks(initialTasks);
     setGoals(initialGoals);
     setContacts(initialContacts);
     setNetworkingEvents(initialNetworkingEvents);
+    setCompanies(initialCompanies);
+  };
+
+  const clearAllData = () => {
+    setApps([]);
+    setTasks([]);
+    setGoals({});
+    setContacts([]);
+    setNetworkingEvents([]);
+    setCompanies([]);
   };
 
   return {
@@ -124,6 +167,7 @@ export function useTrackerData() {
     goals,
     contacts,
     networkingEvents,
+    companies,
     setGoals,
     dismissTask,
     addApplication,
@@ -142,6 +186,11 @@ export function useTrackerData() {
     deleteContact,
     addNetworkingEvent,
     deleteNetworkingEvent,
+    createCompany,
+    editCompany,
+    deleteCompany,
+    promoteToTarget,
     resetDemoData,
+    clearAllData,
   };
 }

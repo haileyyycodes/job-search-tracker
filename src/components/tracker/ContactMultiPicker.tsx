@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Contact } from "@/lib/types";
+import { companyName } from "@/lib/companies";
+import type { Company, Contact } from "@/lib/types";
 
 interface ContactMultiPickerProps {
   label?: string;
   contacts: Contact[];
+  companies: Company[];
   value: string[];
   onChange: (contactIds: string[]) => void;
   onCreateContact: (contact: Contact) => void;
-  defaultCompany?: string;
+  defaultCompanyId?: string;
   error?: string;
 }
 
@@ -17,10 +19,11 @@ interface ContactMultiPickerProps {
 export function ContactMultiPicker({
   label,
   contacts,
+  companies,
   value,
   onChange,
   onCreateContact,
-  defaultCompany,
+  defaultCompanyId,
   error,
 }: ContactMultiPickerProps) {
   const [open, setOpen] = useState(false);
@@ -56,7 +59,7 @@ export function ContactMultiPicker({
   const handleCreate = () => {
     const name = newName.trim();
     if (!name) return;
-    const contact: Contact = { id: crypto.randomUUID(), name, employer: defaultCompany || undefined, notes: "" };
+    const contact: Contact = { id: crypto.randomUUID(), name, companyId: defaultCompanyId, notes: "" };
     onCreateContact(contact);
     addContact(contact.id);
     setNewName("");
@@ -156,9 +159,9 @@ export function ContactMultiPicker({
               style={{ padding: "8px 12px", font: "var(--text-body-m)", color: "var(--text-primary)", cursor: "pointer" }}
             >
               {c.name}
-              {c.employer && (
+              {c.companyId && (
                 <span style={{ color: "var(--text-tertiary)", marginLeft: 6, font: "var(--text-caption)" }}>
-                  {c.employer}
+                  {companyName(c.companyId, companies)}
                 </span>
               )}
             </div>

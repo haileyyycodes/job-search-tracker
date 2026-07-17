@@ -15,6 +15,7 @@ export default function FollowUpsPage() {
       <FollowUpsListView
         apps={data.apps}
         contacts={data.contacts}
+        companies={data.companies}
         onSelectApp={(a) => router.push(`/applications/${a.id}`)}
         onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
       />

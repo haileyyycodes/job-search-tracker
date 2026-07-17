@@ -1,41 +1,36 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { companyName } from "@/lib/companies";
-import type { Company, Contact } from "@/lib/types";
+import type { Company } from "@/lib/types";
 
-interface ContactPickerProps {
+interface CompanyPickerProps {
   label?: string;
-  contacts: Contact[];
   companies: Company[];
   value: string;
-  onChange: (contactId: string) => void;
-  onCreateContact: (contact: Contact) => void;
-  defaultCompanyId?: string;
+  onChange: (companyId: string) => void;
+  onCreateCompany: (company: Company) => void;
   error?: string;
   placeholder?: string;
 }
 
-/** Typeahead search over existing contacts, with inline "+ New contact" quick-create (name only, required). */
-export function ContactPicker({
+/** Typeahead search over existing companies, with inline "+ New company" quick-create (name only, non-target). */
+export function CompanyPicker({
   label,
-  contacts,
   companies,
   value,
   onChange,
-  onCreateContact,
-  defaultCompanyId,
+  onCreateCompany,
   error,
-  placeholder = "Search contacts…",
-}: ContactPickerProps) {
+  placeholder = "Search companies…",
+}: CompanyPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selected = contacts.find((c) => c.id === value);
-  const filtered = contacts.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
+  const selected = companies.find((c) => c.id === value);
+  const filtered = companies.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     if (!open) return;
@@ -49,7 +44,7 @@ export function ContactPicker({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const selectContact = (id: string) => {
+  const selectCompany = (id: string) => {
     onChange(id);
     setQuery("");
     setOpen(false);
@@ -59,9 +54,16 @@ export function ContactPicker({
   const handleCreate = () => {
     const name = newName.trim();
     if (!name) return;
-    const contact: Contact = { id: crypto.randomUUID(), name, companyId: defaultCompanyId, notes: "" };
-    onCreateContact(contact);
-    selectContact(contact.id);
+    const company: Company = {
+      id: crypto.randomUUID(),
+      name,
+      isTarget: false,
+      status: "researching",
+      locations: [],
+      notes: "",
+    };
+    onCreateCompany(company);
+    selectCompany(company.id);
     setNewName("");
   };
 
@@ -125,7 +127,7 @@ export function ContactPicker({
           {filtered.map((c) => (
             <div
               key={c.id}
-              onClick={() => selectContact(c.id)}
+              onClick={() => selectCompany(c.id)}
               style={{
                 padding: "8px 12px",
                 font: "var(--text-body-m)",
@@ -135,16 +137,16 @@ export function ContactPicker({
               }}
             >
               {c.name}
-              {c.companyId && (
+              {c.industry && (
                 <span style={{ color: "var(--text-tertiary)", marginLeft: 6, font: "var(--text-caption)" }}>
-                  {companyName(c.companyId, companies)}
+                  {c.industry}
                 </span>
               )}
             </div>
           ))}
           {filtered.length === 0 && !creating && (
             <div style={{ padding: "10px 12px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-              No contacts match.
+              No companies match.
             </div>
           )}
           {!creating && (
@@ -161,7 +163,7 @@ export function ContactPicker({
                 borderTop: "1px solid var(--border-default)",
               }}
             >
-              + New contact{query ? `: "${query}"` : ""}
+              + New company{query ? `: "${query}"` : ""}
             </div>
           )}
           {creating && (
@@ -176,7 +178,7 @@ export function ContactPicker({
                     handleCreate();
                   }
                 }}
-                placeholder="Contact name"
+                placeholder="Company name"
                 style={{
                   flex: 1,
                   height: 32,

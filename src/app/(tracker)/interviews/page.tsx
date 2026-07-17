@@ -12,7 +12,11 @@ export default function InterviewsPage() {
   return (
     <>
       <TopBar title="Interviews" />
-      <InterviewsListView apps={data.apps} onSelectApp={(a) => router.push(`/applications/${a.id}`)} />
+      <InterviewsListView
+        apps={data.apps}
+        companies={data.companies}
+        onSelectApp={(a) => router.push(`/applications/${a.id}`)}
+      />
     </>
   );
 }

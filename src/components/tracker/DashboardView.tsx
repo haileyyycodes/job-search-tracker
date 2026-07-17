@@ -4,8 +4,9 @@ import { Button } from "@/components/ds";
 import { StatusTag } from "@/components/ds";
 import { statusOrder } from "@/lib/data";
 import { daysUntil, isInCurrentCalendarWeek } from "@/lib/date";
+import { companyName } from "@/lib/companies";
 import { GoalsEditDialog } from "./GoalsEditDialog";
-import type { Application, Feedback, Goals, Task } from "@/lib/types";
+import type { Application, Company, Feedback, Goals, Task } from "@/lib/types";
 
 function formatCurrency(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -60,6 +61,7 @@ function StatCard({ label, value, sub }: StatCardProps) {
 
 interface DashboardViewProps {
   apps: Application[];
+  companies: Company[];
   tasks: Task[];
   goals: Goals;
   onDismissTask: (id: string) => void;
@@ -71,7 +73,7 @@ const reachedInterview = (a: Application) => a.statusHistory.some((s) => s.statu
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
-export function DashboardView({ apps, tasks, goals, onDismissTask, onSelectApp, onSaveGoals }: DashboardViewProps) {
+export function DashboardView({ apps, companies, tasks, goals, onDismissTask, onSelectApp, onSaveGoals }: DashboardViewProps) {
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const total = apps.length;
   const todoCount = apps.filter((a) => a.status === "todo").length;
@@ -284,7 +286,7 @@ export function DashboardView({ apps, tasks, goals, onDismissTask, onSelectApp, 
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {app ? `${app.company} — ${app.role}` : "—"}
+                      {app ? `${companyName(app.companyId, companies)} — ${app.role}` : "—"}
                     </div>
                     <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
                       {t.note} · due {t.dueDate}
@@ -319,7 +321,7 @@ export function DashboardView({ apps, tasks, goals, onDismissTask, onSelectApp, 
                 }}
               >
                 <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>
-                  {a.company} — {a.role}
+                  {companyName(a.companyId, companies)} — {a.role}
                 </div>
                 <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
                   {a.feedback.text}
