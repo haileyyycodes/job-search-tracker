@@ -16,6 +16,7 @@ const items: SidebarItem[] = [
   { href: "/interviews", label: "Interviews", icon: "◔" },
   { href: "/followups", label: "Follow-Ups", icon: "↻" },
   { href: "/tasks", label: "Tasks", icon: "☑" },
+  { href: "/feedback", label: "Feedback", icon: "✉" },
   { href: "/contacts", label: "Contacts", icon: "◎" },
   { href: "/networking", label: "Networking", icon: "⇄" },
 ];
