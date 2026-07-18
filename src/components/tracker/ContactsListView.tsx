@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Input, IconButton } from "@/components/ds";
+import { Input, Select, IconButton } from "@/components/ds";
+import type { SelectOption } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import { TargetStar } from "./TargetStar";
 import type { Company, Contact } from "@/lib/types";
+
+const companyFilterOptions: SelectOption[] = [
+  { value: "", label: "All companies" },
+  { value: "target", label: "★ Target companies" },
+  { value: "other", label: "Other companies" },
+];
 
 interface ContactsListViewProps {
   contacts: Contact[];
@@ -16,11 +23,19 @@ interface ContactsListViewProps {
 
 export function ContactsListView({ contacts, companies, onSelect, onSelectCompany, onRequestDelete }: ContactsListViewProps) {
   const [q, setQ] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
+
+  const isAtTarget = (c: Contact) => companies.find((co) => co.id === c.companyId)?.isTarget === true;
+
+  // Contacts with no employer only appear when the company filter is off.
+  const matchesCompanyFilter = (c: Contact) =>
+    !companyFilter || (companyFilter === "target" ? isAtTarget(c) : c.companyId != null && !isAtTarget(c));
 
   const filtered = contacts.filter(
     (c) =>
-      c.name.toLowerCase().includes(q.toLowerCase()) ||
-      (c.companyId ? companyName(c.companyId, companies).toLowerCase().includes(q.toLowerCase()) : false)
+      matchesCompanyFilter(c) &&
+      (c.name.toLowerCase().includes(q.toLowerCase()) ||
+        (c.companyId ? companyName(c.companyId, companies).toLowerCase().includes(q.toLowerCase()) : false))
   );
 
   return (
@@ -28,6 +43,14 @@ export function ContactsListView({ contacts, companies, onSelect, onSelectCompan
       <div style={{ display: "flex", gap: 12, padding: "16px 0" }}>
         <div style={{ width: 260 }}>
           <Input placeholder="Search name or employer…" value={q} onChange={setQ} />
+        </div>
+        <div style={{ width: 200 }}>
+          <Select
+            value={companyFilter}
+            options={companyFilterOptions}
+            onChange={setCompanyFilter}
+            placeholder="All companies"
+          />
         </div>
       </div>
       <div
