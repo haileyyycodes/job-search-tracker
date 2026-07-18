@@ -10,6 +10,17 @@ import {
   networkingEvents as initialNetworkingEvents,
 } from "@/lib/data";
 import { usePersistedState } from "@/lib/usePersistedState";
+import {
+  applicationSchema,
+  companySchema,
+  contactSchema,
+  goalsSchema,
+  interviewCategorySchema,
+  networkingEventSchema,
+  salvageArray,
+  salvageObject,
+  taskSchema,
+} from "@/lib/schemas";
 import type {
   Application,
   ApplicationStatus,
@@ -24,6 +35,15 @@ import type {
   Task,
 } from "@/lib/types";
 
+// Module-level so usePersistedState receives stable references across renders.
+const sanitizeApplications = salvageArray(applicationSchema, applications);
+const sanitizeTasks = salvageArray(taskSchema, initialTasks);
+const sanitizeGoals = salvageObject(goalsSchema, initialGoals);
+const sanitizeContacts = salvageArray(contactSchema, initialContacts);
+const sanitizeNetworkingEvents = salvageArray(networkingEventSchema, initialNetworkingEvents);
+const sanitizeCompanies = salvageArray(companySchema, initialCompanies);
+const sanitizeInterviewCategories = salvageArray(interviewCategorySchema, defaultInterviewCategories);
+
 /**
  * Bundles every piece of persisted tracker data plus the pure data-mutation handlers.
  * Backed by usePersistedState, which synchronizes all call sites for the same
@@ -31,18 +51,24 @@ import type {
  * independently from multiple pages stays consistent with no Context required.
  */
 export function useTrackerData() {
-  const [apps, setApps] = usePersistedState<Application[]>("harbor:applications", applications);
-  const [tasks, setTasks] = usePersistedState<Task[]>("harbor:tasks", initialTasks);
-  const [goals, setGoals] = usePersistedState<Goals>("harbor:goals", initialGoals);
-  const [contacts, setContacts] = usePersistedState<Contact[]>("harbor:contacts", initialContacts);
+  const [apps, setApps] = usePersistedState<Application[]>("harbor:applications", applications, sanitizeApplications);
+  const [tasks, setTasks] = usePersistedState<Task[]>("harbor:tasks", initialTasks, sanitizeTasks);
+  const [goals, setGoals] = usePersistedState<Goals>("harbor:goals", initialGoals, sanitizeGoals);
+  const [contacts, setContacts] = usePersistedState<Contact[]>("harbor:contacts", initialContacts, sanitizeContacts);
   const [networkingEvents, setNetworkingEvents] = usePersistedState<NetworkingEvent[]>(
     "harbor:networkingEvents",
-    initialNetworkingEvents
+    initialNetworkingEvents,
+    sanitizeNetworkingEvents
   );
-  const [companies, setCompanies] = usePersistedState<Company[]>("harbor:companies", initialCompanies);
+  const [companies, setCompanies] = usePersistedState<Company[]>(
+    "harbor:companies",
+    initialCompanies,
+    sanitizeCompanies
+  );
   const [interviewCategories, setInterviewCategories] = usePersistedState<string[]>(
     "harbor:interviewCategories",
-    defaultInterviewCategories
+    defaultInterviewCategories,
+    sanitizeInterviewCategories
   );
 
   const addInterviewCategory = (category: string) =>

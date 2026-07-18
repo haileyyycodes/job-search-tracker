@@ -38,8 +38,16 @@ function writeRaw(key: string, raw: string) {
  * Uses useSyncExternalStore (not an effect) so server/first-paint snapshots never
  * mismatch the client's persisted value, and same-tab updates notify subscribers
  * immediately (native `storage` events only fire in *other* tabs).
+ *
+ * `sanitize` validates whatever JSON.parse produced before it's trusted as a T —
+ * storage is writable by anything on the origin and outlives schema changes.
+ * Must be a stable (module-level) function; it runs on every read.
  */
-export function usePersistedState<T>(key: string, initialValue: T) {
+export function usePersistedState<T>(
+  key: string,
+  initialValue: T,
+  sanitize?: (key: string, parsed: unknown) => T
+) {
   const subscribe = useCallback(
     (onStoreChange: Listener) => {
       const listeners = getListeners(key);
@@ -64,7 +72,8 @@ export function usePersistedState<T>(key: string, initialValue: T) {
   let value: T = initialValue;
   if (raw !== null) {
     try {
-      value = JSON.parse(raw) as T;
+      const parsed: unknown = JSON.parse(raw);
+      value = sanitize ? sanitize(key, parsed) : (parsed as T);
     } catch (err) {
       console.error(`Failed to parse localStorage key "${key}"`, err);
     }
@@ -76,7 +85,8 @@ export function usePersistedState<T>(key: string, initialValue: T) {
       let prev: T = initialValue;
       if (prevRaw !== null) {
         try {
-          prev = JSON.parse(prevRaw) as T;
+          const parsed: unknown = JSON.parse(prevRaw);
+          prev = sanitize ? sanitize(key, parsed) : (parsed as T);
         } catch (err) {
           console.error(`Failed to parse localStorage key "${key}"`, err);
         }
@@ -84,7 +94,7 @@ export function usePersistedState<T>(key: string, initialValue: T) {
       const next = typeof updater === "function" ? (updater as (p: T) => T)(prev) : updater;
       writeRaw(key, JSON.stringify(next));
     },
-    [key, initialValue]
+    [key, initialValue, sanitize]
   );
 
   return [value, setValue] as const;

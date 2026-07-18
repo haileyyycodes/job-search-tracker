@@ -11,6 +11,7 @@ import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel }
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
 import { formatResponseTime } from "@/lib/responseTime";
+import { isValidUrl } from "@/lib/validation";
 import type {
   Application,
   ApplicationStatus,
@@ -179,9 +180,13 @@ export function ApplicationDetailView({
                 label="Application link"
                 value={
                   app.link ? (
-                    <a href={app.link} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
-                      View posting
-                    </a>
+                    isValidUrl(app.link) ? (
+                      <a href={app.link} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                        View posting
+                      </a>
+                    ) : (
+                      app.link
+                    )
                   ) : (
                     "—"
                   )
