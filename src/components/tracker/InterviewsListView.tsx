@@ -3,18 +3,12 @@
 import { useState } from "react";
 import { Input, Select } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
+import { interviewTypeOptions } from "@/lib/data";
 import { isWithinDateRange } from "@/lib/date";
 import { companyName } from "@/lib/companies";
 import type { Application, Company, Interview } from "@/lib/types";
 
-const typeOptions: SelectOption[] = [
-  { value: "", label: "All types" },
-  { value: "Screening Call", label: "Screening Call" },
-  { value: "Technical Interview", label: "Technical" },
-  { value: "Onsite/Panel", label: "Onsite/Panel" },
-  { value: "Behavioral", label: "Behavioral" },
-  { value: "Other", label: "Other" },
-];
+const typeOptions: SelectOption[] = [{ value: "", label: "All types" }, ...interviewTypeOptions];
 
 interface InterviewRow extends Interview {
   app: Application;
@@ -63,7 +57,7 @@ export function InterviewsListView({ apps, companies, onSelectApp }: InterviewsL
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 170px 130px 1fr",
+          gridTemplateColumns: "1fr 190px 130px 1fr 1fr",
           columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
@@ -77,6 +71,7 @@ export function InterviewsListView({ apps, companies, onSelectApp }: InterviewsL
         <span>Application</span>
         <span>Type</span>
         <span>Date</span>
+        <span>Categories</span>
         <span>Notes</span>
       </div>
       {filtered.map((r) => (
@@ -84,7 +79,7 @@ export function InterviewsListView({ apps, companies, onSelectApp }: InterviewsL
           key={r.key}
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 170px 130px 1fr",
+            gridTemplateColumns: "1fr 190px 130px 1fr 1fr",
             columnGap: 16,
             padding: "14px 4px",
             borderBottom: "1px solid var(--border-default)",
@@ -95,8 +90,34 @@ export function InterviewsListView({ apps, companies, onSelectApp }: InterviewsL
             <div style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{r.app.role}</div>
             <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{companyName(r.app.companyId, companies)}</div>
           </div>
-          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.type}</span>
+          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
+            {r.type}
+            {r.style && <span style={{ color: "var(--text-tertiary)" }}> · {r.style}</span>}
+          </span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{r.date}</span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {(r.categories ?? []).map((c) => (
+              <span
+                key={c}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  height: 20,
+                  padding: "0 7px",
+                  borderRadius: "var(--radius-pill)",
+                  background: "var(--blue-100)",
+                  color: "var(--blue-700)",
+                  font: "var(--text-caption)",
+                  fontWeight: 700,
+                }}
+              >
+                {c}
+              </span>
+            ))}
+            {(!r.categories || r.categories.length === 0) && (
+              <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>—</span>
+            )}
+          </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{r.notes || "—"}</span>
         </div>
       ))}

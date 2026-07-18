@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card, IconButton, StatusTag, statusDotColor } from "@/components/ds";
-import { statusLabels } from "@/lib/data";
+import { groupInterviewsByDate, statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
 import { LogFollowUpDialog } from "./LogFollowUpDialog";
@@ -46,6 +46,8 @@ interface ApplicationDetailViewProps {
   contacts: Contact[];
   companies: Company[];
   goals: Goals;
+  interviewCategories: string[];
+  onCreateInterviewCategory: (category: string) => void;
   onCreateContact: (contact: Contact) => void;
   onCreateCompany: (company: Company) => void;
   onSelectContact: (contact: Contact) => void;
@@ -54,6 +56,7 @@ interface ApplicationDetailViewProps {
   onDismissTask: (id: string) => void;
   onChangeStatus: (appId: string, status: ApplicationStatus, at: string) => void;
   onLogInterview: (appId: string, interview: Omit<Interview, "id">) => void;
+  onEditInterview: (appId: string, interviewId: string, updates: Omit<Interview, "id">) => void;
   onLogFollowUp: (appId: string, followUp: Omit<FollowUp, "id">) => void;
   onAddTask: (appId: string, note: string, dueDate: string, reminderRule: ReminderRule) => void;
   onEditApplication: (updated: Application) => void;
@@ -69,6 +72,8 @@ export function ApplicationDetailView({
   contacts,
   companies,
   goals,
+  interviewCategories,
+  onCreateInterviewCategory,
   onCreateContact,
   onCreateCompany,
   onSelectContact,
@@ -77,6 +82,7 @@ export function ApplicationDetailView({
   onDismissTask,
   onChangeStatus,
   onLogInterview,
+  onEditInterview,
   onLogFollowUp,
   onAddTask,
   onEditApplication,
@@ -87,6 +93,7 @@ export function ApplicationDetailView({
 }: ApplicationDetailViewProps) {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
+  const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -267,36 +274,101 @@ export function ApplicationDetailView({
           )}
           <Card padding="md">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Interviews</div>
-              <Button variant="ghost" size="sm" onClick={() => setInterviewDialogOpen(true)}>
+              <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>
+                Interviews{app.interviews.length > 0 ? ` (${app.interviews.length})` : ""}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditingInterview(null);
+                  setInterviewDialogOpen(true);
+                }}
+              >
                 + Log interview
               </Button>
             </div>
             {app.interviews.length === 0 && (
               <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No interviews logged yet.</div>
             )}
-            {app.interviews.map((iv, i) => (
+            {groupInterviewsByDate(app.interviews).map((group, gi, groups) => (
               <div
-                key={iv.id ?? i}
-                style={{ padding: "10px 0", borderBottom: i < app.interviews.length - 1 ? "1px solid var(--border-default)" : "none" }}
+                key={group.date + gi}
+                style={{ padding: "10px 0", borderBottom: gi < groups.length - 1 ? "1px solid var(--border-default)" : "none" }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{iv.type}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
-                    {iv.id && (
-                      <IconButton
-                        aria-label="Delete interview"
-                        icon={<span>✕</span>}
-                        size="sm"
-                        onClick={() => onDeleteInterview(app.id, iv.id)}
-                      />
-                    )}
+                {group.interviews.length > 1 && (
+                  <div style={{ font: "700 12px var(--font-body)", color: "var(--text-tertiary)", marginBottom: 8 }}>
+                    Interview day: {group.date}
                   </div>
-                </div>
-                {iv.notes && (
-                  <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{iv.notes}</div>
                 )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {group.interviews.map((iv) => (
+                    <div key={iv.id}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>
+                          {iv.type}
+                          {iv.style && (
+                            <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)", fontWeight: 400 }}>
+                              {" "}
+                              · {iv.style}
+                            </span>
+                          )}
+                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {group.interviews.length === 1 && (
+                            <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
+                          )}
+                          <IconButton
+                            aria-label="Edit interview"
+                            icon={<span>✎</span>}
+                            size="sm"
+                            onClick={() => {
+                              setEditingInterview(iv);
+                              setInterviewDialogOpen(true);
+                            }}
+                          />
+                          <IconButton
+                            aria-label="Delete interview"
+                            icon={<span>✕</span>}
+                            size="sm"
+                            onClick={() => onDeleteInterview(app.id, iv.id)}
+                          />
+                        </div>
+                      </div>
+                      {iv.categories && iv.categories.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+                          {iv.categories.map((c) => (
+                            <span
+                              key={c}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                height: 22,
+                                padding: "0 8px",
+                                borderRadius: "var(--radius-pill)",
+                                background: "var(--blue-100)",
+                                color: "var(--blue-700)",
+                                font: "var(--text-caption)",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {iv.questionsAsked && (
+                        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
+                          <span style={{ color: "var(--text-tertiary)" }}>Questions: </span>
+                          {iv.questionsAsked}
+                        </div>
+                      )}
+                      {iv.notes && (
+                        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{iv.notes}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </Card>
@@ -438,9 +510,13 @@ export function ApplicationDetailView({
     )}
     {interviewDialogOpen && (
       <LogInterviewDialog
+        interview={editingInterview ?? undefined}
+        interviewCategories={interviewCategories}
+        onCreateCategory={onCreateInterviewCategory}
         onClose={() => setInterviewDialogOpen(false)}
         onSave={(interview) => {
-          onLogInterview(app.id, interview);
+          if (editingInterview) onEditInterview(app.id, editingInterview.id, interview);
+          else onLogInterview(app.id, interview);
           setInterviewDialogOpen(false);
         }}
       />

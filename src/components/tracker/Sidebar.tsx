@@ -101,9 +101,9 @@ export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
             font: "700 12px var(--font-display)",
           }}
         >
-          J
+          H
         </div>
-        <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>Jordan A.</span>
+        <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>haileyyycodes</span>
       </div>
       <button
         onClick={onRequestReset}

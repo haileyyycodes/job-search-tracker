@@ -6,7 +6,40 @@ import { statusOrder } from "@/lib/data";
 import { bucketByCalendarWeek, daysUntil, isInCurrentCalendarMonth, isInCurrentCalendarWeek } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
 import { GoalsEditDialog } from "./GoalsEditDialog";
+import { InterviewStatsView } from "./InterviewStatsView";
 import type { Application, Goals, NetworkingEvent } from "@/lib/types";
+
+type DashboardTab = "overview" | "interviewStats";
+
+const tabs: { id: DashboardTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "interviewStats", label: "Interview stats" },
+];
+
+function TabBar({ active, onChange }: { active: DashboardTab; onChange: (tab: DashboardTab) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--border-default)", padding: "0 32px" }}>
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          onClick={() => onChange(t.id)}
+          style={{
+            background: "none",
+            border: "none",
+            borderBottom: `2px solid ${active === t.id ? "var(--accent-primary)" : "transparent"}`,
+            padding: "12px 4px",
+            marginRight: 20,
+            font: "700 13px var(--font-body)",
+            color: active === t.id ? "var(--text-primary)" : "var(--text-tertiary)",
+            cursor: "pointer",
+          }}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function formatCurrency(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -144,6 +177,7 @@ const rateOf = (list: Application[]) =>
 
 export function DashboardView({ apps, goals, networkingEvents, onSaveGoals }: DashboardViewProps) {
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const total = apps.length;
   const todoCount = apps.filter((a) => a.status === "todo").length;
   const submittedApps = apps.filter((a) => a.status !== "todo");
@@ -172,6 +206,10 @@ export function DashboardView({ apps, goals, networkingEvents, onSaveGoals }: Da
 
   return (
     <>
+    <TabBar active={activeTab} onChange={setActiveTab} />
+    {activeTab === "interviewStats" ? (
+      <InterviewStatsView apps={apps} />
+    ) : (
     <div style={{ padding: "24px 32px 32px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -350,6 +388,7 @@ export function DashboardView({ apps, goals, networkingEvents, onSaveGoals }: Da
         </Card>
       </div>
     </div>
+    )}
     {goalsDialogOpen && (
       <GoalsEditDialog
         goals={goals}
