@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { DropdownSurface, isInsideDropdownSurface } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import type { Company, Contact } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export function ContactMultiPicker({
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   const selectedContacts = value
     .map((id) => contacts.find((c) => c.id === id))
@@ -40,7 +42,7 @@ export function ContactMultiPicker({
   useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node) && !isInsideDropdownSurface(e.target)) {
         setOpen(false);
         setCreating(false);
       }
@@ -73,6 +75,7 @@ export function ContactMultiPicker({
     >
       {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
       <div
+        ref={anchorRef}
         onClick={() => setOpen(true)}
         style={{
           display: "flex",
@@ -134,24 +137,7 @@ export function ContactMultiPicker({
         />
       </div>
       {error && <span style={{ font: "var(--text-caption)", color: "var(--red-600)" }}>{error}</span>}
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            marginTop: 4,
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-            borderRadius: "var(--radius-s)",
-            boxShadow: "var(--shadow-m)",
-            zIndex: 20,
-            maxHeight: 240,
-            overflowY: "auto",
-            overflowX: "hidden",
-          }}
-        >
+      <DropdownSurface open={open} anchorRef={anchorRef}>
           {filtered.map((c) => (
             <div
               key={c.id}
@@ -229,8 +215,7 @@ export function ContactMultiPicker({
               </button>
             </div>
           )}
-        </div>
-      )}
+      </DropdownSurface>
     </div>
   );
 }

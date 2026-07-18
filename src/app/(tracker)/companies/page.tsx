@@ -23,6 +23,7 @@ export default function CompaniesPage() {
         companies={data.companies}
         apps={data.apps}
         onSelect={(c) => router.push(`/companies/${c.id}`)}
+        onToggleTarget={data.toggleTarget}
         onRequestDelete={ui.requestDeleteCompany}
       />
     </>

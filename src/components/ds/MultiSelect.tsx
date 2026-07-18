@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
 
 interface MultiSelectProps {
   label?: string;
@@ -16,11 +17,13 @@ export function MultiSelect({ label, values, options, onChange, onCreateOption, 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handleOutsideClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node) && !isInsideDropdownSurface(e.target))
+        setOpen(false);
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
@@ -87,6 +90,7 @@ export function MultiSelect({ label, values, options, onChange, onCreateOption, 
         </div>
       )}
       <div
+        ref={anchorRef}
         style={{
           display: "flex",
           alignItems: "center",
@@ -120,23 +124,7 @@ export function MultiSelect({ label, values, options, onChange, onCreateOption, 
           }}
         />
       </div>
-      {open && (
-          <div
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 0,
-              marginTop: 4,
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-default)",
-              borderRadius: "var(--radius-s)",
-              boxShadow: "var(--shadow-m)",
-              zIndex: 10,
-              maxHeight: 220,
-              overflow: "auto",
-            }}
-          >
+      <DropdownSurface open={open} anchorRef={anchorRef} maxHeight={220}>
             {matches.map((o) => (
               <div
                 key={o}
@@ -174,8 +162,7 @@ export function MultiSelect({ label, values, options, onChange, onCreateOption, 
                 Start typing to search or create a category.
               </div>
             )}
-          </div>
-      )}
+      </DropdownSurface>
     </div>
   );
 }

@@ -19,6 +19,7 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
     industry: company.industry ?? "",
     website: company.website ?? "",
     notes: company.notes,
+    isTarget: company.isTarget,
     status: company.status,
     locations: company.locations,
   });
@@ -35,6 +36,7 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
       website: form.website.trim() || undefined,
       locations: form.locations.filter((l) => l.city.trim() || l.state.trim()),
       notes: form.notes.trim(),
+      isTarget: form.isTarget,
       status: form.status,
     });
   };
@@ -55,7 +57,7 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
         </>
       }
     >
-      <CompanyFormFields form={form} setForm={setForm} submitted={submitted} showStatus={company.isTarget} />
+      <CompanyFormFields form={form} setForm={setForm} submitted={submitted} />
     </Dialog>
   );
 }

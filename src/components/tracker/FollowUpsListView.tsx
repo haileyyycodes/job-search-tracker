@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ds";
 import { isWithinDateRange } from "@/lib/date";
 import { companyName } from "@/lib/companies";
+import { ListCount } from "./ListCount";
 import type { Application, Company, Contact, FollowUp } from "@/lib/types";
 
 interface FollowUpRow extends FollowUp {
@@ -61,6 +62,7 @@ export function FollowUpsListView({ apps, contacts, companies, onSelectApp, onSe
         <div style={{ width: 160 }}>
           <Input label="To" type="date" value={to} onChange={setTo} />
         </div>
+        <ListCount shown={filtered.length} total={rows.length} noun="follow-up" />
       </div>
       <div
         style={{

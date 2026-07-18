@@ -196,8 +196,8 @@ export function useTrackerData() {
 
   const deleteCompany = (companyId: string) => setCompanies((prev) => prev.filter((c) => c.id !== companyId));
 
-  const promoteToTarget = (companyId: string) =>
-    setCompanies((prev) => prev.map((c) => (c.id === companyId ? { ...c, isTarget: true } : c)));
+  const toggleTarget = (companyId: string) =>
+    setCompanies((prev) => prev.map((c) => (c.id === companyId ? { ...c, isTarget: !c.isTarget } : c)));
 
   const resetDemoData = () => {
     setApps(applications);
@@ -250,7 +250,7 @@ export function useTrackerData() {
     createCompany,
     editCompany,
     deleteCompany,
-    promoteToTarget,
+    toggleTarget,
     resetDemoData,
     clearAllData,
   };

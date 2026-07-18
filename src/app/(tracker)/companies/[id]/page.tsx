@@ -32,7 +32,7 @@ export default function CompanyDetailPage() {
       onBack={() => router.push("/companies")}
       onEditCompany={data.editCompany}
       onRequestDelete={ui.requestDeleteCompany}
-      onPromoteToTarget={data.promoteToTarget}
+      onToggleTarget={data.toggleTarget}
       onSelectApp={(a) => router.push(`/applications/${a.id}`)}
       onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
     />

@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card } from "@/components/ds";
 import { EditCompanyDialog } from "./EditCompanyDialog";
-import { companyStatusLabels, companyStatusColor, formatCompanyLocations } from "@/lib/companies";
+import { TargetStar } from "./TargetStar";
+import { companyStatusLabels, companyStatusColor, displayedCompanyStatus, formatCompanyLocations } from "@/lib/companies";
 import { isValidUrl } from "@/lib/validation";
 import type { Application, Company, Contact } from "@/lib/types";
 
@@ -28,7 +29,7 @@ interface CompanyDetailViewProps {
   onBack: () => void;
   onEditCompany: (updated: Company) => void;
   onRequestDelete: (company: Company) => void;
-  onPromoteToTarget: (companyId: string) => void;
+  onToggleTarget: (companyId: string) => void;
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
 }
@@ -40,7 +41,7 @@ export function CompanyDetailView({
   onBack,
   onEditCompany,
   onRequestDelete,
-  onPromoteToTarget,
+  onToggleTarget,
   onSelectApp,
   onSelectContact,
 }: CompanyDetailViewProps) {
@@ -48,6 +49,7 @@ export function CompanyDetailView({
 
   if (!company) return null;
 
+  const shownStatus = displayedCompanyStatus(company);
   const linkedApps = apps.filter((a) => a.companyId === company.id);
   const linkedContacts = contacts.filter((c) => c.companyId === company.id);
 
@@ -87,12 +89,15 @@ export function CompanyDetailView({
               {company.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{company.name}</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{company.name}</h1>
+                <TargetStar isTarget={company.isTarget} onToggle={() => onToggleTarget(company.id)} size={20} />
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
                 {company.industry && (
                   <span style={{ font: "var(--text-body-m)", color: "var(--text-secondary)" }}>{company.industry}</span>
                 )}
-                {company.isTarget && (
+                {shownStatus && (
                   <span
                     style={{
                       display: "inline-flex",
@@ -102,7 +107,7 @@ export function CompanyDetailView({
                       padding: "0 8px",
                       borderRadius: "var(--radius-pill)",
                       background: "var(--ink-100)",
-                      color: companyStatusColor(company.status),
+                      color: companyStatusColor(shownStatus),
                       font: "var(--text-caption)",
                       fontWeight: 700,
                     }}
@@ -112,22 +117,17 @@ export function CompanyDetailView({
                         width: 6,
                         height: 6,
                         borderRadius: "50%",
-                        background: companyStatusColor(company.status),
+                        background: companyStatusColor(shownStatus),
                         flexShrink: 0,
                       }}
                     />
-                    {companyStatusLabels[company.status]}
+                    {companyStatusLabels[shownStatus]}
                   </span>
                 )}
               </div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {!company.isTarget && (
-              <Button variant="secondary" size="sm" onClick={() => onPromoteToTarget(company.id)}>
-                + Add to target list
-              </Button>
-            )}
             <Button variant="secondary" size="sm" onClick={() => setEditDialogOpen(true)}>
               Edit
             </Button>

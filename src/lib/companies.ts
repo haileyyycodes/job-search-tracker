@@ -14,6 +14,16 @@ export function formatCompanyLocations(company: Company): string {
     .join(" · ");
 }
 
+/**
+ * Status a company surfaces in the UI: targets show their full pipeline status;
+ * non-targets only surface "applied" (advanced automatically when an application
+ * is logged), since the rest of the pipeline is a deliberate-pursuit concept.
+ */
+export function displayedCompanyStatus(company: Company): CompanyStatus | null {
+  if (company.isTarget) return company.status;
+  return company.status === "applied" ? "applied" : null;
+}
+
 export const companyStatusLabels: Record<CompanyStatus, string> = {
   researching: "Researching",
   watching: "Watching",

@@ -3,11 +3,13 @@ import { Card } from "@/components/ds";
 import { Button } from "@/components/ds";
 import { StatusTag } from "@/components/ds";
 import { statusOrder } from "@/lib/data";
+import { companyStatusLabels } from "@/lib/companies";
 import { bucketByCalendarWeek, daysUntil, isInCurrentCalendarMonth, isInCurrentCalendarWeek } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
 import { GoalsEditDialog } from "./GoalsEditDialog";
 import { InterviewStatsView } from "./InterviewStatsView";
-import type { Application, Goals, NetworkingEvent } from "@/lib/types";
+import { TargetStar } from "./TargetStar";
+import type { Application, Company, CompanyStatus, Contact, Goals, NetworkingEvent } from "@/lib/types";
 
 type DashboardTab = "overview" | "interviewStats";
 
@@ -164,18 +166,106 @@ function VelocityChart({ buckets, weeklyTarget }: VelocityChartProps) {
   );
 }
 
+interface TargetCompaniesCardProps {
+  companies: Company[];
+  contacts: Contact[];
+  apps: Application[];
+  networkingEvents: NetworkingEvent[];
+  onSelectCompany: (company: Company) => void;
+}
+
+/**
+ * Per-target coverage: applications logged and networking touches. Events carry no
+ * companyId, so touches are attributed via the event's contacts' employer and via the
+ * linked application's company (union).
+ */
+function TargetCompaniesCard({ companies, contacts, apps, networkingEvents, onSelectCompany }: TargetCompaniesCardProps) {
+  const targets = companies.filter((c) => c.isTarget);
+
+  const networkingEventCount = (companyId: string) => {
+    const contactIdsAtCompany = new Set(contacts.filter((c) => c.companyId === companyId).map((c) => c.id));
+    return networkingEvents.filter((e) => {
+      if (e.contactIds.some((id) => contactIdsAtCompany.has(id))) return true;
+      const app = e.applicationId ? apps.find((a) => a.id === e.applicationId) : undefined;
+      return app?.companyId === companyId;
+    }).length;
+  };
+
+  const rows = targets
+    .map((c) => ({
+      company: c,
+      appCount: apps.filter((a) => a.companyId === c.id).length,
+      eventCount: networkingEventCount(c.id),
+    }))
+    .sort((a, b) => (a.appCount > 0 ? 1 : 0) + (a.eventCount > 0 ? 1 : 0) - ((b.appCount > 0 ? 1 : 0) + (b.eventCount > 0 ? 1 : 0)));
+
+  const statusCounts = (Object.keys(companyStatusLabels) as CompanyStatus[])
+    .map((s) => ({ status: s, count: targets.filter((c) => c.status === s).length }))
+    .filter((s) => s.count > 0);
+
+  const breakdown = [
+    `${targets.length} target${targets.length === 1 ? "" : "s"}`,
+    ...statusCounts.map((s) => `${s.count} ${companyStatusLabels[s.status].toLowerCase()}`),
+  ].join(" · ");
+
+  return (
+    <Card padding="md">
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>
+          <TargetStar isTarget size={13} /> Target companies
+        </div>
+        <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{breakdown}</span>
+      </div>
+      {targets.length === 0 && (
+        <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
+          No target companies yet — star companies on the Companies tab to track your coverage here.
+        </div>
+      )}
+      {rows.map(({ company, appCount, eventCount }, i) => (
+        <div
+          key={company.id}
+          onClick={() => onSelectCompany(company)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            padding: "9px 0",
+            borderBottom: i < rows.length - 1 ? "1px solid var(--border-default)" : "none",
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{company.name}</span>
+          <span style={{ font: "var(--text-body-s)" }}>
+            <span style={{ color: appCount > 0 ? "var(--text-secondary)" : "var(--warning)" }}>
+              {appCount > 0 ? `${appCount} application${appCount === 1 ? "" : "s"}` : "no applications"}
+            </span>
+            <span style={{ color: "var(--text-tertiary)" }}> · </span>
+            <span style={{ color: eventCount > 0 ? "var(--text-secondary)" : "var(--warning)" }}>
+              {eventCount > 0 ? `${eventCount} networking event${eventCount === 1 ? "" : "s"}` : "no networking"}
+            </span>
+          </span>
+        </div>
+      ))}
+    </Card>
+  );
+}
+
 interface DashboardViewProps {
   apps: Application[];
   goals: Goals;
+  companies: Company[];
+  contacts: Contact[];
   networkingEvents: NetworkingEvent[];
   onSaveGoals: (goals: Goals) => void;
+  onSelectCompany: (company: Company) => void;
 }
 
 const reachedInterview = (a: Application) => a.statusHistory.some((s) => s.status === "interviewing");
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
-export function DashboardView({ apps, goals, networkingEvents, onSaveGoals }: DashboardViewProps) {
+export function DashboardView({ apps, goals, companies, contacts, networkingEvents, onSaveGoals, onSelectCompany }: DashboardViewProps) {
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const total = apps.length;
@@ -317,6 +407,13 @@ export function DashboardView({ apps, goals, networkingEvents, onSaveGoals }: Da
         </div>
       </div>
       <VelocityChart buckets={velocityBuckets} weeklyTarget={goals.applicationsPerWeekTarget} />
+      <TargetCompaniesCard
+        companies={companies}
+        contacts={contacts}
+        apps={apps}
+        networkingEvents={networkingEvents}
+        onSelectCompany={onSelectCompany}
+      />
       <div>
         <div style={sectionHeaderStyle}>Pipeline performance</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16 }}>

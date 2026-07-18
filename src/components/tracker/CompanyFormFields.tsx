@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { Input, Select, IconButton, Button } from "@/components/ds";
+import { Input, Select, IconButton, Button, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
 import { companyStatusLabels } from "@/lib/companies";
@@ -17,6 +17,7 @@ export interface CompanyFormValues {
   industry: string;
   website: string;
   notes: string;
+  isTarget: boolean;
   status: CompanyStatus;
   locations: CompanyLocation[];
 }
@@ -26,6 +27,7 @@ export const emptyCompanyForm: CompanyFormValues = {
   industry: "",
   website: "",
   notes: "",
+  isTarget: true,
   status: "researching",
   locations: [],
 };
@@ -41,11 +43,10 @@ interface CompanyFormFieldsProps {
   form: CompanyFormValues;
   setForm: Dispatch<SetStateAction<CompanyFormValues>>;
   submitted: boolean;
-  showStatus?: boolean;
 }
 
 /** Field set shared between AddCompanyDialog and EditCompanyDialog. */
-export function CompanyFormFields({ form, setForm, submitted, showStatus = true }: CompanyFormFieldsProps) {
+export function CompanyFormFields({ form, setForm, submitted }: CompanyFormFieldsProps) {
   const updateLocation = (index: number, patch: Partial<CompanyLocation>) =>
     setForm((f) => ({
       ...f,
@@ -82,7 +83,14 @@ export function CompanyFormFields({ form, setForm, submitted, showStatus = true 
         onChange={(v) => setForm((f) => ({ ...f, website: v }))}
         error={submitted && form.website.trim() && !isValidUrl(form.website.trim()) ? "Enter a valid URL" : undefined}
       />
-      {showStatus && <Select label="Status" value={form.status} options={statusOptions} onChange={(v) => setForm((f) => ({ ...f, status: v as CompanyStatus }))} />}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Switch
+          checked={form.isTarget}
+          onChange={(checked) => setForm((f) => ({ ...f, isTarget: checked }))}
+          label="★ Target company"
+        />
+      </div>
+      {form.isTarget && <Select label="Status" value={form.status} options={statusOptions} onChange={(v) => setForm((f) => ({ ...f, status: v as CompanyStatus }))} />}
       <div>
         <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
           Locations

@@ -81,68 +81,79 @@ export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
       <div
         style={{
           marginTop: "auto",
-          padding: "12px 8px",
+          paddingTop: 12,
           borderTop: "1px solid var(--border-default)",
           display: "flex",
-          alignItems: "center",
-          gap: 8,
+          flexDirection: "column",
+          gap: 2,
         }}
       >
-        <div
+        <button
+          onClick={onRequestReset}
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: "var(--green-500)",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            font: "700 12px var(--font-display)",
+            background: "none",
+            border: "none",
+            textAlign: "left",
+            padding: "6px 8px",
+            font: "var(--text-caption)",
+            color: "var(--text-tertiary)",
+            cursor: "pointer",
           }}
         >
-          H
+          Reset demo data
+        </button>
+        <button
+          onClick={onRequestClearAll}
+          style={{
+            background: "none",
+            border: "none",
+            textAlign: "left",
+            padding: "6px 8px",
+            font: "var(--text-caption)",
+            color: "var(--text-tertiary)",
+            cursor: "pointer",
+          }}
+        >
+          Clear all data
+        </button>
+        <p
+          style={{
+            margin: 0,
+            padding: "8px 8px 0",
+            font: "var(--text-caption)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          Your data is stored only in this browser — nothing is sent to a server.
+        </p>
+        <div
+          style={{
+            marginTop: 8,
+            padding: "12px 8px 0",
+            borderTop: "1px solid var(--border-default)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "var(--green-500)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              font: "700 12px var(--font-display)",
+            }}
+          >
+            H
+          </div>
+          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>haileyyycodes</span>
         </div>
-        <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>haileyyycodes</span>
       </div>
-      <button
-        onClick={onRequestReset}
-        style={{
-          background: "none",
-          border: "none",
-          textAlign: "left",
-          padding: "6px 8px",
-          font: "var(--text-caption)",
-          color: "var(--text-tertiary)",
-          cursor: "pointer",
-        }}
-      >
-        Reset demo data
-      </button>
-      <button
-        onClick={onRequestClearAll}
-        style={{
-          background: "none",
-          border: "none",
-          textAlign: "left",
-          padding: "6px 8px",
-          font: "var(--text-caption)",
-          color: "var(--text-tertiary)",
-          cursor: "pointer",
-        }}
-      >
-        Clear all data
-      </button>
-      <p
-        style={{
-          margin: 0,
-          padding: "8px 8px 0",
-          font: "var(--text-caption)",
-          color: "var(--text-tertiary)",
-        }}
-      >
-        Your data is stored only in this browser — nothing is sent to a server.
-      </p>
     </div>
   );
 }

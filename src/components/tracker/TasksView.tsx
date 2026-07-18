@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input, Select, Button, IconButton } from "@/components/ds";
 import { companyName } from "@/lib/companies";
+import { ListCount } from "./ListCount";
 import type { Application, Company, Task, TaskStatus } from "@/lib/types";
 
 interface TasksViewProps {
@@ -47,6 +48,7 @@ export function TasksView({ apps, companies, tasks, onDismissTask, onDeleteTask,
             ]}
           />
         </div>
+        <ListCount shown={filtered.length} total={tasks.length} noun="task" />
       </div>
       <div
         style={{

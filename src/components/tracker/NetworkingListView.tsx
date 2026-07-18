@@ -5,6 +5,7 @@ import { Input, Select, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { networkingEventTypes } from "@/lib/data";
 import { companyName } from "@/lib/companies";
+import { ListCount } from "./ListCount";
 import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 interface NetworkingListViewProps {
@@ -54,6 +55,7 @@ export function NetworkingListView({
         <div style={{ width: 200 }}>
           <Select value={type} options={typeOptions} onChange={setType} placeholder="All types" />
         </div>
+        <ListCount shown={rows.length} total={events.length} noun="event" />
       </div>
       <div
         style={{
