@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card } from "@/components/ds";
 import { EditCompanyDialog } from "./EditCompanyDialog";
+import { TargetStar } from "./TargetStar";
 import { companyStatusLabels, companyStatusColor, formatCompanyLocations } from "@/lib/companies";
 import { isValidUrl } from "@/lib/validation";
 import type { Application, Company, Contact } from "@/lib/types";
@@ -28,7 +29,7 @@ interface CompanyDetailViewProps {
   onBack: () => void;
   onEditCompany: (updated: Company) => void;
   onRequestDelete: (company: Company) => void;
-  onPromoteToTarget: (companyId: string) => void;
+  onToggleTarget: (companyId: string) => void;
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
 }
@@ -40,7 +41,7 @@ export function CompanyDetailView({
   onBack,
   onEditCompany,
   onRequestDelete,
-  onPromoteToTarget,
+  onToggleTarget,
   onSelectApp,
   onSelectContact,
 }: CompanyDetailViewProps) {
@@ -87,7 +88,10 @@ export function CompanyDetailView({
               {company.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{company.name}</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{company.name}</h1>
+                <TargetStar isTarget={company.isTarget} onToggle={() => onToggleTarget(company.id)} size={20} />
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
                 {company.industry && (
                   <span style={{ font: "var(--text-body-m)", color: "var(--text-secondary)" }}>{company.industry}</span>
@@ -123,11 +127,6 @@ export function CompanyDetailView({
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {!company.isTarget && (
-              <Button variant="secondary" size="sm" onClick={() => onPromoteToTarget(company.id)}>
-                + Add to target list
-              </Button>
-            )}
             <Button variant="secondary" size="sm" onClick={() => setEditDialogOpen(true)}>
               Edit
             </Button>

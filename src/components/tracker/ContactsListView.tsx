@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input, IconButton } from "@/components/ds";
 import { companyName } from "@/lib/companies";
+import { TargetStar } from "./TargetStar";
 import type { Company, Contact } from "@/lib/types";
 
 interface ContactsListViewProps {
@@ -89,9 +90,18 @@ export function ContactsListView({ contacts, companies, onSelect, onSelectCompan
                   const company = companies.find((co) => co.id === c.companyId);
                   if (company) onSelectCompany(company);
                 }}
-                style={{ font: "var(--text-body-s)", color: "var(--text-link)", cursor: "pointer", width: "fit-content" }}
+                style={{
+                  font: "var(--text-body-s)",
+                  color: "var(--text-link)",
+                  cursor: "pointer",
+                  width: "fit-content",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
               >
                 {companyName(c.companyId, companies)}
+                {companies.find((co) => co.id === c.companyId)?.isTarget && <TargetStar isTarget size={12} />}
               </div>
             ) : (
               <div style={{ font: "var(--text-body-s)", color: "var(--text-primary)" }}>—</div>

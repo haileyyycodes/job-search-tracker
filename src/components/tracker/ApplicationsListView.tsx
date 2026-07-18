@@ -6,6 +6,7 @@ import type { SelectOption } from "@/components/ds";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
+import { TargetStar } from "./TargetStar";
 import type { Application, ApplicationStatus, Company, Goals } from "@/lib/types";
 
 const statusOptions: SelectOption[] = [
@@ -140,9 +141,13 @@ export function ApplicationsListView({
                   color: "var(--text-link)",
                   cursor: "pointer",
                   width: "fit-content",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
                 }}
               >
                 {companyName(a.companyId, companies)}
+                {companies.find((c) => c.id === a.companyId)?.isTarget && <TargetStar isTarget size={12} />}
               </div>
             </div>
           </div>

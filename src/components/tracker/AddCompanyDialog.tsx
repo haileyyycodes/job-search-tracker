@@ -12,7 +12,7 @@ interface AddCompanyDialogProps {
   onAdd: (company: Company) => void;
 }
 
-/** Companies added here are real targets by default — quick-created companies (from an Application/Contact form) are not. */
+/** Defaults to creating a target — quick-created companies (from an Application/Contact form) are not. */
 export function AddCompanyDialog({ open, onClose, onAdd }: AddCompanyDialogProps) {
   const [form, setForm] = useState<CompanyFormValues>(emptyCompanyForm);
   const [submitted, setSubmitted] = useState(false);
@@ -30,7 +30,7 @@ export function AddCompanyDialog({ open, onClose, onAdd }: AddCompanyDialogProps
     onAdd({
       id: crypto.randomUUID(),
       name: form.name.trim(),
-      isTarget: true,
+      isTarget: form.isTarget,
       status: form.status,
       industry: form.industry.trim() || undefined,
       website: form.website.trim() || undefined,
@@ -43,7 +43,7 @@ export function AddCompanyDialog({ open, onClose, onAdd }: AddCompanyDialogProps
   return (
     <Dialog
       open={open}
-      title="Add target company"
+      title="Add company"
       onClose={resetAndClose}
       footer={
         <>
