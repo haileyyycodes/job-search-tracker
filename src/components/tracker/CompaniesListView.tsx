@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Input, Select, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { TargetStar } from "./TargetStar";
-import { companyStatusLabels, companyStatusColor, formatCompanyLocations } from "@/lib/companies";
+import { companyStatusLabels, companyStatusColor, displayedCompanyStatus, formatCompanyLocations } from "@/lib/companies";
 import type { Application, Company, CompanyStatus } from "@/lib/types";
 
 const statusOptions: SelectOption[] = [
@@ -32,6 +32,7 @@ interface CompanyRowProps {
 }
 
 function CompanyRow({ company: c, appCount, onSelect, onToggleTarget, onRequestDelete }: CompanyRowProps) {
+  const shownStatus = displayedCompanyStatus(c);
   return (
     <div
       onClick={() => onSelect(c)}
@@ -69,7 +70,7 @@ function CompanyRow({ company: c, appCount, onSelect, onToggleTarget, onRequestD
       <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
         {formatCompanyLocations(c) || "—"}
       </span>
-      {c.isTarget ? (
+      {shownStatus ? (
         <span
           style={{
             display: "inline-flex",
@@ -79,16 +80,16 @@ function CompanyRow({ company: c, appCount, onSelect, onToggleTarget, onRequestD
             padding: "0 10px",
             borderRadius: "var(--radius-pill)",
             background: "var(--ink-100)",
-            color: companyStatusColor(c.status),
+            color: companyStatusColor(shownStatus),
             font: "var(--text-caption)",
             fontWeight: 700,
             width: "fit-content",
           }}
         >
           <span
-            style={{ width: 6, height: 6, borderRadius: "50%", background: companyStatusColor(c.status), flexShrink: 0 }}
+            style={{ width: 6, height: 6, borderRadius: "50%", background: companyStatusColor(shownStatus), flexShrink: 0 }}
           />
-          {companyStatusLabels[c.status]}
+          {companyStatusLabels[shownStatus]}
         </span>
       ) : (
         <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>—</span>
@@ -122,8 +123,11 @@ export function CompaniesListView({ companies, apps, onSelect, onToggleTarget, o
     c.name.toLowerCase().includes(q.toLowerCase()) || (c.industry ?? "").toLowerCase().includes(q.toLowerCase());
 
   const targets = companies.filter((c) => c.isTarget && matchesSearch(c) && (!status || c.status === status));
-  // Status is a targets-only concept, so a status filter can never match a non-target.
-  const others = status ? [] : companies.filter((c) => !c.isTarget && matchesSearch(c));
+  // Non-targets only ever surface "applied", so any other status filter empties this section.
+  const others = companies.filter(
+    (c) => !c.isTarget && matchesSearch(c) && (!status || displayedCompanyStatus(c) === status)
+  );
+  const showOthersSection = !status || others.length > 0;
 
   const appCount = (c: Company) => apps.filter((a) => a.companyId === c.id).length;
   const rowProps = { onSelect, onToggleTarget, onRequestDelete };
@@ -180,7 +184,7 @@ export function CompaniesListView({ companies, apps, onSelect, onToggleTarget, o
         </div>
       )}
 
-      {!status && (
+      {showOthersSection && (
         <>
           <div style={sectionHeaderStyle}>Other companies ({others.length})</div>
           {others.map((c) => (
