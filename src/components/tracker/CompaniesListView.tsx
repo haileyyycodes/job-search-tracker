@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input, Select, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
+import { ListCount } from "./ListCount";
 import { TargetStar } from "./TargetStar";
 import { companyStatusLabels, companyStatusColor, displayedCompanyStatus, formatCompanyLocations } from "@/lib/companies";
 import type { Application, Company, CompanyStatus } from "@/lib/types";
@@ -146,6 +147,7 @@ export function CompaniesListView({ companies, apps, onSelect, onToggleTarget, o
             placeholder="All statuses"
           />
         </div>
+        <ListCount shown={targets.length + others.length} total={companies.length} noun="company" nounPlural="companies" />
       </div>
       <div
         style={{

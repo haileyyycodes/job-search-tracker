@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input, Select, IconButton } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { companyName } from "@/lib/companies";
+import { ListCount } from "./ListCount";
 import { TargetStar } from "./TargetStar";
 import type { Company, Contact } from "@/lib/types";
 
@@ -52,6 +53,7 @@ export function ContactsListView({ contacts, companies, onSelect, onSelectCompan
             placeholder="All companies"
           />
         </div>
+        <ListCount shown={filtered.length} total={contacts.length} noun="contact" />
       </div>
       <div
         style={{

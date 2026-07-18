@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ds";
 import { companyName } from "@/lib/companies";
+import { ListCount } from "./ListCount";
 import type { Application, Company, Feedback } from "@/lib/types";
 
 interface FeedbackRow extends Feedback {
@@ -36,6 +37,7 @@ export function FeedbackListView({ apps, companies, onSelectApp }: FeedbackListV
         <div style={{ width: 260 }}>
           <Input placeholder="Search company, role, or feedback…" value={q} onChange={setQ} />
         </div>
+        <ListCount shown={filtered.length} total={rows.length} noun="feedback entry" nounPlural="feedback entries" />
       </div>
       <div
         style={{

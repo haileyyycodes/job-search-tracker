@@ -6,6 +6,7 @@ import type { SelectOption } from "@/components/ds";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
+import { ListCount } from "./ListCount";
 import { TargetStar } from "./TargetStar";
 import type { Application, ApplicationStatus, Company, Goals } from "@/lib/types";
 
@@ -74,6 +75,7 @@ export function ApplicationsListView({
         <div style={{ width: 180 }}>
           <Select value={referral} options={referralOptions} onChange={setReferral} placeholder="All referrals" />
         </div>
+        <ListCount shown={filtered.length} total={apps.length} noun="application" />
       </div>
       <div
         style={{
