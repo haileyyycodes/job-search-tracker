@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Button, Card, IconButton } from "@/components/ds";
 import { EditContactDialog } from "./EditContactDialog";
 import { companyName } from "@/lib/companies";
+import { isValidUrl } from "@/lib/validation";
 import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 interface FieldProps {
@@ -138,9 +139,13 @@ export function ContactDetailView({
                 label="LinkedIn"
                 value={
                   contact.linkedInUrl ? (
-                    <a href={contact.linkedInUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
-                      View profile
-                    </a>
+                    isValidUrl(contact.linkedInUrl) ? (
+                      <a href={contact.linkedInUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                        View profile
+                      </a>
+                    ) : (
+                      contact.linkedInUrl
+                    )
                   ) : undefined
                 }
               />
@@ -148,9 +153,13 @@ export function ContactDetailView({
                 label="Website"
                 value={
                   contact.website ? (
-                    <a href={contact.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
-                      {contact.website}
-                    </a>
+                    isValidUrl(contact.website) ? (
+                      <a href={contact.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                        {contact.website}
+                      </a>
+                    ) : (
+                      contact.website
+                    )
                   ) : undefined
                 }
               />

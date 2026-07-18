@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Button, Card } from "@/components/ds";
 import { EditCompanyDialog } from "./EditCompanyDialog";
 import { companyStatusLabels, companyStatusColor, formatCompanyLocations } from "@/lib/companies";
+import { isValidUrl } from "@/lib/validation";
 import type { Application, Company, Contact } from "@/lib/types";
 
 interface FieldProps {
@@ -145,9 +146,13 @@ export function CompanyDetailView({
                 label="Website"
                 value={
                   company.website ? (
-                    <a href={company.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
-                      {company.website}
-                    </a>
+                    isValidUrl(company.website) ? (
+                      <a href={company.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                        {company.website}
+                      </a>
+                    ) : (
+                      company.website
+                    )
                   ) : undefined
                 }
               />

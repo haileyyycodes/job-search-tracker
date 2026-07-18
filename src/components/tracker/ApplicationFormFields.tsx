@@ -169,12 +169,6 @@ export function ApplicationFormFields({
       )}
       <div>
         <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
-          Resume
-        </label>
-        <input type="file" accept=".pdf,.docx" style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }} />
-      </div>
-      <div>
-        <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
           Job description
         </label>
         <textarea

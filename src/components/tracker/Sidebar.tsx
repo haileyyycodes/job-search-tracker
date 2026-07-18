@@ -133,6 +133,16 @@ export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
       >
         Clear all data
       </button>
+      <p
+        style={{
+          margin: 0,
+          padding: "8px 8px 0",
+          font: "var(--text-caption)",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        Your data is stored only in this browser — nothing is sent to a server.
+      </p>
     </div>
   );
 }
