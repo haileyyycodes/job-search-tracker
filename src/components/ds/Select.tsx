@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
 
 export interface SelectOption {
   value: string;
@@ -17,12 +18,25 @@ interface SelectProps {
 
 export function Select({ label, value, options = [], onChange, placeholder = "Select…" }: SelectProps) {
   const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
   const sel = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (anchorRef.current?.contains(e.target as Node)) return;
+      if (isInsideDropdownSurface(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [open]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%", minWidth: 0 }}>
       {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
       <button
+        ref={anchorRef}
         type="button"
         onClick={() => setOpen(!open)}
         style={{
@@ -42,42 +56,26 @@ export function Select({ label, value, options = [], onChange, placeholder = "Se
         <span>{sel ? sel.label : placeholder}</span>
         <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>▾</span>
       </button>
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            marginTop: 4,
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-            borderRadius: "var(--radius-s)",
-            boxShadow: "var(--shadow-m)",
-            zIndex: 10,
-            overflow: "hidden",
-          }}
-        >
-          {options.map((o) => (
-            <div
-              key={o.value}
-              onClick={() => {
-                onChange?.(o.value);
-                setOpen(false);
-              }}
-              style={{
-                padding: "8px 12px",
-                font: "var(--text-body-m)",
-                background: o.value === value ? "var(--blue-100)" : "transparent",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-              }}
-            >
-              {o.label}
-            </div>
-          ))}
-        </div>
-      )}
+      <DropdownSurface open={open} anchorRef={anchorRef}>
+        {options.map((o) => (
+          <div
+            key={o.value}
+            onClick={() => {
+              onChange?.(o.value);
+              setOpen(false);
+            }}
+            style={{
+              padding: "8px 12px",
+              font: "var(--text-body-m)",
+              background: o.value === value ? "var(--blue-100)" : "transparent",
+              color: "var(--text-primary)",
+              cursor: "pointer",
+            }}
+          >
+            {o.label}
+          </div>
+        ))}
+      </DropdownSurface>
     </div>
   );
 }

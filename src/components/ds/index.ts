@@ -12,3 +12,4 @@ export { Switch } from "./Switch";
 export { IconButton } from "./IconButton";
 export type { IconButtonVariant, IconButtonSize } from "./IconButton";
 export { Dialog } from "./Dialog";
+export { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
