@@ -31,6 +31,8 @@ export default function ApplicationDetailPage() {
       contacts={data.contacts}
       companies={data.companies}
       goals={data.goals}
+      interviewCategories={data.interviewCategories}
+      onCreateInterviewCategory={data.addInterviewCategory}
       onCreateContact={data.createContact}
       onCreateCompany={data.createCompany}
       onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
@@ -39,6 +41,7 @@ export default function ApplicationDetailPage() {
       onDismissTask={data.dismissTask}
       onChangeStatus={data.changeApplicationStatus}
       onLogInterview={data.logInterview}
+      onEditInterview={data.editInterview}
       onLogFollowUp={data.logFollowUp}
       onAddTask={data.addTask}
       onEditApplication={data.editApplication}

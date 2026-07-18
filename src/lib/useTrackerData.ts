@@ -3,6 +3,7 @@
 import {
   applications,
   companies as initialCompanies,
+  defaultInterviewCategories,
   initialTasks,
   initialGoals,
   contacts as initialContacts,
@@ -39,6 +40,22 @@ export function useTrackerData() {
     initialNetworkingEvents
   );
   const [companies, setCompanies] = usePersistedState<Company[]>("harbor:companies", initialCompanies);
+  const [interviewCategories, setInterviewCategories] = usePersistedState<string[]>(
+    "harbor:interviewCategories",
+    defaultInterviewCategories
+  );
+
+  const addInterviewCategory = (category: string) =>
+    setInterviewCategories((prev) => (prev.includes(category) ? prev : [...prev, category]));
+
+  /** Merges any not-yet-seen category tags into the persisted pool so they show up as options next time. */
+  const registerInterviewCategories = (cats: string[] | undefined) => {
+    if (!cats || cats.length === 0) return;
+    setInterviewCategories((prev) => {
+      const missing = cats.filter((c) => !prev.includes(c));
+      return missing.length ? [...prev, ...missing] : prev;
+    });
+  };
 
   const dismissTask = (id: string) =>
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status: "dismissed" } : t)));
@@ -68,7 +85,8 @@ export function useTrackerData() {
     if (app) advanceCompanyStatusIfApplied(app.companyId, status);
   };
 
-  const logInterview = (appId: string, interview: Omit<Interview, "id">) =>
+  const logInterview = (appId: string, interview: Omit<Interview, "id">) => {
+    registerInterviewCategories(interview.categories);
     setApps((prev) =>
       prev.map((a) => {
         if (a.id !== appId) return a;
@@ -84,6 +102,18 @@ export function useTrackerData() {
         return { ...a, interviews };
       })
     );
+  };
+
+  const editInterview = (appId: string, interviewId: string, updates: Omit<Interview, "id">) => {
+    registerInterviewCategories(updates.categories);
+    setApps((prev) =>
+      prev.map((a) =>
+        a.id === appId
+          ? { ...a, interviews: a.interviews.map((iv) => (iv.id === interviewId ? { id: iv.id, ...updates } : iv)) }
+          : a
+      )
+    );
+  };
 
   const logFollowUp = (appId: string, followUp: Omit<FollowUp, "id">) =>
     setApps((prev) =>
@@ -150,6 +180,7 @@ export function useTrackerData() {
     setContacts(initialContacts);
     setNetworkingEvents(initialNetworkingEvents);
     setCompanies(initialCompanies);
+    setInterviewCategories(defaultInterviewCategories);
   };
 
   const clearAllData = () => {
@@ -159,6 +190,7 @@ export function useTrackerData() {
     setContacts([]);
     setNetworkingEvents([]);
     setCompanies([]);
+    setInterviewCategories(defaultInterviewCategories);
   };
 
   return {
@@ -168,11 +200,14 @@ export function useTrackerData() {
     contacts,
     networkingEvents,
     companies,
+    interviewCategories,
+    addInterviewCategory,
     setGoals,
     dismissTask,
     addApplication,
     changeApplicationStatus,
     logInterview,
+    editInterview,
     logFollowUp,
     addTask,
     editApplication,

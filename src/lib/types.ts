@@ -14,10 +14,24 @@ export interface StatusHistoryEntry {
   at: string;
 }
 
+export type InterviewType =
+  | "Recruiter Screen"
+  | "Technical Screen"
+  | "Technical Interview"
+  | "Behavioral"
+  | "Hiring Manager"
+  | "Panel"
+  | "Other";
+
+export type InterviewStyle = "LeetCode" | "Whiteboarding" | "Mixture" | "Other";
+
 export interface Interview {
   id: string;
-  type: string;
+  type: InterviewType;
   date: string;
+  style?: InterviewStyle;
+  categories?: string[];
+  questionsAsked?: string;
   notes: string;
 }
 

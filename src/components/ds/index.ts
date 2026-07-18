@@ -7,6 +7,7 @@ export { Input } from "./Input";
 export type { InputSize } from "./Input";
 export { Select } from "./Select";
 export type { SelectOption } from "./Select";
+export { MultiSelect } from "./MultiSelect";
 export { Switch } from "./Switch";
 export { IconButton } from "./IconButton";
 export type { IconButtonVariant, IconButtonSize } from "./IconButton";
