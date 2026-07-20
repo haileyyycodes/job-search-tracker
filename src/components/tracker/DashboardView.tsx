@@ -276,6 +276,10 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
   const offerCount = apps.filter((a) => ["offer_extended", "offer_accepted", "offer_declined"].includes(a.status)).length;
   const referred = submittedApps.filter((a) => a.referral);
   const notReferred = submittedApps.filter((a) => !a.referral);
+  const tailored = submittedApps.filter((a) => a.resumeType === "tailored");
+  const sprayAndPray = submittedApps.filter((a) => a.resumeType === "spray_and_pray");
+  const withCoverLetter = submittedApps.filter((a) => a.coverLetterSubmitted);
+  const withoutCoverLetter = submittedApps.filter((a) => !a.coverLetterSubmitted);
 
   const responseDaysList = apps.map(getResponseDays).filter((d): d is number => d != null);
   const avgResponseDays = responseDaysList.length
@@ -416,7 +420,7 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
       />
       <div>
         <div style={sectionHeaderStyle}>Pipeline performance</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
           <StatCard
             label="Interview rate"
             value={`${interviewRate}%`}
@@ -427,6 +431,16 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
             label="Interview rate by referral"
             value={`${rateOf(referred)}% / ${rateOf(notReferred)}%`}
             sub="Referred vs. non-referred"
+          />
+          <StatCard
+            label="Interview rate by resume type"
+            value={`${rateOf(tailored)}% / ${rateOf(sprayAndPray)}%`}
+            sub="Tailored vs. spray and pray"
+          />
+          <StatCard
+            label="Interview rate by cover letter"
+            value={`${rateOf(withCoverLetter)}% / ${rateOf(withoutCoverLetter)}%`}
+            sub="With vs. without cover letter"
           />
           <StatCard label="Applications to submit" value={todoCount} sub="Queued and ready to go" />
           <StatCard

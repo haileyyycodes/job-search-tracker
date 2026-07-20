@@ -6,9 +6,10 @@ import type { SelectOption } from "@/components/ds";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
+import { resumeTypeLabels, resumeTypeOptions } from "@/lib/data";
 import { ListCount } from "./ListCount";
 import { TargetStar } from "./TargetStar";
-import type { Application, ApplicationStatus, Company, Goals } from "@/lib/types";
+import type { Application, ApplicationStatus, Company, Goals, ResumeType } from "@/lib/types";
 
 const statusOptions: SelectOption[] = [
   { value: "", label: "All statuses" },
@@ -27,6 +28,11 @@ const referralOptions: SelectOption[] = [
   { value: "", label: "All referrals" },
   { value: "yes", label: "Referred" },
   { value: "no", label: "Not referred" },
+];
+
+const resumeTypeFilterOptions: SelectOption[] = [
+  { value: "", label: "All resume types" },
+  ...resumeTypeOptions,
 ];
 
 interface ApplicationsListViewProps {
@@ -49,11 +55,13 @@ export function ApplicationsListView({
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [referral, setReferral] = useState("");
+  const [resumeType, setResumeType] = useState<ResumeType | "">("");
 
   const filtered = apps.filter(
     (a) =>
       (!status || a.status === status) &&
       (!referral || (referral === "yes" ? a.referral : !a.referral)) &&
+      (!resumeType || a.resumeType === resumeType) &&
       (companyName(a.companyId, companies).toLowerCase().includes(q.toLowerCase()) ||
         a.role.toLowerCase().includes(q.toLowerCase()))
   );
@@ -75,12 +83,20 @@ export function ApplicationsListView({
         <div style={{ width: 180 }}>
           <Select value={referral} options={referralOptions} onChange={setReferral} placeholder="All referrals" />
         </div>
+        <div style={{ width: 180 }}>
+          <Select
+            value={resumeType}
+            options={resumeTypeFilterOptions}
+            onChange={(v) => setResumeType(v as ResumeType | "")}
+            placeholder="All resume types"
+          />
+        </div>
         <ListCount shown={filtered.length} total={apps.length} noun="application" />
       </div>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 150px 100px 130px 120px 80px 40px",
+          gridTemplateColumns: "1fr 150px 100px 130px 120px 80px 120px 90px 40px",
           columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
@@ -97,6 +113,8 @@ export function ApplicationsListView({
         <span>Location</span>
         <span>Salary</span>
         <span>Referral</span>
+        <span>Resume</span>
+        <span>Cover letter</span>
         <span />
       </div>
       {filtered.map((a) => (
@@ -105,7 +123,7 @@ export function ApplicationsListView({
           onClick={() => onSelect(a)}
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 150px 100px 130px 120px 80px 40px",
+            gridTemplateColumns: "1fr 150px 100px 130px 120px 80px 120px 90px 40px",
           columnGap: 16,
             alignItems: "center",
             padding: "14px 4px",
@@ -168,6 +186,17 @@ export function ApplicationsListView({
           </span>
           <span style={{ font: "var(--text-body-s)", color: a.referral ? "var(--green-600)" : "var(--text-tertiary)" }}>
             {a.referral ? "Yes" : "No"}
+          </span>
+          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
+            {resumeTypeLabels[a.resumeType]}
+          </span>
+          <span
+            style={{
+              font: "var(--text-body-s)",
+              color: a.coverLetterSubmitted ? "var(--green-600)" : "var(--text-tertiary)",
+            }}
+          >
+            {a.coverLetterSubmitted ? "Yes" : "No"}
           </span>
           <IconButton
             aria-label="Delete application"

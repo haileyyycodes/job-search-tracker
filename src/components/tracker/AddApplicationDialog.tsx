@@ -58,6 +58,8 @@ export function AddApplicationDialog({
       jobDescription: form.description.trim(),
       referral: form.referral,
       referredByContactId: form.referral ? form.referredByContactId || undefined : undefined,
+      resumeType: form.resumeType as Application["resumeType"],
+      coverLetterSubmitted: form.coverLetterSubmitted === "yes",
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
       salaryMax: form.salaryMax.trim() ? Number(form.salaryMax) : undefined,

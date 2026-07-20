@@ -49,6 +49,8 @@ export interface Feedback {
 
 export type WorkArrangement = "onsite" | "remote" | "hybrid";
 
+export type ResumeType = "spray_and_pray" | "tailored";
+
 export type CompanyStatus = "researching" | "watching" | "applied" | "not_pursuing";
 
 export interface CompanyLocation {
@@ -76,6 +78,8 @@ export interface Application {
   jobDescription: string;
   referral: boolean;
   referredByContactId?: string;
+  resumeType: ResumeType;
+  coverLetterSubmitted: boolean;
   notes: string;
   status: ApplicationStatus;
   logo: string;

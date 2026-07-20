@@ -4,14 +4,20 @@ import type { Dispatch, SetStateAction } from "react";
 import { Input, Select, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
+import { resumeTypeOptions } from "@/lib/data";
 import { ContactPicker } from "./ContactPicker";
 import { CompanyPicker } from "./CompanyPicker";
-import type { Company, Contact, WorkArrangement } from "@/lib/types";
+import type { Company, Contact, ResumeType, WorkArrangement } from "@/lib/types";
 
 const workArrangementOptions: SelectOption[] = [
   { value: "onsite", label: "Onsite" },
   { value: "remote", label: "Remote" },
   { value: "hybrid", label: "Hybrid" },
+];
+
+const coverLetterOptions: SelectOption[] = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
 ];
 
 export interface ApplicationFormValues {
@@ -22,6 +28,8 @@ export interface ApplicationFormValues {
   description: string;
   referral: boolean;
   referredByContactId: string;
+  resumeType: ResumeType | "";
+  coverLetterSubmitted: "" | "yes" | "no";
   notes: string;
   salaryMin: string;
   salaryMax: string;
@@ -38,6 +46,8 @@ export const emptyApplicationForm: ApplicationFormValues = {
   description: "",
   referral: false,
   referredByContactId: "",
+  resumeType: "",
+  coverLetterSubmitted: "",
   notes: "",
   salaryMin: "",
   salaryMax: "",
@@ -65,6 +75,8 @@ interface ApplicationFormFieldsProps {
 export function isApplicationFormValid(form: ApplicationFormValues, requireDateApplied = true): boolean {
   if (!form.companyId || !form.role.trim()) return false;
   if (requireDateApplied && !form.dateApplied) return false;
+  if (!form.resumeType) return false;
+  if (!form.coverLetterSubmitted) return false;
   if (form.link.trim() && !isValidUrl(form.link.trim())) return false;
   const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
   const max = form.salaryMax.trim() ? Number(form.salaryMax) : undefined;
@@ -187,6 +199,22 @@ export function ApplicationFormFields({
           }}
         />
       </div>
+      <Select
+        label="Resume type"
+        value={form.resumeType}
+        options={resumeTypeOptions}
+        onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
+        placeholder="Choose one"
+        error={submitted && !form.resumeType ? "Required" : undefined}
+      />
+      <Select
+        label="Cover letter submitted?"
+        value={form.coverLetterSubmitted}
+        options={coverLetterOptions}
+        onChange={(v) => setForm((f) => ({ ...f, coverLetterSubmitted: v as "yes" | "no" }))}
+        placeholder="Choose one"
+        error={submitted && !form.coverLetterSubmitted ? "Required" : undefined}
+      />
       <Switch
         label="I had a referral"
         checked={form.referral}

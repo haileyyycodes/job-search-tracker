@@ -60,6 +60,8 @@ const feedbackSchema = z.object({
 
 const workArrangementSchema = z.enum(["onsite", "remote", "hybrid"]);
 
+const resumeTypeSchema = z.enum(["spray_and_pray", "tailored"]);
+
 export const applicationSchema: z.ZodType<Application> = z.object({
   id: z.string(),
   companyId: z.string(),
@@ -69,6 +71,8 @@ export const applicationSchema: z.ZodType<Application> = z.object({
   jobDescription: z.string(),
   referral: z.boolean(),
   referredByContactId: z.string().optional(),
+  resumeType: resumeTypeSchema,
+  coverLetterSubmitted: z.boolean(),
   notes: z.string(),
   status: applicationStatusSchema,
   logo: z.string(),

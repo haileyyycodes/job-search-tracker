@@ -14,9 +14,10 @@ interface SelectProps {
   options?: SelectOption[];
   onChange?: (value: string) => void;
   placeholder?: string;
+  error?: string;
 }
 
-export function Select({ label, value, options = [], onChange, placeholder = "Select…" }: SelectProps) {
+export function Select({ label, value, options = [], onChange, placeholder = "Select…", error }: SelectProps) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const sel = options.find((o) => o.value === value);
@@ -46,7 +47,7 @@ export function Select({ label, value, options = [], onChange, placeholder = "Se
           height: 40,
           padding: "0 12px",
           background: "var(--bg-surface)",
-          border: `1.5px solid ${open ? "var(--accent-primary)" : "var(--border-default)"}`,
+          border: `1.5px solid ${error ? "var(--red-500)" : open ? "var(--accent-primary)" : "var(--border-default)"}`,
           borderRadius: "var(--radius-s)",
           font: "var(--text-body-m)",
           color: sel ? "var(--text-primary)" : "var(--text-tertiary)",
@@ -76,6 +77,7 @@ export function Select({ label, value, options = [], onChange, placeholder = "Se
           </div>
         ))}
       </DropdownSurface>
+      {error && <span style={{ font: "var(--text-caption)", color: "var(--red-600)" }}>{error}</span>}
     </div>
   );
 }

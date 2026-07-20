@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card, IconButton, StatusTag, statusDotColor } from "@/components/ds";
-import { groupInterviewsByDate, statusLabels } from "@/lib/data";
+import { groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
 import { LogFollowUpDialog } from "./LogFollowUpDialog";
@@ -221,6 +221,8 @@ export function ApplicationDetailView({
                 label="Resume used"
                 value={`resume_${companyName(app.companyId, companies).split(" ")[0].toLowerCase()}.pdf`}
               />
+              <Field label="Resume type" value={resumeTypeLabels[app.resumeType]} />
+              <Field label="Cover letter submitted" value={app.coverLetterSubmitted ? "Yes" : "No"} />
               <Field label="Location" value={formatLocation(app) || undefined} />
               <Field
                 label="Salary band"
