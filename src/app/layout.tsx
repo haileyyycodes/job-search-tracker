@@ -19,7 +19,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Harbor — Application Tracker",
+  title: "Job Tracker",
   description: "Track job applications, interviews, and follow-ups.",
 };
 
