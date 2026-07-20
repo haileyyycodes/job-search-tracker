@@ -53,7 +53,7 @@ export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
           letterSpacing: "-0.02em",
         }}
       >
-        Harbor
+        Job Tracker
       </div>
       {items.map((it) => (
         <Link
