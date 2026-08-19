@@ -123,7 +123,7 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
           contacts={data.contacts}
           apps={data.apps}
           companies={data.companies}
-          initialContactId={ui.networkingDialogContactId ?? undefined}
+          initialContactId={ui.networkingDialogContactId != null ? String(ui.networkingDialogContactId) : undefined}
           onCreateContact={data.createContact}
           onClose={ui.closeLogNetworkingEvent}
           onSave={(event) => {

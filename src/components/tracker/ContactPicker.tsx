@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "@/components/ds";
 import { companyName } from "@/lib/companies";
+import type { NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact } from "@/lib/types";
 
 interface ContactPickerProps {
@@ -11,7 +12,7 @@ interface ContactPickerProps {
   companies: Company[];
   value: string;
   onChange: (contactId: string) => void;
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   defaultCompanyId?: string;
   error?: string;
   placeholder?: string;
@@ -36,7 +37,7 @@ export function ContactPicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const selected = contacts.find((c) => c.id === value);
+  const selected = contacts.find((c) => String(c.id) === value);
   const filtered = contacts.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
@@ -58,12 +59,15 @@ export function ContactPicker({
     setCreating(false);
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const name = newName.trim();
     if (!name) return;
-    const contact: Contact = { id: crypto.randomUUID(), name, companyId: defaultCompanyId, notes: "" };
-    onCreateContact(contact);
-    selectContact(contact.id);
+    const contact = await onCreateContact({
+      name,
+      companyId: defaultCompanyId ? Number(defaultCompanyId) : undefined,
+      notes: "",
+    });
+    selectContact(String(contact.id));
     setNewName("");
   };
 
@@ -111,13 +115,13 @@ export function ContactPicker({
           {filtered.map((c) => (
             <div
               key={c.id}
-              onClick={() => selectContact(c.id)}
+              onClick={() => selectContact(String(c.id))}
               style={{
                 padding: "8px 12px",
                 font: "var(--text-body-m)",
                 color: "var(--text-primary)",
                 cursor: "pointer",
-                background: c.id === value ? "var(--blue-100)" : "transparent",
+                background: String(c.id) === value ? "var(--blue-100)" : "transparent",
               }}
             >
               {c.name}

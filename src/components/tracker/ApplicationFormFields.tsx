@@ -7,6 +7,7 @@ import { isValidUrl } from "@/lib/validation";
 import { resumeTypeOptions } from "@/lib/data";
 import { ContactPicker } from "./ContactPicker";
 import { CompanyPicker } from "./CompanyPicker";
+import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact, ResumeType, WorkArrangement } from "@/lib/types";
 
 const workArrangementOptions: SelectOption[] = [
@@ -62,9 +63,9 @@ interface ApplicationFormFieldsProps {
   submitted: boolean;
   requireDateApplied?: boolean;
   contacts: Contact[];
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   companies: Company[];
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
 }
 
 /**

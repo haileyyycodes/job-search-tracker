@@ -11,7 +11,7 @@ export default function ApplicationDetailPage() {
   const data = useTrackerData();
   const ui = useTrackerUI();
   const router = useRouter();
-  const app = data.apps.find((a) => a.id === id) ?? null;
+  const app = data.apps.find((a) => a.id === Number(id)) ?? null;
 
   if (!app) {
     return (

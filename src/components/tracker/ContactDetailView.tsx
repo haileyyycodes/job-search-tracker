@@ -5,6 +5,7 @@ import { Button, Card, IconButton } from "@/components/ds";
 import { EditContactDialog } from "./EditContactDialog";
 import { companyName } from "@/lib/companies";
 import { isValidUrl } from "@/lib/validation";
+import type { NewCompany } from "@/lib/dataSource/types";
 import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 interface FieldProps {
@@ -29,13 +30,13 @@ interface ContactDetailViewProps {
   networkingEvents: NetworkingEvent[];
   onBack: () => void;
   onEditContact: (updated: Contact) => void;
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
   onRequestDelete: (contact: Contact) => void;
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
   onSelectCompany: (company: Company) => void;
-  onDeleteNetworkingEvent: (id: string) => void;
-  onOpenLogNetworkingEvent: (initialContactId: string) => void;
+  onDeleteNetworkingEvent: (id: number) => void;
+  onOpenLogNetworkingEvent: (initialContactId: number) => void;
 }
 
 export function ContactDetailView({

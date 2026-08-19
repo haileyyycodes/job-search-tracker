@@ -21,7 +21,11 @@ function pluralize(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
-/** Deleting never touches the referencing records — they just resolve to "Unknown contact" afterward. */
+/**
+ * FollowUp.contactId is required, so a follow-up still pointing at this contact blocks the
+ * delete outright (same as company deletion). Referrals and networking-event attendance are
+ * optional links, so those just degrade to "Unknown contact" and don't block anything.
+ */
 export function ConfirmDeleteContactDialog({
   contact,
   apps,
@@ -33,9 +37,28 @@ export function ConfirmDeleteContactDialog({
   const followUpCount = apps.reduce((sum, a) => sum + a.followUps.filter((f) => f.contactId === contact.id).length, 0);
   const eventCount = networkingEvents.filter((e) => e.contactIds.includes(contact.id)).length;
 
+  if (followUpCount > 0) {
+    return (
+      <Dialog
+        open
+        title="Can't delete this contact"
+        onClose={onClose}
+        footer={
+          <Button size="sm" onClick={onClose}>
+            Close
+          </Button>
+        }
+      >
+        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
+          <strong>{contact.name}</strong> is linked to {pluralize(followUpCount, "follow-up")}. Delete or reassign{" "}
+          {followUpCount === 1 ? "it" : "those"} first, then you can delete this contact.
+        </div>
+      </Dialog>
+    );
+  }
+
   const parts = [
     referralCount > 0 ? pluralize(referralCount, "referral") : null,
-    followUpCount > 0 ? pluralize(followUpCount, "follow-up") : null,
     eventCount > 0 ? pluralize(eventCount, "networking event") : null,
   ].filter((p): p is string => p !== null);
 

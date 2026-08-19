@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "@/components/ds";
+import type { NewCompany } from "@/lib/dataSource/types";
 import type { Company } from "@/lib/types";
 
 interface CompanyPickerProps {
@@ -9,7 +10,7 @@ interface CompanyPickerProps {
   companies: Company[];
   value: string;
   onChange: (companyId: string) => void;
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
   error?: string;
   placeholder?: string;
 }
@@ -31,7 +32,7 @@ export function CompanyPicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const selected = companies.find((c) => c.id === value);
+  const selected = companies.find((c) => String(c.id) === value);
   const filtered = companies.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
@@ -53,19 +54,11 @@ export function CompanyPicker({
     setCreating(false);
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const name = newName.trim();
     if (!name) return;
-    const company: Company = {
-      id: crypto.randomUUID(),
-      name,
-      isTarget: false,
-      status: "researching",
-      locations: [],
-      notes: "",
-    };
-    onCreateCompany(company);
-    selectCompany(company.id);
+    const company = await onCreateCompany({ name, isTarget: false, status: "researching", locations: [], notes: "" });
+    selectCompany(String(company.id));
     setNewName("");
   };
 
@@ -113,13 +106,13 @@ export function CompanyPicker({
           {filtered.map((c) => (
             <div
               key={c.id}
-              onClick={() => selectCompany(c.id)}
+              onClick={() => selectCompany(String(c.id))}
               style={{
                 padding: "8px 12px",
                 font: "var(--text-body-m)",
                 color: "var(--text-primary)",
                 cursor: "pointer",
-                background: c.id === value ? "var(--blue-100)" : "transparent",
+                background: String(c.id) === value ? "var(--blue-100)" : "transparent",
               }}
             >
               {c.name}

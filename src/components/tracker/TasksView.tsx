@@ -10,8 +10,8 @@ interface TasksViewProps {
   apps: Application[];
   companies: Company[];
   tasks: Task[];
-  onDismissTask: (id: string) => void;
-  onDeleteTask: (id: string) => void;
+  onDismissTask: (id: number) => void;
+  onDeleteTask: (id: number) => void;
   onSelectApp: (app: Application) => void;
 }
 

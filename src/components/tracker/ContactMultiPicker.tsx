@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "@/components/ds";
 import { companyName } from "@/lib/companies";
+import type { NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact } from "@/lib/types";
 
 interface ContactMultiPickerProps {
@@ -11,7 +12,7 @@ interface ContactMultiPickerProps {
   companies: Company[];
   value: string[];
   onChange: (contactIds: string[]) => void;
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   defaultCompanyId?: string;
   error?: string;
 }
@@ -35,9 +36,11 @@ export function ContactMultiPicker({
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const selectedContacts = value
-    .map((id) => contacts.find((c) => c.id === id))
+    .map((id) => contacts.find((c) => String(c.id) === id))
     .filter((c): c is Contact => c != null);
-  const filtered = contacts.filter((c) => !value.includes(c.id) && c.name.toLowerCase().includes(query.toLowerCase()));
+  const filtered = contacts.filter(
+    (c) => !value.includes(String(c.id)) && c.name.toLowerCase().includes(query.toLowerCase())
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -58,12 +61,15 @@ export function ContactMultiPicker({
 
   const removeContact = (id: string) => onChange(value.filter((v) => v !== id));
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const name = newName.trim();
     if (!name) return;
-    const contact: Contact = { id: crypto.randomUUID(), name, companyId: defaultCompanyId, notes: "" };
-    onCreateContact(contact);
-    addContact(contact.id);
+    const contact = await onCreateContact({
+      name,
+      companyId: defaultCompanyId ? Number(defaultCompanyId) : undefined,
+      notes: "",
+    });
+    addContact(String(contact.id));
     setNewName("");
     setCreating(false);
   };
@@ -109,7 +115,7 @@ export function ContactMultiPicker({
             <span
               onClick={(e) => {
                 e.stopPropagation();
-                removeContact(c.id);
+                removeContact(String(c.id));
               }}
               style={{ cursor: "pointer" }}
             >
@@ -141,7 +147,7 @@ export function ContactMultiPicker({
           {filtered.map((c) => (
             <div
               key={c.id}
-              onClick={() => addContact(c.id)}
+              onClick={() => addContact(String(c.id))}
               style={{ padding: "8px 12px", font: "var(--text-body-m)", color: "var(--text-primary)", cursor: "pointer" }}
             >
               {c.name}

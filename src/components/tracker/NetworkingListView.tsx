@@ -13,7 +13,7 @@ interface NetworkingListViewProps {
   contacts: Contact[];
   apps: Application[];
   companies: Company[];
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
   onSelectContact: (contact: Contact) => void;
   onSelectApp: (app: Application) => void;
 }

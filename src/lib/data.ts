@@ -2,6 +2,7 @@ import type {
   Application,
   Company,
   Contact,
+  FollowUp,
   Goals,
   Interview,
   InterviewStyle,
@@ -11,7 +12,47 @@ import type {
   Task,
 } from "./types";
 
-export const companies: Company[] = [
+/**
+ * Seed data below is authored with stable, human-readable string ids
+ * ("co1", "c1", "iv4b", ...) so cross-references stay easy to read and edit.
+ * remapToNumericIds() below assigns real sequential numeric ids (matching
+ * the DataSource-assigned ids the app uses at runtime) and rewrites every
+ * foreign key through the id maps it builds along the way.
+ */
+
+interface RawCompany extends Omit<Company, "id"> {
+  id: string;
+}
+interface RawContact extends Omit<Contact, "id" | "companyId"> {
+  id: string;
+  companyId?: string;
+}
+interface RawInterview extends Omit<Interview, "id"> {
+  id: string;
+}
+interface RawFollowUp extends Omit<FollowUp, "id" | "contactId"> {
+  id: string;
+  contactId: string;
+}
+interface RawApplication
+  extends Omit<Application, "id" | "companyId" | "referredByContactId" | "interviews" | "followUps"> {
+  id: string;
+  companyId: string;
+  referredByContactId?: string;
+  interviews: RawInterview[];
+  followUps: RawFollowUp[];
+}
+interface RawTask extends Omit<Task, "id" | "applicationId"> {
+  id: string;
+  applicationId: string;
+}
+interface RawNetworkingEvent extends Omit<NetworkingEvent, "id" | "contactIds" | "applicationId"> {
+  id: string;
+  contactIds: string[];
+  applicationId?: string;
+}
+
+const rawCompanies: RawCompany[] = [
   {
     id: "co1",
     name: "Northwind Co.",
@@ -273,7 +314,7 @@ export const companies: Company[] = [
   },
 ];
 
-export const contacts: Contact[] = [
+const rawContacts: RawContact[] = [
   {
     id: "c1",
     name: "Alex Chen",
@@ -321,7 +362,7 @@ export const contacts: Contact[] = [
   },
 ];
 
-export const networkingEvents: NetworkingEvent[] = [
+const rawNetworkingEvents: RawNetworkingEvent[] = [
   {
     id: "ne1",
     contactIds: ["c1"],
@@ -347,7 +388,7 @@ export const networkingEvents: NetworkingEvent[] = [
   },
 ];
 
-export const applications: Application[] = [
+const rawApplications: RawApplication[] = [
   {
     id: "1",
     companyId: "co1",
@@ -1168,7 +1209,7 @@ export const applications: Application[] = [
   },
 ];
 
-export const initialTasks: Task[] = [
+const rawTasks: RawTask[] = [
   {
     id: "t1",
     applicationId: "2",
@@ -1210,6 +1251,60 @@ export const initialTasks: Task[] = [
     reminderRule: { type: "manual" },
   },
 ];
+
+function remapToNumericIds() {
+  const companyIdMap = new Map<string, number>();
+  const companies: Company[] = rawCompanies.map((c, i) => {
+    const id = i + 1;
+    companyIdMap.set(c.id, id);
+    return { ...c, id };
+  });
+
+  const contactIdMap = new Map<string, number>();
+  const contacts: Contact[] = rawContacts.map((c, i) => {
+    const id = i + 1;
+    contactIdMap.set(c.id, id);
+    return { ...c, id, companyId: c.companyId !== undefined ? companyIdMap.get(c.companyId) : undefined };
+  });
+
+  const applicationIdMap = new Map<string, number>();
+  let nextInterviewId = 1;
+  let nextFollowUpId = 1;
+  const applications: Application[] = rawApplications.map((a, i) => {
+    const id = i + 1;
+    applicationIdMap.set(a.id, id);
+    return {
+      ...a,
+      id,
+      companyId: companyIdMap.get(a.companyId)!,
+      referredByContactId:
+        a.referredByContactId !== undefined ? contactIdMap.get(a.referredByContactId) : undefined,
+      interviews: a.interviews.map((iv) => ({ ...iv, id: nextInterviewId++ })),
+      followUps: a.followUps.map((fu) => ({
+        ...fu,
+        id: nextFollowUpId++,
+        contactId: contactIdMap.get(fu.contactId)!,
+      })),
+    };
+  });
+
+  const initialTasks: Task[] = rawTasks.map((t, i) => ({
+    ...t,
+    id: i + 1,
+    applicationId: applicationIdMap.get(t.applicationId)!,
+  }));
+
+  const networkingEvents: NetworkingEvent[] = rawNetworkingEvents.map((e, i) => ({
+    ...e,
+    id: i + 1,
+    contactIds: e.contactIds.map((cid) => contactIdMap.get(cid)!),
+    applicationId: e.applicationId !== undefined ? applicationIdMap.get(e.applicationId) : undefined,
+  }));
+
+  return { companies, contacts, applications, initialTasks, networkingEvents };
+}
+
+export const { companies, contacts, applications, initialTasks, networkingEvents } = remapToNumericIds();
 
 export const initialGoals: Goals = {
   salaryMin: 120000,

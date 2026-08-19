@@ -11,7 +11,7 @@ export default function ContactDetailPage() {
   const data = useTrackerData();
   const ui = useTrackerUI();
   const router = useRouter();
-  const contact = data.contacts.find((c) => c.id === id) ?? null;
+  const contact = data.contacts.find((c) => c.id === Number(id)) ?? null;
 
   if (!contact) {
     return (

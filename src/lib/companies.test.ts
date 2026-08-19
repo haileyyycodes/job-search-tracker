@@ -4,7 +4,7 @@ import type { Company } from "./types";
 
 function makeCompany(overrides: Partial<Company> = {}): Company {
   return {
-    id: "company-1",
+    id: 1,
     name: "Acme Corp",
     isTarget: true,
     status: "researching",
@@ -15,10 +15,10 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
 }
 
 describe("companyName", () => {
-  const companies = [makeCompany({ id: "c1", name: "Acme Corp" })];
+  const companies = [makeCompany({ id: 1, name: "Acme Corp" })];
 
   it("resolves a known companyId to its name", () => {
-    expect(companyName("c1", companies)).toBe("Acme Corp");
+    expect(companyName(1, companies)).toBe("Acme Corp");
   });
 
   it("falls back to 'Unknown company' for an undefined id", () => {
@@ -26,7 +26,7 @@ describe("companyName", () => {
   });
 
   it("falls back to 'Unknown company' for a dangling id", () => {
-    expect(companyName("does-not-exist", companies)).toBe("Unknown company");
+    expect(companyName(999, companies)).toBe("Unknown company");
   });
 });
 

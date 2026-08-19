@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Application, Company, Contact, Goals, Task } from "./types";
+import type { Application, Company, Contact, Goals, NetworkingEvent, Task } from "./types";
 
 /**
  * Zod schemas mirroring types.ts, used to validate data read back from
@@ -37,7 +37,7 @@ const interviewTypeSchema = z.enum([
 const interviewStyleSchema = z.enum(["LeetCode", "Whiteboarding", "Mixture", "Other"]);
 
 const interviewSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   type: interviewTypeSchema,
   date: z.string(),
   style: interviewStyleSchema.optional(),
@@ -47,9 +47,9 @@ const interviewSchema = z.object({
 });
 
 const followUpSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   date: z.string(),
-  contactId: z.string(),
+  contactId: z.number(),
   notes: z.string(),
 });
 
@@ -63,14 +63,14 @@ const workArrangementSchema = z.enum(["onsite", "remote", "hybrid"]);
 const resumeTypeSchema = z.enum(["spray_and_pray", "tailored"]);
 
 export const applicationSchema: z.ZodType<Application> = z.object({
-  id: z.string(),
-  companyId: z.string(),
+  id: z.number(),
+  companyId: z.number(),
   role: z.string(),
   dateApplied: z.string(),
   link: z.string(),
   jobDescription: z.string(),
   referral: z.boolean(),
-  referredByContactId: z.string().optional(),
+  referredByContactId: z.number().optional(),
   resumeType: resumeTypeSchema,
   coverLetterSubmitted: z.boolean(),
   notes: z.string(),
@@ -90,7 +90,7 @@ export const applicationSchema: z.ZodType<Application> = z.object({
 const companyStatusSchema = z.enum(["researching", "watching", "applied", "not_pursuing"]);
 
 export const companySchema: z.ZodType<Company> = z.object({
-  id: z.string(),
+  id: z.number(),
   name: z.string(),
   isTarget: z.boolean(),
   status: companyStatusSchema,
@@ -101,23 +101,23 @@ export const companySchema: z.ZodType<Company> = z.object({
 });
 
 export const contactSchema: z.ZodType<Contact> = z.object({
-  id: z.string(),
+  id: z.number(),
   name: z.string(),
   email: z.string().optional(),
   phone: z.string().optional(),
   linkedInUrl: z.string().optional(),
   website: z.string().optional(),
-  companyId: z.string().optional(),
+  companyId: z.number().optional(),
   role: z.string().optional(),
   notes: z.string(),
 });
 
-export const networkingEventSchema = z.object({
-  id: z.string(),
-  contactIds: z.array(z.string()),
+export const networkingEventSchema: z.ZodType<NetworkingEvent> = z.object({
+  id: z.number(),
+  contactIds: z.array(z.number()),
   type: z.string(),
   date: z.string(),
-  applicationId: z.string().optional(),
+  applicationId: z.number().optional(),
   notes: z.string(),
 });
 
@@ -127,8 +127,8 @@ const reminderRuleSchema = z.discriminatedUnion("type", [
 ]);
 
 export const taskSchema: z.ZodType<Task> = z.object({
-  id: z.string(),
-  applicationId: z.string(),
+  id: z.number(),
+  applicationId: z.number(),
   dueDate: z.string(),
   note: z.string(),
   status: z.enum(["active", "dismissed"]),

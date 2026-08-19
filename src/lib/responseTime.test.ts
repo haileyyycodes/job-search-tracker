@@ -4,8 +4,8 @@ import type { Application, StatusHistoryEntry } from "./types";
 
 function makeApp(statusHistory: StatusHistoryEntry[]): Application {
   return {
-    id: "app-1",
-    companyId: "company-1",
+    id: 1,
+    companyId: 1,
     role: "Software Engineer",
     dateApplied: "Jul 1, 2026",
     link: "",

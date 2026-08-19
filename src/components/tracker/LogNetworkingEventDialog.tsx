@@ -7,6 +7,7 @@ import { formatDateInput, todayFormatted } from "@/lib/date";
 import { networkingEventTypes } from "@/lib/data";
 import { companyName } from "@/lib/companies";
 import { ContactMultiPicker } from "./ContactMultiPicker";
+import type { NewContact } from "@/lib/dataSource/types";
 import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 const typeOptions: SelectOption[] = networkingEventTypes.map((t) => ({ value: t, label: t }));
@@ -17,7 +18,7 @@ interface LogNetworkingEventDialogProps {
   companies: Company[];
   initialContactId?: string;
   onClose: () => void;
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   onSave: (event: Omit<NetworkingEvent, "id">) => void;
 }
 
@@ -40,7 +41,7 @@ export function LogNetworkingEventDialog({
 
   const applicationOptions: SelectOption[] = [
     { value: "", label: "No application" },
-    ...apps.map((a) => ({ value: a.id, label: `${companyName(a.companyId, companies)} — ${a.role}` })),
+    ...apps.map((a) => ({ value: String(a.id), label: `${companyName(a.companyId, companies)} — ${a.role}` })),
   ];
 
   const handleSave = () => {
@@ -48,7 +49,13 @@ export function LogNetworkingEventDialog({
     if (contactIds.length === 0) return;
 
     const date = dateInput ? formatDateInput(dateInput) : todayFormatted();
-    onSave({ contactIds, type, date, applicationId: applicationId || undefined, notes: notes.trim() });
+    onSave({
+      contactIds: contactIds.map(Number),
+      type,
+      date,
+      applicationId: applicationId ? Number(applicationId) : undefined,
+      notes: notes.trim(),
+    });
   };
 
   return (

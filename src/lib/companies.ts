@@ -1,7 +1,7 @@
 import type { Company, CompanyStatus } from "./types";
 
 /** Resolves a companyId to its name, degrading to "Unknown company" for dangling/missing references. */
-export function companyName(companyId: string | undefined, companies: Company[]): string {
+export function companyName(companyId: number | undefined, companies: Company[]): string {
   if (!companyId) return "Unknown company";
   return companies.find((c) => c.id === companyId)?.name ?? "Unknown company";
 }

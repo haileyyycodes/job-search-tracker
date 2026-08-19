@@ -4,14 +4,15 @@ import { useState } from "react";
 import { Dialog, Button } from "@/components/ds";
 import { ContactFormFields, emptyContactForm, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
-import type { Company, Contact } from "@/lib/types";
+import type { NewCompany, NewContact } from "@/lib/dataSource/types";
+import type { Company } from "@/lib/types";
 
 interface AddContactDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (contact: Contact) => void;
+  onAdd: (contact: NewContact) => void;
   companies: Company[];
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
 }
 
 export function AddContactDialog({ open, onClose, onAdd, companies, onCreateCompany }: AddContactDialogProps) {
@@ -29,13 +30,12 @@ export function AddContactDialog({ open, onClose, onAdd, companies, onCreateComp
     if (!isContactFormValid(form)) return;
 
     onAdd({
-      id: crypto.randomUUID(),
       name: form.name.trim(),
       email: form.email.trim() || undefined,
       phone: form.phone.trim() || undefined,
       linkedInUrl: form.linkedInUrl.trim() || undefined,
       website: form.website.trim() || undefined,
-      companyId: form.companyId || undefined,
+      companyId: form.companyId ? Number(form.companyId) : undefined,
       role: form.role.trim() || undefined,
       notes: form.notes.trim(),
     });

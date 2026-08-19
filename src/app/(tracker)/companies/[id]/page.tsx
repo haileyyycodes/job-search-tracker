@@ -11,7 +11,7 @@ export default function CompanyDetailPage() {
   const data = useTrackerData();
   const ui = useTrackerUI();
   const router = useRouter();
-  const company = data.companies.find((c) => c.id === id) ?? null;
+  const company = data.companies.find((c) => c.id === Number(id)) ?? null;
 
   if (!company) {
     return (
