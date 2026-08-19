@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/tracker/Sidebar";
 import { AddApplicationDialog } from "@/components/tracker/AddApplicationDialog";
 import { ConfirmDeleteApplicationDialog } from "@/components/tracker/ConfirmDeleteApplicationDialog";
@@ -17,7 +18,9 @@ import { TrackerUIProvider, useTrackerUI } from "@/lib/TrackerUIContext";
 export default function TrackerLayout({ children }: { children: React.ReactNode }) {
   return (
     <TrackerUIProvider>
-      <TrackerShell>{children}</TrackerShell>
+      <Suspense fallback={null}>
+        <TrackerShell>{children}</TrackerShell>
+      </Suspense>
     </TrackerUIProvider>
   );
 }
@@ -27,12 +30,13 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
   const ui = useTrackerUI();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const confirmDeleteApplication = () => {
     if (!ui.deleteTarget) return;
     const appId = ui.deleteTarget.id;
     data.deleteApplication(appId);
-    if (pathname === `/applications/${appId}`) router.push("/applications");
+    if (pathname === "/applications" && searchParams.get("id") === String(appId)) router.push("/applications");
     ui.closeDeleteApplication();
   };
 
@@ -40,7 +44,7 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
     if (!ui.deleteContactTarget) return;
     const contactId = ui.deleteContactTarget.id;
     data.deleteContact(contactId);
-    if (pathname === `/contacts/${contactId}`) router.push("/contacts");
+    if (pathname === "/contacts" && searchParams.get("id") === String(contactId)) router.push("/contacts");
     ui.closeDeleteContact();
   };
 
@@ -48,7 +52,7 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
     if (!ui.deleteCompanyTarget) return;
     const companyId = ui.deleteCompanyTarget.id;
     data.deleteCompany(companyId);
-    if (pathname === `/companies/${companyId}`) router.push("/companies");
+    if (pathname === "/companies" && searchParams.get("id") === String(companyId)) router.push("/companies");
     ui.closeDeleteCompany();
   };
 

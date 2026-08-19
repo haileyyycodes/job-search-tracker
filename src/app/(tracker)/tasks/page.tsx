@@ -18,7 +18,7 @@ export default function TasksPage() {
         tasks={data.tasks}
         onDismissTask={data.dismissTask}
         onDeleteTask={data.deleteTask}
-        onSelectApp={(a) => router.push(`/applications/${a.id}`)}
+        onSelectApp={(a) => router.push(`/applications?id=${a.id}`)}
       />
     </>
   );

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { MemoryDataSource } from "./dataSource/memoryDataSource";
+import { selectDataSource } from "./dataSource/select";
 import { emptySeed } from "./dataSource/seed";
 import type {
   DataSource,
@@ -46,9 +47,8 @@ const emptyState: TrackerState = {
   interviewCategories: [],
 };
 
-// Phase 2: hardcoded MemoryDataSource. Phase 3 replaces this with real
-// boot-time selection between WasmDataSource (browser) and ElectronDataSource.
-let dataSource: DataSource = new MemoryDataSource();
+// Placeholder until real boot-time selection (below) resolves and swaps this out.
+let dataSource: DataSource = new MemoryDataSource(emptySeed);
 
 let state: TrackerState = emptyState;
 let loadPromise: Promise<void> | null = null;
@@ -96,7 +96,17 @@ function ensureLoaded(): Promise<void> {
   return loadPromise;
 }
 
-void ensureLoaded();
+// Real boot-time selection (WasmDataSource in the browser today; ElectronDataSource once
+// Phase 5 exists). Only runs in an actual browser: Next.js's server-side prerender pass
+// evaluates this module in Node too (even though every consumer is "use client"), and
+// under Vitest __resetTrackerDataForTests drives DataSource selection explicitly instead —
+// both would otherwise hit WasmDataSource's browser-style wasm path, which fails under Node.
+if (typeof window !== "undefined" && !(typeof process !== "undefined" && process.env.VITEST === "true")) {
+  void selectDataSource().then((ds) => {
+    dataSource = ds;
+    void ensureLoaded();
+  });
+}
 
 /**
  * Test-only: swap in a fresh DataSource and wait for it to load, so each
