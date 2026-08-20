@@ -15,7 +15,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      include: ["src/**/*.{ts,tsx}"],
+      include: ["packages/shared/src/**/*.{ts,tsx}"],
       skipFull: false,
     },
   },

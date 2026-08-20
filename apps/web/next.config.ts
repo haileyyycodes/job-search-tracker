@@ -31,7 +31,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: path.join(__dirname),
+    // Monorepo root (two levels up from apps/web), not just this app's own directory —
+    // Turbopack needs this to resolve and transpile packages/shared/src, which apps/web
+    // reaches via a raw "@/*" tsconfig path alias rather than a real package import.
+    root: path.join(__dirname, "../.."),
   },
   async headers() {
     return [
