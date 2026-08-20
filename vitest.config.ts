@@ -12,6 +12,9 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // apps/desktop has its own vitest.config.ts (node environment, no jsdom/react —
+    // its tests exercise better-sqlite3 + electron's ipcMain, neither of which belongs here).
+    include: ["packages/shared/src/**/*.{test,spec}.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
