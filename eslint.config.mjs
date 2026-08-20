@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     "coverage/**",
     // esbuild output (apps/desktop/src -> apps/desktop/dist):
     "apps/desktop/dist/**",
+    // plain-CJS npm-override shim (tools/extract-zip-shim), not app source:
+    "tools/**",
   ]),
 ]);
 
