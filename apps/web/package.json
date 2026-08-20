@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:electron": "BUILD_TARGET=export next build",
     "start": "next start"
   },
   "dependencies": {

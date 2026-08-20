@@ -29,6 +29,12 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
 ];
 
+// The Electron build needs `output: "export"` (static HTML/JS/CSS, no Next server —
+// Electron just loads the files off disk). Static export can't serve custom headers
+// at runtime (there's no server to apply them), so headers() is Vercel-only; Electron
+// gets its CSP-equivalent restrictions from its own BrowserWindow/session config instead.
+const isStaticExport = process.env.BUILD_TARGET === "export";
+
 const nextConfig: NextConfig = {
   turbopack: {
     // Monorepo root (two levels up from apps/web), not just this app's own directory —
@@ -36,14 +42,18 @@ const nextConfig: NextConfig = {
     // reaches via a raw "@/*" tsconfig path alias rather than a real package import.
     root: path.join(__dirname, "../.."),
   },
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: securityHeaders,
-      },
-    ];
-  },
+  ...(isStaticExport
+    ? { output: "export" }
+    : {
+        async headers() {
+          return [
+            {
+              source: "/:path*",
+              headers: securityHeaders,
+            },
+          ];
+        },
+      }),
 };
 
 export default nextConfig;

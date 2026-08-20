@@ -9,9 +9,10 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
+    "build:electron": "npm run build:electron --workspace=apps/web",
     "start": "npm run start --workspace=apps/web",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p apps/web",
+    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p apps/web && tsc --noEmit -p apps/desktop",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest",
     "test:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage"

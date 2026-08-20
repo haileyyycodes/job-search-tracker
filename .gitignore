@@ -20,6 +20,9 @@ out/
 # production
 /build
 
+# electron (tsc output for main/preload, Forge's package/make output)
+apps/desktop/dist/
+
 # misc
 .DS_Store
 *.pem
