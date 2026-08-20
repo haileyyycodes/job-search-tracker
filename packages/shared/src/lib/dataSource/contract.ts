@@ -328,33 +328,4 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
     });
   });
 
-  describe("bulk operations", () => {
-    it("clearAllData empties every table and resets goals/categories", async () => {
-      const ds = makeDataSource();
-      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
-      await ds.createApplication({
-        companyId: company.id,
-        role: "Engineer",
-        dateApplied: "",
-        link: "",
-        jobDescription: "",
-        referral: false,
-        resumeType: "tailored",
-        coverLetterSubmitted: false,
-        notes: "",
-        status: "todo",
-        logo: "A",
-        statusHistory: [],
-      });
-      await ds.updateGoals({ salaryMin: 100000 });
-      await ds.addInterviewCategory("Custom");
-
-      await ds.clearAllData();
-
-      expect(await ds.getApplications()).toEqual([]);
-      expect(await ds.getCompanies()).toEqual([]);
-      expect(await ds.getGoals()).toEqual({});
-      expect(await ds.getInterviewCategories()).toEqual([]);
-    });
-  });
 }

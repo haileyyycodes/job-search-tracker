@@ -171,7 +171,4 @@ export interface DataSource {
 
   getInterviewCategories(): Promise<string[]>;
   addInterviewCategory(category: string): Promise<void>;
-
-  resetToSeedData(): Promise<void>;
-  clearAllData(): Promise<void>;
 }

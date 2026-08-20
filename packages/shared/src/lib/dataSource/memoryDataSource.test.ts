@@ -39,16 +39,4 @@ describe("MemoryDataSource seed loading", () => {
     expect(await ds.getGoals()).toEqual(defaultSeed.goals);
     expect(await ds.getInterviewCategories()).toEqual(defaultSeed.interviewCategories);
   });
-
-  it("resetToSeedData clears everything created since construction and reloads the seed", async () => {
-    const ds = new MemoryDataSource(defaultSeed);
-    await ds.createCompany({ name: "Extra Co", isTarget: false, status: "researching", notes: "" });
-    expect(await ds.getCompanies()).toHaveLength(3);
-
-    await ds.resetToSeedData();
-
-    const companies = await ds.getCompanies();
-    expect(companies).toHaveLength(2);
-    expect(companies.some((c) => c.name === "Extra Co")).toBe(false);
-  });
 });

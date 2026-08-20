@@ -615,40 +615,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
       db.prepare("INSERT OR IGNORE INTO interview_categories (name) VALUES (?)").run(category);
     },
 
-    // ---- bulk ----
-    // Electron has no "demo data" — both just wipe. resetToSeedData exists only to satisfy
-    // the shared DataSource interface (the "Reset demo data" sidebar action makes sense for
-    // the browser demo, not for your real local data; revisit that UI affordance later).
-
-    async resetToSeedData() {
-      wipe(db);
-    },
-
-    async clearAllData() {
-      wipe(db);
-    },
   };
-}
-
-function wipe(db: Database.Database): void {
-  for (const table of [
-    "networking_event_contacts",
-    "networking_events",
-    "status_history",
-    "follow_ups",
-    "interviews",
-    "tasks",
-    "applications",
-    "company_locations",
-    "contacts",
-    "companies",
-    "interview_categories",
-  ]) {
-    db.prepare(`DELETE FROM ${table}`).run();
-  }
-  db.prepare(
-    "UPDATE goals SET salary_min = NULL, salary_max = NULL, applications_per_week_target = NULL, target_offer_date = NULL WHERE id = 1"
-  ).run();
 }
 
 /**
@@ -702,9 +669,6 @@ export function registerIpcHandlers(db: Database.Database): void {
 
     "interviewCategories:list": () => ds.getInterviewCategories(),
     "interviewCategories:add": (category) => ds.addInterviewCategory(category as string),
-
-    "bulk:resetToSeedData": () => ds.resetToSeedData(),
-    "bulk:clearAllData": () => ds.clearAllData(),
   };
 
   for (const [channel, handler] of Object.entries(channels)) {

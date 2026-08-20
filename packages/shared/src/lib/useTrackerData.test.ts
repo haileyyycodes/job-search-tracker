@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MemoryDataSource } from "./dataSource/memoryDataSource";
-import { defaultSeed, emptySeed } from "./dataSource/seed";
+import { emptySeed } from "./dataSource/seed";
 import type { NewApplication, NewCompany } from "./dataSource/types";
 import { __resetTrackerDataForTests, useTrackerData } from "./useTrackerData";
 
@@ -193,33 +193,5 @@ describe("create-then-immediately-select", () => {
     const contact = await act(() => result.current.createContact({ name: "Sam", notes: "" }));
     expect(contact.id).toBeTypeOf("number");
     expect(result.current.contacts.find((c) => c.id === contact.id)?.name).toBe("Sam");
-  });
-});
-
-describe("clearAllData / resetDemoData", () => {
-  it("clearAllData empties every collection", async () => {
-    const { result } = renderHook(() => useTrackerData());
-    const company = await act(() => result.current.createCompany(makeCompany()));
-    await act(() => result.current.addApplication(makeApplication({ companyId: company.id })));
-
-    await act(() => result.current.clearAllData());
-
-    expect(result.current.apps).toEqual([]);
-    expect(result.current.companies).toEqual([]);
-    expect(result.current.tasks).toEqual([]);
-    expect(result.current.goals).toEqual({});
-  });
-
-  it("resetDemoData restores the seeded demo dataset", async () => {
-    await __resetTrackerDataForTests(new MemoryDataSource(defaultSeed));
-    const { result } = renderHook(() => useTrackerData());
-    await act(() => result.current.clearAllData());
-    expect(result.current.apps).toEqual([]);
-
-    await act(() => result.current.resetDemoData());
-
-    expect(result.current.apps).toHaveLength(defaultSeed.applications.length);
-    expect(result.current.companies).toHaveLength(defaultSeed.companies.length);
-    expect(result.current.companies.some((c) => c.name === "Northwind Co.")).toBe(true);
   });
 });
