@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "**/next-env.d.ts",
     // vitest coverage output:
     "coverage/**",
+    // esbuild output (apps/desktop/src -> apps/desktop/dist):
+    "apps/desktop/dist/**",
   ]),
 ]);
 

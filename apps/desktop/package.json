@@ -5,18 +5,30 @@
   "description": "Job Tracker desktop app (Electron + local SQLite)",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "npm run build && electron-forge start",
-    "package": "npm run build && electron-forge package",
-    "make": "npm run build && electron-forge make"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "npm run typecheck && node build.mjs",
+    "rebuild-native": "electron-rebuild -f -w better-sqlite3",
+    "start": "npm run build && npm run rebuild-native && electron-forge start",
+    "package": "npm run build && npm run rebuild-native && electron-forge package",
+    "make": "npm run build && npm run rebuild-native && electron-forge make",
+    "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.2",
     "@electron-forge/maker-zip": "^7.11.2",
     "@electron-forge/plugin-fuses": "^7.11.2",
     "@electron/fuses": "^1.8.0",
+    "@electron/rebuild": "^3.7.2",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20.19.43",
+    "@types/serve-handler": "^6.1.4",
     "electron": "^43.4.1",
-    "typescript": "^5.9.3"
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "serve-handler": "^6.1.7"
   }
 }

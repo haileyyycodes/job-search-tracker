@@ -20,8 +20,9 @@ out/
 # production
 /build
 
-# electron (tsc output for main/preload, Forge's package/make output)
+# electron (tsc output for main/preload, Forge's package/make output, dev-mode throwaway db)
 apps/desktop/dist/
+apps/desktop/dev-data/
 
 # misc
 .DS_Store
