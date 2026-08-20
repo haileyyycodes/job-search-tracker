@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Tracker
 
-## Getting Started
+Local-first job application tracker. One codebase, two runtimes:
 
-First, run the development server:
+- **`apps/desktop`** — Electron app, real SQLite (`better-sqlite3`), for daily personal use
+- **`apps/web`** — Next.js app, deployed to Vercel as a portfolio demo (in-memory SQLite via `sql.js`, resets on refresh)
+- **`packages/shared`** — the UI, business logic, and `DataSource` interface both runtimes consume unchanged
+
+See [`docs/local-first-architecture.md`](docs/local-first-architecture.md) for the full design.
+
+## Web
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Desktop app
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Develop** — rebuilds from current source every run (no hot reload; re-run after each change):
 
-## Learn More
+```bash
+cd apps/desktop && npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Install** — builds a `.dmg`/`.app` into `apps/desktop/out/`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cd apps/desktop && npm run make
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open the `.dmg`, drag `Job Tracker.app` into Applications. It's unsigned, so the first launch needs a right-click → **Open** to get past Gatekeeper.
 
-## Deploy on Vercel
+The installed app is a frozen snapshot — it does **not** auto-update. Re-run `npm run make` and reinstall to pick up new changes. Dev and installed builds share the same database (`~/Library/Application Support/Job Tracker/job-tracker.db`), so data carries over either way.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Commands
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run from the repo root, across all workspaces:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
