@@ -28,7 +28,7 @@ interface CompanyRowProps {
   company: Company;
   appCount: number;
   onSelect: (company: Company) => void;
-  onToggleTarget: (companyId: string) => void;
+  onToggleTarget: (companyId: number) => void;
   onRequestDelete: (company: Company) => void;
 }
 
@@ -112,7 +112,7 @@ interface CompaniesListViewProps {
   companies: Company[];
   apps: Application[];
   onSelect: (company: Company) => void;
-  onToggleTarget: (companyId: string) => void;
+  onToggleTarget: (companyId: number) => void;
   onRequestDelete: (company: Company) => void;
 }
 

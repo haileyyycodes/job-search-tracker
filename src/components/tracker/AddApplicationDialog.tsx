@@ -6,16 +6,17 @@ import { formatDateInput, todayFormatted } from "@/lib/date";
 import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
-import type { Application, Company, Contact } from "@/lib/types";
+import type { NewApplication, NewCompany, NewContact } from "@/lib/dataSource/types";
+import type { Company, Contact } from "@/lib/types";
 
 interface AddApplicationDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (app: Application) => void;
+  onAdd: (app: NewApplication) => void;
   contacts: Contact[];
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   companies: Company[];
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
 }
 
 const initialStatusOptions = [
@@ -49,16 +50,15 @@ export function AddApplicationDialog({
     if (!isApplicationFormValid(form, requireDateApplied)) return;
 
     const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
-    const newApp: Application = {
-      id: crypto.randomUUID(),
-      companyId: form.companyId,
+    const newApp: NewApplication = {
+      companyId: Number(form.companyId),
       role: form.role.trim(),
       dateApplied,
       link: form.link.trim(),
       jobDescription: form.description.trim(),
       referral: form.referral,
-      referredByContactId: form.referral ? form.referredByContactId || undefined : undefined,
-      resumeType: form.resumeType as Application["resumeType"],
+      referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
+      resumeType: form.resumeType as NewApplication["resumeType"],
       coverLetterSubmitted: form.coverLetterSubmitted === "yes",
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
@@ -67,11 +67,9 @@ export function AddApplicationDialog({
       city: form.city.trim() || undefined,
       state: form.state.trim() || undefined,
       status,
-      logo: companyName(form.companyId, companies).charAt(0).toUpperCase() || "?",
+      logo: companyName(form.companyId ? Number(form.companyId) : undefined, companies).charAt(0).toUpperCase() || "?",
       statusHistory:
         status === "todo" ? [{ status: "todo", at: todayFormatted() }] : [{ status: "applied", at: dateApplied }],
-      interviews: [],
-      followUps: [],
     };
 
     onAdd(newApp);

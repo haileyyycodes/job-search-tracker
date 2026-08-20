@@ -6,6 +6,7 @@ import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { ApplicationFormFields, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
+import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type { Application, Company, Contact } from "@/lib/types";
 
 interface EditApplicationDialogProps {
@@ -13,9 +14,9 @@ interface EditApplicationDialogProps {
   onClose: () => void;
   onSave: (updated: Application) => void;
   contacts: Contact[];
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   companies: Company[];
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
 }
 
 /** Only ever rendered while the edit flow is open, so form state starts fresh from `app` every time. */
@@ -29,13 +30,13 @@ export function EditApplicationDialog({
   onCreateCompany,
 }: EditApplicationDialogProps) {
   const [form, setForm] = useState<ApplicationFormValues>({
-    companyId: app.companyId,
+    companyId: String(app.companyId),
     role: app.role,
     dateApplied: toDateInputValue(app.dateApplied),
     link: app.link,
     description: app.jobDescription ?? "",
     referral: app.referral,
-    referredByContactId: app.referredByContactId ?? "",
+    referredByContactId: app.referredByContactId != null ? String(app.referredByContactId) : "",
     resumeType: app.resumeType,
     coverLetterSubmitted: app.coverLetterSubmitted ? "yes" : "no",
     notes: app.notes,
@@ -55,13 +56,13 @@ export function EditApplicationDialog({
     const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
     onSave({
       ...app,
-      companyId: form.companyId,
+      companyId: Number(form.companyId),
       role: form.role.trim(),
       dateApplied,
       link: form.link.trim(),
       jobDescription: form.description.trim(),
       referral: form.referral,
-      referredByContactId: form.referral ? form.referredByContactId || undefined : undefined,
+      referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
       resumeType: form.resumeType as Application["resumeType"],
       coverLetterSubmitted: form.coverLetterSubmitted === "yes",
       notes: form.notes.trim(),
@@ -70,7 +71,7 @@ export function EditApplicationDialog({
       workArrangement: form.workArrangement || undefined,
       city: form.city.trim() || undefined,
       state: form.state.trim() || undefined,
-      logo: companyName(form.companyId, companies).charAt(0).toUpperCase() || app.logo,
+      logo: companyName(Number(form.companyId), companies).charAt(0).toUpperCase() || app.logo,
     });
   };
 

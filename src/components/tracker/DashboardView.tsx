@@ -182,7 +182,7 @@ interface TargetCompaniesCardProps {
 function TargetCompaniesCard({ companies, contacts, apps, networkingEvents, onSelectCompany }: TargetCompaniesCardProps) {
   const targets = companies.filter((c) => c.isTarget);
 
-  const networkingEventCount = (companyId: string) => {
+  const networkingEventCount = (companyId: number) => {
     const contactIdsAtCompany = new Set(contacts.filter((c) => c.companyId === companyId).map((c) => c.id));
     return networkingEvents.filter((e) => {
       if (e.contactIds.some((id) => contactIdsAtCompany.has(id))) return true;

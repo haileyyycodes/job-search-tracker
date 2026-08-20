@@ -4,6 +4,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { Input } from "@/components/ds";
 import { isValidEmail, isValidUrl } from "@/lib/validation";
 import { CompanyPicker } from "./CompanyPicker";
+import type { NewCompany } from "@/lib/dataSource/types";
 import type { Company } from "@/lib/types";
 
 export interface ContactFormValues {
@@ -42,7 +43,7 @@ interface ContactFormFieldsProps {
   setForm: Dispatch<SetStateAction<ContactFormValues>>;
   submitted: boolean;
   companies: Company[];
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
 }
 
 /** Field set shared between AddContactDialog and EditContactDialog. */

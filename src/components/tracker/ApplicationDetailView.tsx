@@ -12,6 +12,7 @@ import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
 import { formatResponseTime } from "@/lib/responseTime";
 import { isValidUrl } from "@/lib/validation";
+import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type {
   Application,
   ApplicationStatus,
@@ -49,22 +50,22 @@ interface ApplicationDetailViewProps {
   goals: Goals;
   interviewCategories: string[];
   onCreateInterviewCategory: (category: string) => void;
-  onCreateContact: (contact: Contact) => void;
-  onCreateCompany: (company: Company) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
   onSelectContact: (contact: Contact) => void;
   onSelectCompany: (company: Company) => void;
   onBack: () => void;
-  onDismissTask: (id: string) => void;
-  onChangeStatus: (appId: string, status: ApplicationStatus, at: string) => void;
-  onLogInterview: (appId: string, interview: Omit<Interview, "id">) => void;
-  onEditInterview: (appId: string, interviewId: string, updates: Omit<Interview, "id">) => void;
-  onLogFollowUp: (appId: string, followUp: Omit<FollowUp, "id">) => void;
-  onAddTask: (appId: string, note: string, dueDate: string, reminderRule: ReminderRule) => void;
+  onDismissTask: (id: number) => void;
+  onChangeStatus: (appId: number, status: ApplicationStatus, at: string) => void;
+  onLogInterview: (appId: number, interview: Omit<Interview, "id">) => void;
+  onEditInterview: (appId: number, interviewId: number, updates: Omit<Interview, "id">) => void;
+  onLogFollowUp: (appId: number, followUp: Omit<FollowUp, "id">) => void;
+  onAddTask: (appId: number, note: string, dueDate: string, reminderRule: ReminderRule) => void;
   onEditApplication: (updated: Application) => void;
   onRequestDelete: (app: Application) => void;
-  onDeleteInterview: (appId: string, interviewId: string) => void;
-  onDeleteFollowUp: (appId: string, followUpId: string) => void;
-  onSaveFeedback: (appId: string, feedback: Feedback) => void;
+  onDeleteInterview: (appId: number, interviewId: number) => void;
+  onDeleteFollowUp: (appId: number, followUpId: number) => void;
+  onSaveFeedback: (appId: number, feedback: Feedback) => void;
 }
 
 export function ApplicationDetailView({
@@ -533,7 +534,7 @@ export function ApplicationDetailView({
         contacts={contacts}
         companies={companies}
         onCreateContact={onCreateContact}
-        defaultCompanyId={app.companyId}
+        defaultCompanyId={String(app.companyId)}
         onClose={() => setFollowUpDialogOpen(false)}
         onSave={(followUp) => {
           onLogFollowUp(app.id, followUp);

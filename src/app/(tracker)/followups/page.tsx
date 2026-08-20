@@ -16,8 +16,8 @@ export default function FollowUpsPage() {
         apps={data.apps}
         contacts={data.contacts}
         companies={data.companies}
-        onSelectApp={(a) => router.push(`/applications/${a.id}`)}
-        onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
+        onSelectApp={(a) => router.push(`/applications?id=${a.id}`)}
+        onSelectContact={(c) => router.push(`/contacts?id=${c.id}`)}
       />
     </>
   );

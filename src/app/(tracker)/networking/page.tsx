@@ -24,9 +24,9 @@ export default function NetworkingPage() {
         contacts={data.contacts}
         apps={data.apps}
         companies={data.companies}
-        onSelectApp={(a) => router.push(`/applications/${a.id}`)}
+        onSelectApp={(a) => router.push(`/applications?id=${a.id}`)}
         onDelete={data.deleteNetworkingEvent}
-        onSelectContact={(c) => router.push(`/contacts/${c.id}`)}
+        onSelectContact={(c) => router.push(`/contacts?id=${c.id}`)}
       />
     </>
   );

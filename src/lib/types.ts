@@ -26,7 +26,7 @@ export type InterviewType =
 export type InterviewStyle = "LeetCode" | "Whiteboarding" | "Mixture" | "Other";
 
 export interface Interview {
-  id: string;
+  id: number;
   type: InterviewType;
   date: string;
   style?: InterviewStyle;
@@ -36,9 +36,9 @@ export interface Interview {
 }
 
 export interface FollowUp {
-  id: string;
+  id: number;
   date: string;
-  contactId: string;
+  contactId: number;
   notes: string;
 }
 
@@ -59,7 +59,7 @@ export interface CompanyLocation {
 }
 
 export interface Company {
-  id: string;
+  id: number;
   name: string;
   isTarget: boolean;
   status: CompanyStatus;
@@ -70,14 +70,14 @@ export interface Company {
 }
 
 export interface Application {
-  id: string;
-  companyId: string;
+  id: number;
+  companyId: number;
   role: string;
   dateApplied: string;
   link: string;
   jobDescription: string;
   referral: boolean;
-  referredByContactId?: string;
+  referredByContactId?: number;
   resumeType: ResumeType;
   coverLetterSubmitted: boolean;
   notes: string;
@@ -95,23 +95,23 @@ export interface Application {
 }
 
 export interface Contact {
-  id: string;
+  id: number;
   name: string;
   email?: string;
   phone?: string;
   linkedInUrl?: string;
   website?: string;
-  companyId?: string;
+  companyId?: number;
   role?: string;
   notes: string;
 }
 
 export interface NetworkingEvent {
-  id: string;
-  contactIds: string[];
+  id: number;
+  contactIds: number[];
   type: string;
   date: string;
-  applicationId?: string;
+  applicationId?: number;
   notes: string;
 }
 
@@ -120,8 +120,8 @@ export type TaskStatus = "active" | "dismissed";
 export type ReminderRule = { type: "manual" } | { type: "days_after_applied"; days: number };
 
 export interface Task {
-  id: string;
-  applicationId: string;
+  id: number;
+  applicationId: number;
   dueDate: string;
   note: string;
   status: TaskStatus;

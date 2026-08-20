@@ -4,12 +4,12 @@ import { useState } from "react";
 import { Dialog, Button } from "@/components/ds";
 import { CompanyFormFields, emptyCompanyForm, isCompanyFormValid } from "./CompanyFormFields";
 import type { CompanyFormValues } from "./CompanyFormFields";
-import type { Company } from "@/lib/types";
+import type { NewCompany } from "@/lib/dataSource/types";
 
 interface AddCompanyDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (company: Company) => void;
+  onAdd: (company: NewCompany) => void;
 }
 
 /** Defaults to creating a target — quick-created companies (from an Application/Contact form) are not. */
@@ -28,7 +28,6 @@ export function AddCompanyDialog({ open, onClose, onAdd }: AddCompanyDialogProps
     if (!isCompanyFormValid(form)) return;
 
     onAdd({
-      id: crypto.randomUUID(),
       name: form.name.trim(),
       isTarget: form.isTarget,
       status: form.status,

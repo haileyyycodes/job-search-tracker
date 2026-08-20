@@ -29,7 +29,7 @@ interface CompanyDetailViewProps {
   onBack: () => void;
   onEditCompany: (updated: Company) => void;
   onRequestDelete: (company: Company) => void;
-  onToggleTarget: (companyId: string) => void;
+  onToggleTarget: (companyId: number) => void;
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
 }

@@ -37,8 +37,8 @@ interface TrackerUIContextValue {
   closeClearAllConfirm: () => void;
 
   networkingDialogOpen: boolean;
-  networkingDialogContactId: string | null;
-  openLogNetworkingEvent: (initialContactId?: string) => void;
+  networkingDialogContactId: number | null;
+  openLogNetworkingEvent: (initialContactId?: number) => void;
   closeLogNetworkingEvent: () => void;
 }
 
@@ -59,7 +59,7 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
   const [deleteCompanyTarget, setDeleteCompanyTarget] = useState<Company | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [clearAllConfirmOpen, setClearAllConfirmOpen] = useState(false);
-  const [networkingDialogContactId, setNetworkingDialogContactId] = useState<string | null>(null);
+  const [networkingDialogContactId, setNetworkingDialogContactId] = useState<number | null>(null);
   const [networkingDialogOpen, setNetworkingDialogOpen] = useState(false);
 
   const value: TrackerUIContextValue = {

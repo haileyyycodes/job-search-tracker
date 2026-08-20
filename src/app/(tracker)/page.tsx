@@ -25,8 +25,8 @@ export default function DashboardPage() {
         companies={data.companies}
         contacts={data.contacts}
         networkingEvents={data.networkingEvents}
-        onSaveGoals={data.setGoals}
-        onSelectCompany={(c) => router.push(`/companies/${c.id}`)}
+        onSaveGoals={data.updateGoals}
+        onSelectCompany={(c) => router.push(`/companies?id=${c.id}`)}
       />
     </>
   );

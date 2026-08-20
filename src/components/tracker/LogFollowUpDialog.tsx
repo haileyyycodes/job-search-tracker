@@ -4,12 +4,13 @@ import { useState } from "react";
 import { Dialog, Input, Button } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
 import { ContactPicker } from "./ContactPicker";
+import type { NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact, FollowUp } from "@/lib/types";
 
 interface LogFollowUpDialogProps {
   contacts: Contact[];
   companies: Company[];
-  onCreateContact: (contact: Contact) => void;
+  onCreateContact: (contact: NewContact) => Promise<Contact>;
   defaultCompanyId?: string;
   onClose: () => void;
   onSave: (followUp: Omit<FollowUp, "id">) => void;
@@ -34,7 +35,7 @@ export function LogFollowUpDialog({
     if (!contactId) return;
 
     const date = dateInput ? formatDateInput(dateInput) : todayFormatted();
-    onSave({ date, contactId, notes: notes.trim() });
+    onSave({ date, contactId: Number(contactId), notes: notes.trim() });
   };
 
   return (

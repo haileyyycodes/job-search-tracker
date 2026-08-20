@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Dialog, Button } from "@/components/ds";
 import { ContactFormFields, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
+import type { NewCompany } from "@/lib/dataSource/types";
 import type { Company, Contact } from "@/lib/types";
 
 interface EditContactDialogProps {
@@ -11,7 +12,7 @@ interface EditContactDialogProps {
   onClose: () => void;
   onSave: (updated: Contact) => void;
   companies: Company[];
-  onCreateCompany: (company: Company) => void;
+  onCreateCompany: (company: NewCompany) => Promise<Company>;
 }
 
 /** Only ever rendered while the edit flow is open, so form state starts fresh from `contact` every time. */
@@ -22,7 +23,7 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
     phone: contact.phone ?? "",
     linkedInUrl: contact.linkedInUrl ?? "",
     website: contact.website ?? "",
-    companyId: contact.companyId ?? "",
+    companyId: contact.companyId != null ? String(contact.companyId) : "",
     role: contact.role ?? "",
     notes: contact.notes,
   });
@@ -39,7 +40,7 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
       phone: form.phone.trim() || undefined,
       linkedInUrl: form.linkedInUrl.trim() || undefined,
       website: form.website.trim() || undefined,
-      companyId: form.companyId || undefined,
+      companyId: form.companyId ? Number(form.companyId) : undefined,
       role: form.role.trim() || undefined,
       notes: form.notes.trim(),
     });

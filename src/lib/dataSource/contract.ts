@@ -1,0 +1,360 @@
+import { describe, expect, it } from "vitest";
+import { RestrictedDeleteError, type DataSource } from "./types";
+
+/**
+ * Implementation-agnostic behavior contract for DataSource. Every
+ * implementation (Memory, Wasm, Electron) runs this against itself so the
+ * cascade/restrict/compose behavior stays identical everywhere, not just in
+ * whichever implementation happened to get hand-written tests first.
+ */
+export function runDataSourceContractTests(makeDataSource: () => DataSource) {
+  describe("applications", () => {
+    it("creates an application and returns it with empty interviews/followUps", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [{ status: "applied", at: "Jan 1, 2026" }],
+      });
+      expect(app.id).toBeTypeOf("number");
+      expect(app.interviews).toEqual([]);
+      expect(app.followUps).toEqual([]);
+      expect(app.statusHistory).toEqual([{ status: "applied", at: "Jan 1, 2026" }]);
+
+      const all = await ds.getApplications();
+      expect(all).toHaveLength(1);
+      expect(all[0]).toEqual(app);
+    });
+
+    it("rejects creating an application against a company that doesn't exist", async () => {
+      const ds = makeDataSource();
+      await expect(
+        ds.createApplication({
+          companyId: 9999,
+          role: "Engineer",
+          dateApplied: "",
+          link: "",
+          jobDescription: "",
+          referral: false,
+          resumeType: "tailored",
+          coverLetterSubmitted: false,
+          notes: "",
+          status: "todo",
+          logo: "A",
+          statusHistory: [],
+        })
+      ).rejects.toThrow();
+    });
+
+    it("updateApplicationStatus appends to statusHistory and updates status", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [{ status: "applied", at: "Jan 1, 2026" }],
+      });
+      await ds.updateApplicationStatus(app.id, "interviewing", "Jan 5, 2026");
+      const [updated] = await ds.getApplications();
+      expect(updated.status).toBe("interviewing");
+      expect(updated.statusHistory).toEqual([
+        { status: "applied", at: "Jan 1, 2026" },
+        { status: "interviewing", at: "Jan 5, 2026" },
+      ]);
+    });
+
+    it("deleteApplication cascades to its interviews, followUps, statusHistory, and tasks", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [{ status: "applied", at: "Jan 1, 2026" }],
+      });
+      await ds.logInterview(app.id, { type: "Recruiter Screen", date: "Jan 2, 2026", notes: "" });
+      await ds.logFollowUp(app.id, { date: "Jan 3, 2026", contactId: contact.id, notes: "" });
+      await ds.addTask({ applicationId: app.id, dueDate: "Jan 4, 2026", note: "follow up" });
+
+      await ds.deleteApplication(app.id);
+
+      expect(await ds.getApplications()).toEqual([]);
+      expect(await ds.getTasks()).toEqual([]);
+    });
+
+    it("deleteApplication sets NetworkingEvent.applicationId to undefined instead of deleting the event", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [],
+      });
+      const event = await ds.addNetworkingEvent({
+        contactIds: [contact.id],
+        type: "Coffee chat",
+        date: "Jan 2, 2026",
+        applicationId: app.id,
+        notes: "",
+      });
+
+      await ds.deleteApplication(app.id);
+
+      const [remaining] = await ds.getNetworkingEvents();
+      expect(remaining.id).toBe(event.id);
+      expect(remaining.applicationId).toBeUndefined();
+    });
+  });
+
+  describe("companies", () => {
+    it("createCompany persists its locations and getCompanies returns them", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({
+        name: "Acme",
+        isTarget: true,
+        status: "watching",
+        notes: "",
+        locations: [{ city: "Austin", state: "TX" }],
+      });
+      expect(company.locations).toEqual([{ city: "Austin", state: "TX" }]);
+      const [fetched] = await ds.getCompanies();
+      expect(fetched.locations).toEqual([{ city: "Austin", state: "TX" }]);
+    });
+
+    it("editCompany replaces the location set", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({
+        name: "Acme",
+        isTarget: false,
+        status: "researching",
+        notes: "",
+        locations: [{ city: "Austin", state: "TX" }],
+      });
+      await ds.editCompany({ ...company, locations: [{ city: "Denver", state: "CO" }] });
+      const [fetched] = await ds.getCompanies();
+      expect(fetched.locations).toEqual([{ city: "Denver", state: "CO" }]);
+    });
+
+    it("toggleTarget flips isTarget", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      await ds.toggleTarget(company.id);
+      const [fetched] = await ds.getCompanies();
+      expect(fetched.isTarget).toBe(true);
+    });
+
+    it("blocks deleting a company that still has applications pointing at it", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "todo",
+        logo: "A",
+        statusHistory: [],
+      });
+      await expect(ds.deleteCompany(company.id)).rejects.toBeInstanceOf(RestrictedDeleteError);
+      expect(await ds.getCompanies()).toHaveLength(1);
+    });
+
+    it("deleting a company with no referencing applications sets Contact.companyId to undefined", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      await ds.deleteCompany(company.id);
+      const [fetched] = await ds.getContacts();
+      expect(fetched.id).toBe(contact.id);
+      expect(fetched.companyId).toBeUndefined();
+    });
+  });
+
+  describe("contacts", () => {
+    it("blocks deleting a contact that a followUp still references", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "todo",
+        logo: "A",
+        statusHistory: [],
+      });
+      await ds.logFollowUp(app.id, { date: "Jan 1, 2026", contactId: contact.id, notes: "" });
+      await expect(ds.deleteContact(contact.id)).rejects.toBeInstanceOf(RestrictedDeleteError);
+    });
+
+    it("deleting an unreferenced contact removes it from any NetworkingEvent.contactIds", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      const event = await ds.addNetworkingEvent({ contactIds: [contact.id], type: "Coffee chat", date: "", notes: "" });
+      await ds.deleteContact(contact.id);
+      const [fetched] = await ds.getNetworkingEvents();
+      expect(fetched.id).toBe(event.id);
+      expect(fetched.contactIds).toEqual([]);
+    });
+
+    it("deleting a contact clears Application.referredByContactId instead of blocking", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "",
+        link: "",
+        jobDescription: "",
+        referral: true,
+        referredByContactId: contact.id,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "todo",
+        logo: "A",
+        statusHistory: [],
+      });
+      await ds.deleteContact(contact.id);
+      const [fetched] = await ds.getApplications();
+      expect(fetched.id).toBe(app.id);
+      expect(fetched.referredByContactId).toBeUndefined();
+    });
+  });
+
+  describe("tasks", () => {
+    it("addTask defaults status to active; dismissTask sets it to dismissed", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "todo",
+        logo: "A",
+        statusHistory: [],
+      });
+      const task = await ds.addTask({ applicationId: app.id, dueDate: "Jan 1, 2026", note: "ping them" });
+      expect(task.status).toBe("active");
+      await ds.dismissTask(task.id);
+      const [fetched] = await ds.getTasks();
+      expect(fetched.status).toBe("dismissed");
+    });
+  });
+
+  describe("networking events", () => {
+    it("addNetworkingEvent rejects a contactId that doesn't exist", async () => {
+      const ds = makeDataSource();
+      await expect(
+        ds.addNetworkingEvent({ contactIds: [9999], type: "Coffee chat", date: "", notes: "" })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("goals", () => {
+    it("getGoals starts empty and updateGoals fully replaces it", async () => {
+      const ds = makeDataSource();
+      expect(await ds.getGoals()).toEqual({});
+      await ds.updateGoals({ salaryMin: 100000 });
+      expect(await ds.getGoals()).toEqual({ salaryMin: 100000 });
+      await ds.updateGoals({ salaryMax: 150000 });
+      expect(await ds.getGoals()).toEqual({ salaryMax: 150000 });
+    });
+  });
+
+  describe("interview categories", () => {
+    it("addInterviewCategory is idempotent for an existing category", async () => {
+      const ds = makeDataSource();
+      await ds.addInterviewCategory("System Design");
+      await ds.addInterviewCategory("System Design");
+      expect(await ds.getInterviewCategories()).toEqual(["System Design"]);
+    });
+  });
+
+  describe("bulk operations", () => {
+    it("clearAllData empties every table and resets goals/categories", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "todo",
+        logo: "A",
+        statusHistory: [],
+      });
+      await ds.updateGoals({ salaryMin: 100000 });
+      await ds.addInterviewCategory("Custom");
+
+      await ds.clearAllData();
+
+      expect(await ds.getApplications()).toEqual([]);
+      expect(await ds.getCompanies()).toEqual([]);
+      expect(await ds.getGoals()).toEqual({});
+      expect(await ds.getInterviewCategories()).toEqual([]);
+    });
+  });
+}

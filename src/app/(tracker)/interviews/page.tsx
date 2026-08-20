@@ -15,7 +15,7 @@ export default function InterviewsPage() {
       <InterviewsListView
         apps={data.apps}
         companies={data.companies}
-        onSelectApp={(a) => router.push(`/applications/${a.id}`)}
+        onSelectApp={(a) => router.push(`/applications?id=${a.id}`)}
       />
     </>
   );
