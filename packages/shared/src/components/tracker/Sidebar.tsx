@@ -21,12 +21,7 @@ const items: SidebarItem[] = [
   { href: "/networking", label: "Networking", icon: "⇄" },
 ];
 
-interface SidebarProps {
-  onRequestReset: () => void;
-  onRequestClearAll: () => void;
-}
-
-export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
@@ -88,34 +83,6 @@ export function Sidebar({ onRequestReset, onRequestClearAll }: SidebarProps) {
           gap: 2,
         }}
       >
-        <button
-          onClick={onRequestReset}
-          style={{
-            background: "none",
-            border: "none",
-            textAlign: "left",
-            padding: "6px 8px",
-            font: "var(--text-caption)",
-            color: "var(--text-tertiary)",
-            cursor: "pointer",
-          }}
-        >
-          Reset demo data
-        </button>
-        <button
-          onClick={onRequestClearAll}
-          style={{
-            background: "none",
-            border: "none",
-            textAlign: "left",
-            padding: "6px 8px",
-            font: "var(--text-caption)",
-            color: "var(--text-tertiary)",
-            cursor: "pointer",
-          }}
-        >
-          Clear all data
-        </button>
         <p
           style={{
             margin: 0,

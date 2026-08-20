@@ -33,8 +33,6 @@ const ALLOWED_CHANNELS = new Set([
   "goals:update",
   "interviewCategories:list",
   "interviewCategories:add",
-  "bulk:resetToSeedData",
-  "bulk:clearAllData",
 ]);
 
 /**

@@ -400,16 +400,6 @@ const toggleTarget = (companyId: number): Promise<void> => {
   return withRollback(() => dataSource.toggleTarget(companyId));
 };
 
-const resetDemoData = async (): Promise<void> => {
-  await dataSource.resetToSeedData();
-  await loadAll();
-};
-
-const clearAllData = async (): Promise<void> => {
-  await dataSource.clearAllData();
-  await loadAll();
-};
-
 const actions = {
   addInterviewCategory,
   updateGoals,
@@ -435,8 +425,6 @@ const actions = {
   editCompany,
   deleteCompany,
   toggleTarget,
-  resetDemoData,
-  clearAllData,
 };
 
 /**

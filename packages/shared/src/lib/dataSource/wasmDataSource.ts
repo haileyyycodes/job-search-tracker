@@ -817,35 +817,4 @@ export class WasmDataSource implements DataSource {
     db.run("INSERT OR IGNORE INTO interview_categories (name) VALUES (?)", [category]);
   }
 
-  // ---- bulk ----
-
-  async resetToSeedData(): Promise<void> {
-    const db = await this.ready;
-    this.wipe(db);
-    this.loadSeed(db, defaultSeed);
-  }
-
-  async clearAllData(): Promise<void> {
-    const db = await this.ready;
-    this.wipe(db);
-  }
-
-  private wipe(db: Database): void {
-    for (const table of [
-      "networking_event_contacts",
-      "networking_events",
-      "status_history",
-      "follow_ups",
-      "interviews",
-      "tasks",
-      "applications",
-      "company_locations",
-      "contacts",
-      "companies",
-      "interview_categories",
-    ]) {
-      db.run(`DELETE FROM ${table}`);
-    }
-    db.run("UPDATE goals SET salary_min = NULL, salary_max = NULL, applications_per_week_target = NULL, target_offer_date = NULL WHERE id = 1");
-  }
 }

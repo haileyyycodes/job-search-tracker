@@ -158,11 +158,4 @@ export class ElectronDataSource implements DataSource {
   addInterviewCategory(category: string) {
     return this.invoke<void>("interviewCategories:add", category);
   }
-
-  resetToSeedData() {
-    return this.invoke<void>("bulk:resetToSeedData");
-  }
-  clearAllData() {
-    return this.invoke<void>("bulk:clearAllData");
-  }
 }

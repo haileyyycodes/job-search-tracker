@@ -110,10 +110,8 @@ export class MemoryDataSource implements DataSource {
   private networkingEventContacts = new Table<StoredNetworkingEventContact>();
   private goals: DsGoals = {};
   private interviewCategories: string[] = [];
-  private seed: Seed;
 
   constructor(seed: Seed = defaultSeed) {
-    this.seed = seed;
     this.loadSeed(seed);
   }
 
@@ -379,32 +377,6 @@ export class MemoryDataSource implements DataSource {
 
   async addInterviewCategory(category: string): Promise<void> {
     if (!this.interviewCategories.includes(category)) this.interviewCategories.push(category);
-  }
-
-  // ---- bulk ----
-
-  async resetToSeedData(): Promise<void> {
-    this.clearTables();
-    this.loadSeed(this.seed);
-  }
-
-  async clearAllData(): Promise<void> {
-    this.clearTables();
-    this.goals = {};
-    this.interviewCategories = [];
-  }
-
-  private clearTables(): void {
-    this.applications.clear();
-    this.statusHistory.clear();
-    this.interviews.clear();
-    this.followUps.clear();
-    this.tasks.clear();
-    this.companies.clear();
-    this.companyLocations.clear();
-    this.contacts.clear();
-    this.networkingEvents.clear();
-    this.networkingEventContacts.clear();
   }
 
   private loadSeed(seed: Seed): void {

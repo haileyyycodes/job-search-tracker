@@ -5,8 +5,6 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/tracker/Sidebar";
 import { AddApplicationDialog } from "@/components/tracker/AddApplicationDialog";
 import { ConfirmDeleteApplicationDialog } from "@/components/tracker/ConfirmDeleteApplicationDialog";
-import { ConfirmResetDemoDataDialog } from "@/components/tracker/ConfirmResetDemoDataDialog";
-import { ConfirmClearAllDataDialog } from "@/components/tracker/ConfirmClearAllDataDialog";
 import { AddContactDialog } from "@/components/tracker/AddContactDialog";
 import { ConfirmDeleteContactDialog } from "@/components/tracker/ConfirmDeleteContactDialog";
 import { AddCompanyDialog } from "@/components/tracker/AddCompanyDialog";
@@ -56,21 +54,9 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
     ui.closeDeleteCompany();
   };
 
-  const resetDemoData = () => {
-    data.resetDemoData();
-    router.push("/");
-    ui.closeResetConfirm();
-  };
-
-  const clearAllData = () => {
-    data.clearAllData();
-    router.push("/");
-    ui.closeClearAllConfirm();
-  };
-
   return (
     <div style={{ display: "flex", height: "100%" }}>
-      <Sidebar onRequestReset={ui.requestReset} onRequestClearAll={ui.requestClearAll} />
+      <Sidebar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>{children}</div>
       <AddApplicationDialog
         open={ui.addOpen}
@@ -89,12 +75,6 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
           onClose={ui.closeDeleteApplication}
           onConfirm={confirmDeleteApplication}
         />
-      )}
-      {ui.resetConfirmOpen && (
-        <ConfirmResetDemoDataDialog onClose={ui.closeResetConfirm} onConfirm={resetDemoData} />
-      )}
-      {ui.clearAllConfirmOpen && (
-        <ConfirmClearAllDataDialog onClose={ui.closeClearAllConfirm} onConfirm={clearAllData} />
       )}
       <AddContactDialog
         open={ui.addContactOpen}
