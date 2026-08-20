@@ -6,7 +6,8 @@
   "main": "dist/main.js",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "build": "npm run typecheck && node build.mjs",
+    "build:web-export": "cd ../.. && npm run build:electron --workspace=apps/web",
+    "build": "npm run typecheck && npm run build:web-export && node build.mjs",
     "rebuild-native": "electron-rebuild -f -w better-sqlite3",
     "start": "npm run build && npm run rebuild-native && electron-forge start",
     "package": "npm run build && npm run rebuild-native && electron-forge package",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.2",
+    "@electron-forge/maker-dmg": "^7.11.2",
     "@electron-forge/maker-zip": "^7.11.2",
     "@electron-forge/plugin-fuses": "^7.11.2",
     "@electron/fuses": "^1.8.0",

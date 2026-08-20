@@ -6,11 +6,20 @@ import serveHandler from "serve-handler";
 import { openDatabase } from "./db/schema";
 import { registerIpcHandlers } from "./db/ipcHandlers";
 
+// Electron otherwise falls back to package.json's "name" for app.getName() (and by
+// extension the userData directory), which for this scoped workspace package is
+// "@job-tracker/desktop" — literally a folder named "@job-tracker" would be created
+// under Application Support. Set explicitly, before app is ready, so it takes effect
+// everywhere (userData path, window title bar default, etc).
+app.setName("Job Tracker");
+
 // apps/web/src/app builds its static export to apps/web/out (see apps/web's
-// build:electron script). Not copied into apps/desktop's own directory yet —
-// Phase 6 (packaging) decides how that lands in a real packaged app; for now
-// this resolves the monorepo-relative path directly.
-const STATIC_EXPORT_DIR = path.join(__dirname, "../../web/out");
+// build:electron script). forge.config.ts's copyWebExport hook copies it to
+// <packaged app>/Resources/app.asar/web-export for packaged builds; in dev
+// (unpackaged, running straight from the monorepo) it's read from apps/web/out directly.
+const STATIC_EXPORT_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, "app.asar", "web-export")
+  : path.join(__dirname, "../../web/out");
 
 // Root-relative asset paths (/_next/...) that Next's static export emits don't
 // resolve correctly under file://, and client-side routing needs a real origin

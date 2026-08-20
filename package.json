@@ -6,6 +6,9 @@
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "extract-zip": "file:./tools/extract-zip-shim"
+  },
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
