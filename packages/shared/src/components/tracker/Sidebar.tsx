@@ -21,9 +21,14 @@ const items: SidebarItem[] = [
   { href: "/networking", label: "Networking", icon: "⇄" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  userName: string;
+}
+
+export function Sidebar({ userName }: SidebarProps) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const trimmedName = userName.trim();
 
   return (
     <div
@@ -83,21 +88,9 @@ export function Sidebar() {
           gap: 2,
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            padding: "8px 8px 0",
-            font: "var(--text-caption)",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          Your data is stored only in this browser — nothing is sent to a server.
-        </p>
         <div
           style={{
-            marginTop: 8,
-            padding: "12px 8px 0",
-            borderTop: "1px solid var(--border-default)",
+            padding: "8px 8px 0",
             display: "flex",
             alignItems: "center",
             gap: 8,
@@ -114,12 +107,42 @@ export function Sidebar() {
               alignItems: "center",
               justifyContent: "center",
               font: "700 12px var(--font-display)",
+              flexShrink: 0,
             }}
           >
-            H
+            {trimmedName ? trimmedName[0].toUpperCase() : "?"}
           </div>
-          <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>haileyyycodes</span>
+          <span
+            style={{
+              font: "var(--text-body-s)",
+              color: trimmedName ? "var(--text-secondary)" : "var(--text-tertiary)",
+              fontStyle: trimmedName ? "normal" : "italic",
+            }}
+          >
+            {trimmedName || "Add your name"}
+          </span>
         </div>
+        <Link
+          href="/settings"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 2,
+            padding: "9px 10px",
+            border: "none",
+            borderRadius: "var(--radius-s)",
+            textAlign: "left",
+            background: isActive("/settings") ? "var(--blue-100)" : "transparent",
+            color: isActive("/settings") ? "var(--blue-700)" : "var(--text-secondary)",
+            font: "var(--text-body-m)",
+            fontWeight: isActive("/settings") ? 700 : 400,
+            textDecoration: "none",
+          }}
+        >
+          <span style={{ width: 16, textAlign: "center" }}>⚙</span>
+          Settings
+        </Link>
       </div>
     </div>
   );

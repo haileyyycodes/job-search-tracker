@@ -126,5 +126,11 @@ CREATE TABLE interview_categories (
   name TEXT NOT NULL UNIQUE
 );
 
+CREATE TABLE user_profile (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  name TEXT NOT NULL
+);
+
 INSERT INTO goals (id) VALUES (1);
+INSERT INTO user_profile (id, name) VALUES (1, '');
 `;

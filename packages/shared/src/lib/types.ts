@@ -134,3 +134,7 @@ export interface Goals {
   applicationsPerWeekTarget?: number;
   targetOfferDate?: string;
 }
+
+export interface UserProfile {
+  name: string;
+}

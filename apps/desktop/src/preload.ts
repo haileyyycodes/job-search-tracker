@@ -31,6 +31,8 @@ const ALLOWED_CHANNELS = new Set([
   "networkingEvents:delete",
   "goals:get",
   "goals:update",
+  "userProfile:get",
+  "userProfile:update",
   "interviewCategories:list",
   "interviewCategories:add",
 ]);

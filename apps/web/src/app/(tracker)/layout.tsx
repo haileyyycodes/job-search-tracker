@@ -10,6 +10,7 @@ import { ConfirmDeleteContactDialog } from "@/components/tracker/ConfirmDeleteCo
 import { AddCompanyDialog } from "@/components/tracker/AddCompanyDialog";
 import { ConfirmDeleteCompanyDialog } from "@/components/tracker/ConfirmDeleteCompanyDialog";
 import { LogNetworkingEventDialog } from "@/components/tracker/LogNetworkingEventDialog";
+import { GoalsEditDialog } from "@/components/tracker/GoalsEditDialog";
 import { useTrackerData } from "@/lib/useTrackerData";
 import { TrackerUIProvider, useTrackerUI } from "@/lib/TrackerUIContext";
 
@@ -56,7 +57,7 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ display: "flex", height: "100%" }}>
-      <Sidebar />
+      <Sidebar userName={data.userProfile.name} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>{children}</div>
       <AddApplicationDialog
         open={ui.addOpen}
@@ -100,6 +101,16 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
           contacts={data.contacts}
           onClose={ui.closeDeleteCompany}
           onConfirm={confirmDeleteCompany}
+        />
+      )}
+      {ui.goalsDialogOpen && (
+        <GoalsEditDialog
+          goals={data.goals}
+          onClose={ui.closeGoalsDialog}
+          onSave={(goals) => {
+            data.updateGoals(goals);
+            ui.closeGoalsDialog();
+          }}
         />
       )}
       {ui.networkingDialogOpen && (

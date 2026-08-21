@@ -13,6 +13,7 @@ import {
   type DsInterview,
   type DsNetworkingEvent,
   type DsTask,
+  type DsUserProfile,
   type NewApplication,
   type NewCompany,
   type NewContact,
@@ -141,6 +142,9 @@ interface GoalsRow {
   salary_max: number | null;
   applications_per_week_target: number | null;
   target_offer_date: string | null;
+}
+interface UserProfileRow {
+  name: string;
 }
 
 // ---- row -> Ds* mappers ----
@@ -406,6 +410,8 @@ export class WasmDataSource implements DataSource {
     for (const category of seed.interviewCategories) {
       db.run("INSERT INTO interview_categories (name) VALUES (?)", [category]);
     }
+
+    db.run("UPDATE user_profile SET name = ? WHERE id = 1", [seed.userProfile.name]);
   }
 
   // ---- composition helpers ----
@@ -803,6 +809,19 @@ export class WasmDataSource implements DataSource {
       "UPDATE goals SET salary_min = ?, salary_max = ?, applications_per_week_target = ?, target_offer_date = ? WHERE id = 1",
       [goals.salaryMin ?? null, goals.salaryMax ?? null, goals.applicationsPerWeekTarget ?? null, goals.targetOfferDate ?? null]
     );
+  }
+
+  // ---- user profile ----
+
+  async getUserProfile(): Promise<DsUserProfile> {
+    const db = await this.ready;
+    const row = one<UserProfileRow>(db, "SELECT name FROM user_profile WHERE id = 1")!;
+    return { name: row.name };
+  }
+
+  async updateUserProfile(profile: DsUserProfile): Promise<void> {
+    const db = await this.ready;
+    db.run("UPDATE user_profile SET name = ? WHERE id = 1", [profile.name]);
   }
 
   // ---- interview categories ----

@@ -12,6 +12,7 @@ import {
   type DsInterview,
   type DsNetworkingEvent,
   type DsTask,
+  type DsUserProfile,
   type NewApplication,
   type NewCompany,
   type NewContact,
@@ -129,6 +130,9 @@ interface GoalsRow {
   salary_max: number | null;
   applications_per_week_target: number | null;
   target_offer_date: string | null;
+}
+interface UserProfileRow {
+  name: string;
 }
 
 // ---- row -> Ds* mappers (identical to WasmDataSource's — same normalized shape) ----
@@ -605,6 +609,17 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
       ).run(goals.salaryMin ?? null, goals.salaryMax ?? null, goals.applicationsPerWeekTarget ?? null, goals.targetOfferDate ?? null);
     },
 
+    // ---- user profile ----
+
+    async getUserProfile() {
+      const row = db.prepare<[], UserProfileRow>("SELECT name FROM user_profile WHERE id = 1").get()!;
+      return { name: row.name };
+    },
+
+    async updateUserProfile(profile: DsUserProfile) {
+      db.prepare("UPDATE user_profile SET name = ? WHERE id = 1").run(profile.name);
+    },
+
     // ---- interview categories ----
 
     async getInterviewCategories() {
@@ -666,6 +681,9 @@ export function registerIpcHandlers(db: Database.Database): void {
 
     "goals:get": () => ds.getGoals(),
     "goals:update": (goals) => ds.updateGoals(goals as DsGoals),
+
+    "userProfile:get": () => ds.getUserProfile(),
+    "userProfile:update": (profile) => ds.updateUserProfile(profile as DsUserProfile),
 
     "interviewCategories:list": () => ds.getInterviewCategories(),
     "interviewCategories:add": (category) => ds.addInterviewCategory(category as string),
