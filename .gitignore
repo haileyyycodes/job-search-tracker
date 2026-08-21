@@ -20,7 +20,9 @@ out/
 # production
 /build
 
-# electron (tsc output for main/preload, Forge's package/make output, dev-mode throwaway db)
+# electron (tsc output for main/preload, Forge's package/make output; dev-data/ is a
+# leftover local db from before dev mode used the same file as the packaged app — no
+# code writes there anymore, but never let a stray db with real data get committed)
 apps/desktop/dist/
 apps/desktop/dev-data/
 

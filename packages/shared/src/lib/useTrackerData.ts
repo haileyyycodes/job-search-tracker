@@ -25,12 +25,14 @@ import type {
   NetworkingEvent,
   ReminderRule,
   Task,
+  UserProfile,
 } from "./types";
 
 interface TrackerState {
   apps: Application[];
   tasks: Task[];
   goals: Goals;
+  userProfile: UserProfile;
   contacts: Contact[];
   networkingEvents: NetworkingEvent[];
   companies: Company[];
@@ -41,6 +43,7 @@ const emptyState: TrackerState = {
   apps: [],
   tasks: [],
   goals: {},
+  userProfile: { name: "" },
   contacts: [],
   networkingEvents: [],
   companies: [],
@@ -79,16 +82,18 @@ function allocTempId(): number {
 }
 
 async function loadAll(): Promise<void> {
-  const [apps, tasks, goals, contacts, networkingEvents, companies, interviewCategories] = await Promise.all([
-    dataSource.getApplications(),
-    dataSource.getTasks(),
-    dataSource.getGoals(),
-    dataSource.getContacts(),
-    dataSource.getNetworkingEvents(),
-    dataSource.getCompanies(),
-    dataSource.getInterviewCategories(),
-  ]);
-  setState({ apps, tasks, goals, contacts, networkingEvents, companies, interviewCategories });
+  const [apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories] =
+    await Promise.all([
+      dataSource.getApplications(),
+      dataSource.getTasks(),
+      dataSource.getGoals(),
+      dataSource.getUserProfile(),
+      dataSource.getContacts(),
+      dataSource.getNetworkingEvents(),
+      dataSource.getCompanies(),
+      dataSource.getInterviewCategories(),
+    ]);
+  setState({ apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories });
 }
 
 function ensureLoaded(): Promise<void> {
@@ -173,6 +178,11 @@ const addInterviewCategory = (category: string): Promise<void> => {
 const updateGoals = (goals: Goals): Promise<void> => {
   setState((prev) => ({ ...prev, goals }));
   return withRollback(() => dataSource.updateGoals(goals));
+};
+
+const updateUserProfile = (userProfile: UserProfile): Promise<void> => {
+  setState((prev) => ({ ...prev, userProfile }));
+  return withRollback(() => dataSource.updateUserProfile(userProfile));
 };
 
 const dismissTask = (id: number): Promise<void> => {
@@ -403,6 +413,7 @@ const toggleTarget = (companyId: number): Promise<void> => {
 const actions = {
   addInterviewCategory,
   updateGoals,
+  updateUserProfile,
   dismissTask,
   addApplication,
   changeApplicationStatus,

@@ -9,6 +9,7 @@ import type {
   ResumeType,
   StatusHistoryEntry,
   TaskStatus,
+  UserProfile,
   WorkArrangement,
 } from "@/lib/types";
 
@@ -89,6 +90,7 @@ export interface Seed {
     notes: string;
   }>;
   goals: Goals;
+  userProfile: UserProfile;
   interviewCategories: string[];
 }
 
@@ -100,6 +102,7 @@ export const emptySeed: Seed = {
   tasks: [],
   networkingEvents: [],
   goals: {},
+  userProfile: { name: "" },
   interviewCategories: [],
 };
 
@@ -213,5 +216,6 @@ export const defaultSeed: Seed = {
     applicationsPerWeekTarget: 5,
     targetOfferDate: "Aug 15, 2026",
   },
+  userProfile: { name: "haileyyycodes" },
   interviewCategories: ["Behavioral", "DSA/Leetcode", "System Design", "AI/ML", "Take-home/Practical", "Other"],
 };

@@ -36,4 +36,26 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     expect(companies).toEqual([company]);
     second.close();
   });
+
+  it("adds tables introduced after a DB file was created, without touching existing data", async () => {
+    const dbPath = `${process.env.TMPDIR ?? "/tmp"}/job-tracker-electron-migrate-${Date.now()}.db`;
+
+    // Simulate a DB file created before `user_profile` existed: create it, then drop the
+    // table a later schema change added, exactly as if that table had never been there.
+    const first = openDatabase(dbPath);
+    const company = await createSqliteDataSource(first).createCompany({
+      name: "Acme",
+      isTarget: false,
+      status: "researching",
+      notes: "",
+    });
+    first.exec("DROP TABLE user_profile;");
+    first.close();
+
+    const second = openDatabase(dbPath);
+    const secondDs = createSqliteDataSource(second);
+    expect(await secondDs.getCompanies()).toEqual([company]);
+    expect(await secondDs.getUserProfile()).toEqual({ name: "" });
+    second.close();
+  });
 });

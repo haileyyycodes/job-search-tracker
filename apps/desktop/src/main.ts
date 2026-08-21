@@ -49,9 +49,9 @@ function startStaticServer(): Promise<{ server: Server; port: number }> {
 }
 
 function getDbPath(): string {
-  // Dev mode: a throwaway file next to the repo, never your real data — same
-  // code path as production, just a different path, per the architecture doc.
-  if (!app.isPackaged) return path.join(__dirname, "../dev-data/job-tracker-dev.db");
+  // Same file in dev and packaged builds — app.setName() above makes
+  // app.getPath("userData") resolve identically either way, so there's only
+  // ever one real database on disk instead of two that silently diverge.
   return path.join(app.getPath("userData"), "job-tracker.db");
 }
 

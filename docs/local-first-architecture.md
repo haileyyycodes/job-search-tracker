@@ -196,7 +196,7 @@ Static export requires every dynamic route segment (`applications/[id]`, `compan
 
 - Renderer process cannot touch the filesystem directly — SQL runs in the **main process** via `better-sqlite3`.
 - Renderer's `ElectronDataSource` is a thin wrapper: every method calls `ipcRenderer.invoke('applications:list')` etc. It never imports `better-sqlite3` directly, so the native module never leaks into any bundle the web build touches.
-- Dev mode: same code path, just point at a throwaway local `.db` file instead of your real one — not a new branch, a different path passed at startup.
+- Dev mode: same code path, same database file as the packaged build (`app.getPath("userData")/job-tracker.db`) — no separate dev path, so there's only ever one real database on disk.
 - First launch: schema created, database starts **empty** (no seed data — this is your real job search).
 
 **To-do:**

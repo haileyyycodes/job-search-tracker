@@ -6,7 +6,6 @@ import { statusOrder } from "@/lib/data";
 import { companyStatusLabels } from "@/lib/companies";
 import { bucketByCalendarWeek, daysUntil, isInCurrentCalendarMonth, isInCurrentCalendarWeek } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
-import { GoalsEditDialog } from "./GoalsEditDialog";
 import { InterviewStatsView } from "./InterviewStatsView";
 import { TargetStar } from "./TargetStar";
 import type { Application, Company, CompanyStatus, Contact, Goals, NetworkingEvent } from "@/lib/types";
@@ -257,7 +256,7 @@ interface DashboardViewProps {
   companies: Company[];
   contacts: Contact[];
   networkingEvents: NetworkingEvent[];
-  onSaveGoals: (goals: Goals) => void;
+  onOpenGoals: () => void;
   onSelectCompany: (company: Company) => void;
 }
 
@@ -265,8 +264,7 @@ const reachedInterview = (a: Application) => a.statusHistory.some((s) => s.statu
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
-export function DashboardView({ apps, goals, companies, contacts, networkingEvents, onSaveGoals, onSelectCompany }: DashboardViewProps) {
-  const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
+export function DashboardView({ apps, goals, companies, contacts, networkingEvents, onOpenGoals, onSelectCompany }: DashboardViewProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const total = apps.length;
   const todoCount = apps.filter((a) => a.status === "todo").length;
@@ -308,7 +306,7 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Goals</div>
-          <Button variant="secondary" size="sm" onClick={() => setGoalsDialogOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={onOpenGoals}>
             Edit goals
           </Button>
         </div>
@@ -499,16 +497,6 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
         </Card>
       </div>
     </div>
-    )}
-    {goalsDialogOpen && (
-      <GoalsEditDialog
-        goals={goals}
-        onClose={() => setGoalsDialogOpen(false)}
-        onSave={(updated) => {
-          onSaveGoals(updated);
-          setGoalsDialogOpen(false);
-        }}
-      />
     )}
     </>
   );

@@ -319,6 +319,15 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
     });
   });
 
+  describe("user profile", () => {
+    it("getUserProfile starts with an empty name and updateUserProfile replaces it", async () => {
+      const ds = makeDataSource();
+      expect(await ds.getUserProfile()).toEqual({ name: "" });
+      await ds.updateUserProfile({ name: "Sam" });
+      expect(await ds.getUserProfile()).toEqual({ name: "Sam" });
+    });
+  });
+
   describe("interview categories", () => {
     it("addInterviewCategory is idempotent for an existing category", async () => {
       const ds = makeDataSource();

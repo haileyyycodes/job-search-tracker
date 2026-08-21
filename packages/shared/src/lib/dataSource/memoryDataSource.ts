@@ -10,6 +10,7 @@ import {
   type DsInterview,
   type DsNetworkingEvent,
   type DsTask,
+  type DsUserProfile,
   type NewApplication,
   type NewCompany,
   type NewContact,
@@ -109,6 +110,7 @@ export class MemoryDataSource implements DataSource {
   private networkingEvents = new Table<StoredNetworkingEvent>();
   private networkingEventContacts = new Table<StoredNetworkingEventContact>();
   private goals: DsGoals = {};
+  private userProfile: DsUserProfile = { name: "" };
   private interviewCategories: string[] = [];
 
   constructor(seed: Seed = defaultSeed) {
@@ -369,6 +371,16 @@ export class MemoryDataSource implements DataSource {
     this.goals = { ...goals };
   }
 
+  // ---- user profile ----
+
+  async getUserProfile(): Promise<DsUserProfile> {
+    return { ...this.userProfile };
+  }
+
+  async updateUserProfile(profile: DsUserProfile): Promise<void> {
+    this.userProfile = { ...profile };
+  }
+
   // ---- interview categories ----
 
   async getInterviewCategories(): Promise<string[]> {
@@ -434,6 +446,7 @@ export class MemoryDataSource implements DataSource {
     }
 
     this.goals = { ...seed.goals };
+    this.userProfile = { ...seed.userProfile };
     this.interviewCategories = [...seed.interviewCategories];
   }
 }

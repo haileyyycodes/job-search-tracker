@@ -28,6 +28,10 @@ interface TrackerUIContextValue {
   requestDeleteCompany: (company: Company) => void;
   closeDeleteCompany: () => void;
 
+  goalsDialogOpen: boolean;
+  openGoalsDialog: () => void;
+  closeGoalsDialog: () => void;
+
   networkingDialogOpen: boolean;
   networkingDialogContactId: number | null;
   openLogNetworkingEvent: (initialContactId?: number) => void;
@@ -49,6 +53,7 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
   const [deleteTarget, setDeleteTarget] = useState<Application | null>(null);
   const [deleteContactTarget, setDeleteContactTarget] = useState<Contact | null>(null);
   const [deleteCompanyTarget, setDeleteCompanyTarget] = useState<Company | null>(null);
+  const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const [networkingDialogContactId, setNetworkingDialogContactId] = useState<number | null>(null);
   const [networkingDialogOpen, setNetworkingDialogOpen] = useState(false);
 
@@ -76,6 +81,10 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
     deleteCompanyTarget,
     requestDeleteCompany: setDeleteCompanyTarget,
     closeDeleteCompany: () => setDeleteCompanyTarget(null),
+
+    goalsDialogOpen,
+    openGoalsDialog: () => setGoalsDialogOpen(true),
+    closeGoalsDialog: () => setGoalsDialogOpen(false),
 
     networkingDialogOpen,
     networkingDialogContactId,

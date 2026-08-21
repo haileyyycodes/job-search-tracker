@@ -19,7 +19,32 @@ export function openDatabase(dbPath: string): Database.Database {
   const hasSchema = db
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'applications'")
     .get();
-  if (!hasSchema) db.exec(SCHEMA_SQL);
+  if (!hasSchema) {
+    db.exec(SCHEMA_SQL);
+  } else {
+    migrate(db);
+  }
 
   return db;
+}
+
+/**
+ * Additive, idempotent fixups for databases created before a given table
+ * existed. `openDatabase` only runs the full SCHEMA_SQL once (on a brand-new
+ * file), so any table added later needs a matching check here or every
+ * pre-existing local DB breaks the moment code starts calling it.
+ */
+function migrate(db: Database.Database): void {
+  const hasUserProfile = db
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'user_profile'")
+    .get();
+  if (!hasUserProfile) {
+    db.exec(`
+      CREATE TABLE user_profile (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        name TEXT NOT NULL
+      );
+      INSERT INTO user_profile (id, name) VALUES (1, '');
+    `);
+  }
 }

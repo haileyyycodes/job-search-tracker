@@ -10,6 +10,7 @@ import {
   type DsInterview,
   type DsNetworkingEvent,
   type DsTask,
+  type DsUserProfile,
   type NewApplication,
   type NewCompany,
   type NewContact,
@@ -150,6 +151,13 @@ export class ElectronDataSource implements DataSource {
   }
   updateGoals(goals: DsGoals) {
     return this.invoke<void>("goals:update", goals);
+  }
+
+  getUserProfile() {
+    return this.invoke<DsUserProfile>("userProfile:get");
+  }
+  updateUserProfile(profile: DsUserProfile) {
+    return this.invoke<void>("userProfile:update", profile);
   }
 
   getInterviewCategories() {

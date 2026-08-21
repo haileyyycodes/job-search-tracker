@@ -9,6 +9,7 @@ import type {
   ResumeType,
   StatusHistoryEntry,
   TaskStatus,
+  UserProfile,
   WorkArrangement,
 } from "@/lib/types";
 
@@ -109,6 +110,7 @@ export interface DsNetworkingEvent {
 }
 
 export type DsGoals = Goals;
+export type DsUserProfile = UserProfile;
 
 export type NewApplication = Omit<DsApplication, "id" | "interviews" | "followUps">;
 export type NewCompany = Omit<DsCompany, "id" | "locations"> & { locations?: DsCompanyLocation[] };
@@ -168,6 +170,9 @@ export interface DataSource {
 
   getGoals(): Promise<DsGoals>;
   updateGoals(goals: DsGoals): Promise<void>;
+
+  getUserProfile(): Promise<DsUserProfile>;
+  updateUserProfile(profile: DsUserProfile): Promise<void>;
 
   getInterviewCategories(): Promise<string[]>;
   addInterviewCategory(category: string): Promise<void>;
