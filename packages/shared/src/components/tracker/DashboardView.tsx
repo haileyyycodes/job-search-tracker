@@ -436,7 +436,6 @@ interface DashboardViewProps {
 
 export function DashboardView({ apps, companies, networkingEvents, onSelectApp, onViewAllApplications }: DashboardViewProps) {
   const total = apps.length;
-  const todoCount = apps.filter((a) => a.status === "todo").length;
   const submittedApps = apps.filter((a) => a.status !== "todo");
   const tailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "tailored"));
   const untailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "untailored"));
@@ -496,12 +495,6 @@ export function DashboardView({ apps, companies, networkingEvents, onSelectApp, 
             value={<SplitRate a={withCoverLetterRate} b={withoutCoverLetterRate} />}
             bar={<SplitRateBar a={withCoverLetterRate} b={withoutCoverLetterRate} />}
             sub="With vs. without cover letter"
-          />
-          <StatCard
-            label="Applications to submit"
-            value={<span style={{ color: todoCount === 0 ? "var(--text-tertiary)" : "inherit" }}>{todoCount}</span>}
-            bar={<div style={{ height: 6, borderRadius: "var(--radius-pill)", background: "var(--bg-surface-hover)" }} />}
-            sub="Queued and ready to go"
           />
           <StatCard
             label="Avg. response time"
