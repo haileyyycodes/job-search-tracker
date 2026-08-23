@@ -49,7 +49,7 @@ export interface Feedback {
 
 export type WorkArrangement = "onsite" | "remote" | "hybrid";
 
-export type ResumeType = "spray_and_pray" | "tailored";
+export type ResumeType = "untailored" | "tailored";
 
 export type CompanyStatus = "researching" | "watching" | "applied" | "not_pursuing";
 

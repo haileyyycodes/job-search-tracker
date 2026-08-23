@@ -60,7 +60,7 @@ const feedbackSchema = z.object({
 
 const workArrangementSchema = z.enum(["onsite", "remote", "hybrid"]);
 
-const resumeTypeSchema = z.enum(["spray_and_pray", "tailored"]);
+const resumeTypeSchema = z.enum(["untailored", "tailored"]);
 
 export const applicationSchema: z.ZodType<Application> = z.object({
   id: z.number(),

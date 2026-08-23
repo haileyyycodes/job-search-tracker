@@ -179,7 +179,7 @@ export const defaultSeed: Seed = {
       link: "",
       jobDescription: "",
       referral: false,
-      resumeType: "spray_and_pray",
+      resumeType: "untailored",
       coverLetterSubmitted: false,
       notes: "",
       status: "applied",
