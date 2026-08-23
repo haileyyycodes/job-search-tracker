@@ -278,7 +278,7 @@ function ChannelBreakdown({ channelBreakdown }: { channelBreakdown: ChannelBreak
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <h2 style={{ ...sectionHeadingStyle, marginBottom: 20 }}>Channel breakdown</h2>
-      <div style={{ flex: 1, display: "flex" }}>
+      <div style={{ flex: 1, display: "grid" }}>
         <Card padding="lg">
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {channelBreakdown.map((row) => {
@@ -325,7 +325,7 @@ function VelocityChart({ buckets }: VelocityChartProps) {
         <h2 style={sectionHeadingStyle}>Application velocity</h2>
         <span style={{ ...eyebrowStyle, color: "var(--text-tertiary)" }}>Applications per week</span>
       </div>
-      <div style={{ flex: 1, display: "flex" }}>
+      <div style={{ flex: 1, display: "grid" }}>
         <Card padding="lg">
           <div style={{ position: "relative", height: chartHeight }}>
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
