@@ -276,31 +276,33 @@ function ChannelBar({ row }: { row: ChannelBreakdownRow }) {
 
 function ChannelBreakdown({ channelBreakdown }: { channelBreakdown: ChannelBreakdownRow[] }) {
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <h2 style={{ ...sectionHeadingStyle, marginBottom: 20 }}>Channel breakdown</h2>
-      <Card padding="lg">
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {channelBreakdown.map((row) => {
-            const textColor = row.tier ? TIER_BAR_STYLE[row.tier].text : "var(--text-tertiary)";
-            return (
-              <div key={row.channel}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ font: "600 14px var(--font-body)", color: row.count === 0 ? "var(--text-secondary)" : "var(--text-primary)" }}>
-                    {channelLabels[row.channel]}
-                  </span>
-                  <span style={{ font: "13px var(--font-body)", color: "var(--text-secondary)" }}>
-                    {row.count} application{row.count === 1 ? "" : "s"} ·{" "}
-                    <strong style={{ color: textColor, fontWeight: 700 }}>
-                      {row.interviewRatio != null ? `${row.interviewRatio}% interview rate` : "no data"}
-                    </strong>
-                  </span>
+      <div style={{ flex: 1, display: "flex" }}>
+        <Card padding="lg">
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            {channelBreakdown.map((row) => {
+              const textColor = row.tier ? TIER_BAR_STYLE[row.tier].text : "var(--text-tertiary)";
+              return (
+                <div key={row.channel}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ font: "600 14px var(--font-body)", color: row.count === 0 ? "var(--text-secondary)" : "var(--text-primary)" }}>
+                      {channelLabels[row.channel]}
+                    </span>
+                    <span style={{ font: "13px var(--font-body)", color: "var(--text-secondary)" }}>
+                      {row.count} application{row.count === 1 ? "" : "s"} ·{" "}
+                      <strong style={{ color: textColor, fontWeight: 700 }}>
+                        {row.interviewRatio != null ? `${row.interviewRatio}% interview rate` : "no data"}
+                      </strong>
+                    </span>
+                  </div>
+                  <ChannelBar row={row} />
                 </div>
-                <ChannelBar row={row} />
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -318,55 +320,59 @@ function VelocityChart({ buckets }: VelocityChartProps) {
   const maxCount = Math.max(1, ...buckets.map((b) => b.count));
 
   return (
-    <Card padding="lg">
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
         <h2 style={sectionHeadingStyle}>Application velocity</h2>
         <span style={{ ...eyebrowStyle, color: "var(--text-tertiary)" }}>Applications per week</span>
       </div>
-      <div style={{ position: "relative", height: chartHeight }}>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <div style={{ height: 1, background: "var(--border-default)" }} />
-          <div style={{ height: 1, background: "var(--ink-100)" }} />
-          <div style={{ height: 1, background: "var(--ink-100)" }} />
-          <div style={{ height: 1, background: "var(--border-default)" }} />
-        </div>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
-          {buckets.map((b, i) => {
-            const pct = Math.max((b.count / maxCount) * 100, b.count > 0 ? 4 : 0);
-            return (
-              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, height: "100%", justifyContent: "flex-end" }}>
-                {b.count > 0 && <span style={{ font: "13px var(--font-mono)", color: "var(--blue-700)" }}>{b.count}</span>}
-                <div
-                  style={{
-                    width: "100%",
-                    maxWidth: 38,
-                    height: `${pct}%`,
-                    minHeight: b.count > 0 ? 3 : 1,
-                    background: b.count > 0 ? "var(--blue-500)" : "var(--ink-100)",
-                    borderRadius: "8px 8px 3px 3px",
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-        {buckets.map((b, i) => (
-          <div
-            key={i}
-            style={{
-              flex: 1,
-              textAlign: "center",
-              font: `${b.count > 0 ? 500 : 400} 12px var(--font-mono)`,
-              color: b.count > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
-            }}
-          >
-            {b.label}
+      <div style={{ flex: 1, display: "flex" }}>
+        <Card padding="lg">
+          <div style={{ position: "relative", height: chartHeight }}>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div style={{ height: 1, background: "var(--border-default)" }} />
+              <div style={{ height: 1, background: "var(--ink-100)" }} />
+              <div style={{ height: 1, background: "var(--ink-100)" }} />
+              <div style={{ height: 1, background: "var(--border-default)" }} />
+            </div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
+              {buckets.map((b, i) => {
+                const pct = Math.max((b.count / maxCount) * 100, b.count > 0 ? 4 : 0);
+                return (
+                  <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, height: "100%", justifyContent: "flex-end" }}>
+                    {b.count > 0 && <span style={{ font: "13px var(--font-mono)", color: "var(--blue-700)" }}>{b.count}</span>}
+                    <div
+                      style={{
+                        width: "100%",
+                        maxWidth: 38,
+                        height: `${pct}%`,
+                        minHeight: b.count > 0 ? 3 : 1,
+                        background: b.count > 0 ? "var(--blue-500)" : "var(--ink-100)",
+                        borderRadius: "8px 8px 3px 3px",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        ))}
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            {buckets.map((b, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  font: `${b.count > 0 ? 500 : 400} 12px var(--font-mono)`,
+                  color: b.count > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
+                }}
+              >
+                {b.label}
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -465,16 +471,16 @@ export function DashboardView({ apps, companies, networkingEvents, onSelectApp, 
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 28 }}>
-        <StaleApplications
-          staleApplications={staleApplications}
-          companies={companies}
-          onSelectApp={onSelectApp}
-          onViewAllApplications={onViewAllApplications}
-        />
+        <VelocityChart buckets={velocityBuckets} />
         <ChannelBreakdown channelBreakdown={channelBreakdown} />
       </div>
 
-      <VelocityChart buckets={velocityBuckets} />
+      <StaleApplications
+        staleApplications={staleApplications}
+        companies={companies}
+        onSelectApp={onSelectApp}
+        onViewAllApplications={onViewAllApplications}
+      />
 
       <div>
         <h2 style={{ ...sectionHeadingStyle, marginBottom: 16 }}>Pipeline performance</h2>
