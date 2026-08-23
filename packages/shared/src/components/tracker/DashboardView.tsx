@@ -10,10 +10,11 @@ import { InterviewStatsView } from "./InterviewStatsView";
 import { TargetStar } from "./TargetStar";
 import type { Application, Company, CompanyStatus, Contact, Goals, NetworkingEvent } from "@/lib/types";
 
-type DashboardTab = "overview" | "interviewStats";
+type DashboardTab = "overview" | "targetCompanies" | "interviewStats";
 
 const tabs: { id: DashboardTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "targetCompanies", label: "Target companies" },
   { id: "interviewStats", label: "Interview stats" },
 ];
 
@@ -64,6 +65,31 @@ function earliestAcceptedOfferDate(apps: Application[]): string | null {
     }
   }
   return earliest;
+}
+
+function goalsDescription(
+  goals: Goals,
+  weeklyCount: number,
+  acceptedOfferDate: string | null,
+  overdue: boolean
+): string {
+  const salaryText = salaryGoalText(goals);
+
+  const offerText = acceptedOfferDate
+    ? `offer accepted ${acceptedOfferDate}`
+    : goals.targetOfferDate
+      ? overdue
+        ? `offer target was ${goals.targetOfferDate} — no offer yet`
+        : `${daysUntil(goals.targetOfferDate)} days left to offer target (${goals.targetOfferDate})`
+      : "no offer target set";
+
+  return [
+    salaryText ? `Salary goal ${salaryText}` : "no salary goal set",
+    goals.applicationsPerWeekTarget != null
+      ? `${weeklyCount} of ${goals.applicationsPerWeekTarget} applications this week`
+      : "no weekly application target set",
+    offerText,
+  ].join(" · ");
 }
 
 const sectionHeaderStyle = {
@@ -275,7 +301,7 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
   const referred = submittedApps.filter((a) => a.referral);
   const notReferred = submittedApps.filter((a) => !a.referral);
   const tailored = submittedApps.filter((a) => a.resumeType === "tailored");
-  const sprayAndPray = submittedApps.filter((a) => a.resumeType === "spray_and_pray");
+  const untailored = submittedApps.filter((a) => a.resumeType === "untailored");
   const withCoverLetter = submittedApps.filter((a) => a.coverLetterSubmitted);
   const withoutCoverLetter = submittedApps.filter((a) => !a.coverLetterSubmitted);
 
@@ -287,7 +313,6 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
   const eventsThisMonth = networkingEvents.filter((e) => isInCurrentCalendarMonth(e.date));
   const contactsMetThisMonth = new Set(eventsThisMonth.flatMap((e) => e.contactIds)).size;
 
-  const salaryText = salaryGoalText(goals);
   const weeklyCount = apps.filter((a) => isInCurrentCalendarWeek(a.dateApplied)).length;
   const velocityBuckets = bucketByCalendarWeek(
     apps.filter((a) => a.dateApplied).map((a) => a.dateApplied),
@@ -298,124 +323,33 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
 
   return (
     <>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, padding: "20px 32px 16px" }}>
+      <div>
+        <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)", marginBottom: 4 }}>Goals</div>
+        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
+          {goalsDescription(goals, weeklyCount, acceptedOfferDate, overdue)}
+        </div>
+      </div>
+      <Button variant="secondary" size="sm" onClick={onOpenGoals}>
+        Edit goals
+      </Button>
+    </div>
     <TabBar active={activeTab} onChange={setActiveTab} />
     {activeTab === "interviewStats" ? (
       <InterviewStatsView apps={apps} />
+    ) : activeTab === "targetCompanies" ? (
+      <div style={{ padding: "24px 32px 32px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+        <TargetCompaniesCard
+          companies={companies}
+          contacts={contacts}
+          apps={apps}
+          networkingEvents={networkingEvents}
+          onSelectCompany={onSelectCompany}
+        />
+      </div>
     ) : (
     <div style={{ padding: "24px 32px 32px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Goals</div>
-          <Button variant="secondary" size="sm" onClick={onOpenGoals}>
-            Edit goals
-          </Button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-          <Card padding="md">
-            <div
-              style={{
-                font: "var(--text-label)",
-                color: "var(--text-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "var(--tracking-wide)",
-                fontSize: 11,
-                marginBottom: 8,
-              }}
-            >
-              Salary goal
-            </div>
-            {salaryText ? (
-              <div style={{ font: "700 24px var(--font-display)", color: "var(--text-primary)" }}>{salaryText}</div>
-            ) : (
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No salary goal set.</div>
-            )}
-          </Card>
-          <Card padding="md">
-            <div
-              style={{
-                font: "var(--text-label)",
-                color: "var(--text-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "var(--tracking-wide)",
-                fontSize: 11,
-                marginBottom: 8,
-              }}
-            >
-              Applications this week
-            </div>
-            {goals.applicationsPerWeekTarget != null ? (
-              <>
-                <div style={{ font: "700 24px var(--font-display)", color: "var(--text-primary)" }}>
-                  {weeklyCount} of {goals.applicationsPerWeekTarget}
-                </div>
-                <div
-                  style={{
-                    marginTop: 10,
-                    height: 8,
-                    borderRadius: "var(--radius-pill)",
-                    background: "var(--ink-100)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.min(100, (weeklyCount / goals.applicationsPerWeekTarget) * 100)}%`,
-                      height: "100%",
-                      background: "var(--blue-400)",
-                    }}
-                  />
-                </div>
-              </>
-            ) : (
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No weekly target set.</div>
-            )}
-          </Card>
-          <Card padding="md">
-            <div
-              style={{
-                font: "var(--text-label)",
-                color: "var(--text-tertiary)",
-                textTransform: "uppercase",
-                letterSpacing: "var(--tracking-wide)",
-                fontSize: 11,
-                marginBottom: 8,
-              }}
-            >
-              Offer target
-            </div>
-            {acceptedOfferDate ? (
-              <div style={{ font: "700 20px var(--font-display)", color: "var(--text-primary)" }}>
-                Accepted {acceptedOfferDate}
-              </div>
-            ) : goals.targetOfferDate ? (
-              overdue ? (
-                <div style={{ font: "var(--text-body-s)", color: "var(--red-600)" }}>
-                  Target was {goals.targetOfferDate} — no offer yet
-                </div>
-              ) : (
-                <>
-                  <div style={{ font: "700 24px var(--font-display)", color: "var(--text-primary)" }}>
-                    {daysUntil(goals.targetOfferDate)} days left
-                  </div>
-                  <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)", marginTop: 4 }}>
-                    Target: {goals.targetOfferDate}
-                  </div>
-                </>
-              )
-            ) : (
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No target date set.</div>
-            )}
-          </Card>
-        </div>
-      </div>
       <VelocityChart buckets={velocityBuckets} weeklyTarget={goals.applicationsPerWeekTarget} />
-      <TargetCompaniesCard
-        companies={companies}
-        contacts={contacts}
-        apps={apps}
-        networkingEvents={networkingEvents}
-        onSelectCompany={onSelectCompany}
-      />
       <div>
         <div style={sectionHeaderStyle}>Pipeline performance</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
@@ -432,8 +366,8 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
           />
           <StatCard
             label="Interview rate by resume type"
-            value={`${rateOf(tailored)}% / ${rateOf(sprayAndPray)}%`}
-            sub="Tailored vs. spray and pray"
+            value={`${rateOf(tailored)}% / ${rateOf(untailored)}%`}
+            sub="Tailored vs. untailored"
           />
           <StatCard
             label="Interview rate by cover letter"
