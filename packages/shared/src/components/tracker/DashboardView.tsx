@@ -507,14 +507,6 @@ export function DashboardView({ apps, companies, networkingEvents, onSelectApp, 
                 "—"
               )
             }
-            bar={
-              <div style={{ display: "flex", gap: 3, height: 6 }}>
-                <div style={{ flex: 1, borderRadius: "var(--radius-pill)", background: "var(--green-500)" }} />
-                <div style={{ flex: 1, borderRadius: "var(--radius-pill)", background: "var(--green-300)" }} />
-                <div style={{ flex: 1, borderRadius: "var(--radius-pill)", background: "var(--green-200)" }} />
-                <div style={{ flex: 5, borderRadius: "var(--radius-pill)", background: "var(--bg-surface-hover)" }} />
-              </div>
-            }
             sub={
               avgResponseDays != null
                 ? `Based on ${responseDaysList.length} application${responseDaysList.length === 1 ? "" : "s"}`
