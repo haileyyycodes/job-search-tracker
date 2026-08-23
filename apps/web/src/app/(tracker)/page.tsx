@@ -21,11 +21,9 @@ export default function DashboardPage() {
       </TopBar>
       <DashboardView
         apps={data.apps}
-        goals={data.goals}
         companies={data.companies}
         contacts={data.contacts}
         networkingEvents={data.networkingEvents}
-        onOpenGoals={ui.openGoalsDialog}
         onSelectCompany={(c) => router.push(`/companies?id=${c.id}`)}
       />
     </>

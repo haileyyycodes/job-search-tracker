@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Card } from "@/components/ds";
-import { Button } from "@/components/ds";
 import { StatusTag } from "@/components/ds";
 import { statusOrder } from "@/lib/data";
 import { companyStatusLabels } from "@/lib/companies";
-import { bucketByCalendarWeek, daysUntil, isInCurrentCalendarMonth, isInCurrentCalendarWeek } from "@/lib/date";
+import { bucketByCalendarWeek, isInCurrentCalendarMonth } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
 import { InterviewStatsView } from "./InterviewStatsView";
 import { TargetStar } from "./TargetStar";
-import type { Application, Company, CompanyStatus, Contact, Goals, NetworkingEvent } from "@/lib/types";
+import type { Application, Company, CompanyStatus, Contact, NetworkingEvent } from "@/lib/types";
 
 type DashboardTab = "overview" | "targetCompanies" | "interviewStats";
 
@@ -41,55 +40,6 @@ function TabBar({ active, onChange }: { active: DashboardTab; onChange: (tab: Da
       ))}
     </div>
   );
-}
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-}
-
-function salaryGoalText(goals: Goals): string | null {
-  if (goals.salaryMin == null && goals.salaryMax == null) return null;
-  if (goals.salaryMin != null && goals.salaryMax != null) {
-    return `${formatCurrency(goals.salaryMin)}–${formatCurrency(goals.salaryMax)}`;
-  }
-  if (goals.salaryMin != null) return `${formatCurrency(goals.salaryMin)}+`;
-  return null;
-}
-
-function earliestAcceptedOfferDate(apps: Application[]): string | null {
-  let earliest: string | null = null;
-  for (const app of apps) {
-    for (const entry of app.statusHistory) {
-      if (entry.status !== "offer_accepted") continue;
-      if (!earliest || new Date(entry.at).getTime() < new Date(earliest).getTime()) earliest = entry.at;
-    }
-  }
-  return earliest;
-}
-
-function goalsDescription(
-  goals: Goals,
-  weeklyCount: number,
-  acceptedOfferDate: string | null,
-  overdue: boolean
-): string {
-  const salaryText = salaryGoalText(goals);
-
-  const offerText = acceptedOfferDate
-    ? `offer accepted ${acceptedOfferDate}`
-    : goals.targetOfferDate
-      ? overdue
-        ? `offer target was ${goals.targetOfferDate} — no offer yet`
-        : `${daysUntil(goals.targetOfferDate)} days left to offer target (${goals.targetOfferDate})`
-      : "no offer target set";
-
-  return [
-    salaryText ? `Salary goal ${salaryText}` : "no salary goal set",
-    goals.applicationsPerWeekTarget != null
-      ? `${weeklyCount} of ${goals.applicationsPerWeekTarget} applications this week`
-      : "no weekly application target set",
-    offerText,
-  ].join(" · ");
 }
 
 const sectionHeaderStyle = {
@@ -129,13 +79,11 @@ const VELOCITY_WEEKS = 8;
 
 interface VelocityChartProps {
   buckets: { weekStart: Date; label: string; count: number }[];
-  weeklyTarget?: number;
 }
 
-function VelocityChart({ buckets, weeklyTarget }: VelocityChartProps) {
+function VelocityChart({ buckets }: VelocityChartProps) {
   const chartHeight = 120;
-  const maxCount = Math.max(1, weeklyTarget ?? 0, ...buckets.map((b) => b.count));
-  const targetPct = weeklyTarget != null ? Math.min(100, (weeklyTarget / maxCount) * 100) : null;
+  const maxCount = Math.max(1, ...buckets.map((b) => b.count));
 
   return (
     <Card padding="md">
@@ -143,17 +91,6 @@ function VelocityChart({ buckets, weeklyTarget }: VelocityChartProps) {
         Application velocity
       </div>
       <div style={{ position: "relative", height: chartHeight, marginBottom: 8 }}>
-        {targetPct != null && (
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: `${targetPct}%`,
-              borderTop: "1.5px dashed var(--text-tertiary)",
-            }}
-          />
-        )}
         <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: "100%" }}>
           {buckets.map((b, i) => {
             const pct = Math.max((b.count / maxCount) * 100, b.count > 0 ? 4 : 0);
@@ -182,11 +119,6 @@ function VelocityChart({ buckets, weeklyTarget }: VelocityChartProps) {
           </div>
         ))}
       </div>
-      {weeklyTarget != null && (
-        <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginTop: 10 }}>
-          Dashed line marks your weekly target of {weeklyTarget}.
-        </div>
-      )}
     </Card>
   );
 }
@@ -278,11 +210,9 @@ function TargetCompaniesCard({ companies, contacts, apps, networkingEvents, onSe
 
 interface DashboardViewProps {
   apps: Application[];
-  goals: Goals;
   companies: Company[];
   contacts: Contact[];
   networkingEvents: NetworkingEvent[];
-  onOpenGoals: () => void;
   onSelectCompany: (company: Company) => void;
 }
 
@@ -290,7 +220,7 @@ const reachedInterview = (a: Application) => a.statusHistory.some((s) => s.statu
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
-export function DashboardView({ apps, goals, companies, contacts, networkingEvents, onOpenGoals, onSelectCompany }: DashboardViewProps) {
+export function DashboardView({ apps, companies, contacts, networkingEvents, onSelectCompany }: DashboardViewProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const total = apps.length;
   const todoCount = apps.filter((a) => a.status === "todo").length;
@@ -313,27 +243,13 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
   const eventsThisMonth = networkingEvents.filter((e) => isInCurrentCalendarMonth(e.date));
   const contactsMetThisMonth = new Set(eventsThisMonth.flatMap((e) => e.contactIds)).size;
 
-  const weeklyCount = apps.filter((a) => isInCurrentCalendarWeek(a.dateApplied)).length;
   const velocityBuckets = bucketByCalendarWeek(
     apps.filter((a) => a.dateApplied).map((a) => a.dateApplied),
     VELOCITY_WEEKS
   );
-  const acceptedOfferDate = earliestAcceptedOfferDate(apps);
-  const overdue = !acceptedOfferDate && goals.targetOfferDate != null && daysUntil(goals.targetOfferDate) < 0;
 
   return (
     <>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, padding: "20px 32px 16px" }}>
-      <div>
-        <div style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)", marginBottom: 4 }}>Goals</div>
-        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
-          {goalsDescription(goals, weeklyCount, acceptedOfferDate, overdue)}
-        </div>
-      </div>
-      <Button variant="secondary" size="sm" onClick={onOpenGoals}>
-        Edit goals
-      </Button>
-    </div>
     <TabBar active={activeTab} onChange={setActiveTab} />
     {activeTab === "interviewStats" ? (
       <InterviewStatsView apps={apps} />
@@ -349,7 +265,7 @@ export function DashboardView({ apps, goals, companies, contacts, networkingEven
       </div>
     ) : (
     <div style={{ padding: "24px 32px 32px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
-      <VelocityChart buckets={velocityBuckets} weeklyTarget={goals.applicationsPerWeekTarget} />
+      <VelocityChart buckets={velocityBuckets} />
       <div>
         <div style={sectionHeaderStyle}>Pipeline performance</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>

@@ -49,7 +49,7 @@ export function SettingsView({ userProfile, onSaveProfile, onOpenGoals }: Settin
           <div>
             <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Goals</div>
             <p style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)", margin: "4px 0 0" }}>
-              Salary range, weekly application target, and offer date — shown on your dashboard.
+              Salary range, weekly application target, and offer date.
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={onOpenGoals}>
