@@ -152,19 +152,19 @@ function FunnelHealth({ responseRate, interviewRatio, interviewRatioTier, offerR
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)" }}>
         <FunnelRing
-          label="Response rate"
-          value={responseRate}
-          stroke="var(--blue-300)"
-          valueColor="var(--white)"
-          sub={<RingCaption>Any reply, including rejections</RingCaption>}
-          position="first"
-        />
-        <FunnelRing
           label="Interview ratio"
           value={interviewRatio}
           stroke={tierStyle?.stroke ?? "rgba(255,255,255,0.3)"}
           valueColor={tierStyle?.value ?? "rgba(255,255,255,0.55)"}
           sub={interviewRatioTier ? <RingBadge tier={interviewRatioTier} /> : <RingCaption>Interviews ÷ applications sent</RingCaption>}
+          position="first"
+        />
+        <FunnelRing
+          label="Response rate"
+          value={responseRate}
+          stroke="var(--blue-300)"
+          valueColor="var(--white)"
+          sub={<RingCaption>Any reply, including rejections</RingCaption>}
           position="middle"
         />
         <FunnelRing
