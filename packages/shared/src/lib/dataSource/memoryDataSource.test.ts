@@ -10,7 +10,7 @@ describe("MemoryDataSource seed loading", () => {
     const ds = new MemoryDataSource(defaultSeed);
 
     const companies = await ds.getCompanies();
-    expect(companies).toHaveLength(2);
+    expect(companies).toHaveLength(5);
     const northwind = companies.find((c) => c.name === "Northwind Co.")!;
     expect(northwind.locations).toEqual([{ city: "Detroit", state: "MI" }]);
 
@@ -19,7 +19,7 @@ describe("MemoryDataSource seed loading", () => {
     expect(contacts[0].companyId).toBe(northwind.id);
 
     const applications = await ds.getApplications();
-    expect(applications).toHaveLength(2);
+    expect(applications).toHaveLength(5);
     const productDesigner = applications.find((a) => a.role === "Product Designer")!;
     expect(productDesigner.companyId).toBe(northwind.id);
     expect(productDesigner.referredByContactId).toBe(contacts[0].id);

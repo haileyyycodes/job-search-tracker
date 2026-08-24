@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ds";
 import { TopBar } from "@/components/tracker/TopBar";
 import { DashboardView } from "@/components/tracker/DashboardView";
@@ -9,6 +10,7 @@ import { useTrackerUI } from "@/lib/TrackerUIContext";
 export default function DashboardPage() {
   const data = useTrackerData();
   const ui = useTrackerUI();
+  const router = useRouter();
 
   return (
     <>
@@ -17,7 +19,13 @@ export default function DashboardPage() {
           + Log application
         </Button>
       </TopBar>
-      <DashboardView apps={data.apps} networkingEvents={data.networkingEvents} />
+      <DashboardView
+        apps={data.apps}
+        companies={data.companies}
+        networkingEvents={data.networkingEvents}
+        onSelectApp={(a) => router.push(`/applications?id=${a.id}`)}
+        onViewAllApplications={() => router.push("/applications")}
+      />
     </>
   );
 }
