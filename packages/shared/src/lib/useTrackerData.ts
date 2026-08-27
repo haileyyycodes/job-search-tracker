@@ -11,6 +11,7 @@ import type {
   NewContact,
   NewFollowUp,
   NewInterview,
+  NewInterviewPrepQuestion,
   NewNetworkingEvent,
 } from "./dataSource/types";
 import type {
@@ -22,6 +23,7 @@ import type {
   FollowUp,
   Goals,
   Interview,
+  InterviewPrepQuestion,
   NetworkingEvent,
   ReminderRule,
   Task,
@@ -37,6 +39,7 @@ interface TrackerState {
   networkingEvents: NetworkingEvent[];
   companies: Company[];
   interviewCategories: string[];
+  interviewPrepQuestions: InterviewPrepQuestion[];
 }
 
 const emptyState: TrackerState = {
@@ -48,6 +51,7 @@ const emptyState: TrackerState = {
   networkingEvents: [],
   companies: [],
   interviewCategories: [],
+  interviewPrepQuestions: [],
 };
 
 // Placeholder until real boot-time selection (below) resolves and swaps this out.
@@ -82,7 +86,7 @@ function allocTempId(): number {
 }
 
 async function loadAll(): Promise<void> {
-  const [apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories] =
+  const [apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories, interviewPrepQuestions] =
     await Promise.all([
       dataSource.getApplications(),
       dataSource.getTasks(),
@@ -92,8 +96,19 @@ async function loadAll(): Promise<void> {
       dataSource.getNetworkingEvents(),
       dataSource.getCompanies(),
       dataSource.getInterviewCategories(),
+      dataSource.getInterviewPrepQuestions(),
     ]);
-  setState({ apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories });
+  setState({
+    apps,
+    tasks,
+    goals,
+    userProfile,
+    contacts,
+    networkingEvents,
+    companies,
+    interviewCategories,
+    interviewPrepQuestions,
+  });
 }
 
 function ensureLoaded(): Promise<void> {
@@ -410,8 +425,41 @@ const toggleTarget = (companyId: number): Promise<void> => {
   return withRollback(() => dataSource.toggleTarget(companyId));
 };
 
+const addInterviewPrepQuestion = (question: NewInterviewPrepQuestion): Promise<InterviewPrepQuestion> => {
+  const tempId = allocTempId();
+  const optimistic: InterviewPrepQuestion = { ...question, id: tempId };
+  setState((prev) => ({ ...prev, interviewPrepQuestions: [...prev.interviewPrepQuestions, optimistic] }));
+  return withRollback(async () => {
+    const created = await dataSource.addInterviewPrepQuestion(question);
+    setState((prev) => ({
+      ...prev,
+      interviewPrepQuestions: prev.interviewPrepQuestions.map((q) => (q.id === tempId ? created : q)),
+    }));
+    return created;
+  });
+};
+
+const editInterviewPrepQuestion = (updated: InterviewPrepQuestion): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    interviewPrepQuestions: prev.interviewPrepQuestions.map((q) => (q.id === updated.id ? updated : q)),
+  }));
+  return withRollback(() => dataSource.editInterviewPrepQuestion(updated));
+};
+
+const deleteInterviewPrepQuestion = (id: number): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    interviewPrepQuestions: prev.interviewPrepQuestions.filter((q) => q.id !== id),
+  }));
+  return withRollback(() => dataSource.deleteInterviewPrepQuestion(id));
+};
+
 const actions = {
   addInterviewCategory,
+  addInterviewPrepQuestion,
+  editInterviewPrepQuestion,
+  deleteInterviewPrepQuestion,
   updateGoals,
   updateUserProfile,
   dismissTask,

@@ -138,3 +138,11 @@ export interface Goals {
 export interface UserProfile {
   name: string;
 }
+
+export interface InterviewPrepQuestion {
+  id: number;
+  category: string;
+  section?: string;
+  question: string;
+  answer: string;
+}

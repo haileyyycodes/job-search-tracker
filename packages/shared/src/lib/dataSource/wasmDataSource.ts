@@ -11,6 +11,7 @@ import {
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
+  type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
   type DsTask,
   type DsUserProfile,
@@ -19,6 +20,7 @@ import {
   type NewContact,
   type NewFollowUp,
   type NewInterview,
+  type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
   type NewTask,
 } from "./types";
@@ -146,6 +148,13 @@ interface GoalsRow {
 interface UserProfileRow {
   name: string;
 }
+interface InterviewPrepQuestionRow {
+  id: number;
+  category: string;
+  section: string | null;
+  question: string;
+  answer: string;
+}
 
 // ---- row -> Ds* mappers ----
 
@@ -190,6 +199,16 @@ function mapInterview(row: InterviewRow): DsInterview {
 
 function mapFollowUp(row: FollowUpRow): DsFollowUp {
   return { id: row.id, date: row.date, contactId: row.contact_id, notes: row.notes };
+}
+
+function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPrepQuestion {
+  return {
+    id: row.id,
+    category: row.category,
+    section: row.section ?? undefined,
+    question: row.question,
+    answer: row.answer,
+  };
 }
 
 function mapTask(row: TaskRow): DsTask {
@@ -412,6 +431,15 @@ export class WasmDataSource implements DataSource {
     }
 
     db.run("UPDATE user_profile SET name = ? WHERE id = 1", [seed.userProfile.name]);
+
+    for (const q of seed.interviewPrepQuestions) {
+      db.run("INSERT INTO interview_prep_questions (category, section, question, answer) VALUES (?, ?, ?, ?)", [
+        q.category,
+        q.section ?? null,
+        q.question,
+        q.answer,
+      ]);
+    }
   }
 
   // ---- composition helpers ----
@@ -836,4 +864,42 @@ export class WasmDataSource implements DataSource {
     db.run("INSERT OR IGNORE INTO interview_categories (name) VALUES (?)", [category]);
   }
 
+  // ---- interview prep questions ----
+
+  async getInterviewPrepQuestions(): Promise<DsInterviewPrepQuestion[]> {
+    const db = await this.ready;
+    return all<InterviewPrepQuestionRow>(db, "SELECT * FROM interview_prep_questions ORDER BY id").map(
+      mapInterviewPrepQuestion
+    );
+  }
+
+  async addInterviewPrepQuestion(question: NewInterviewPrepQuestion): Promise<DsInterviewPrepQuestion> {
+    const db = await this.ready;
+    db.run("INSERT INTO interview_prep_questions (category, section, question, answer) VALUES (?, ?, ?, ?)", [
+      question.category,
+      question.section ?? null,
+      question.question,
+      question.answer,
+    ]);
+    const id = lastInsertId(db);
+    return mapInterviewPrepQuestion(
+      this.requireRow<InterviewPrepQuestionRow>(db, "SELECT * FROM interview_prep_questions WHERE id = ?", id, "InterviewPrepQuestion")
+    );
+  }
+
+  async editInterviewPrepQuestion(question: DsInterviewPrepQuestion): Promise<void> {
+    const db = await this.ready;
+    db.run("UPDATE interview_prep_questions SET category = ?, section = ?, question = ?, answer = ? WHERE id = ?", [
+      question.category,
+      question.section ?? null,
+      question.question,
+      question.answer,
+      question.id,
+    ]);
+  }
+
+  async deleteInterviewPrepQuestion(id: number): Promise<void> {
+    const db = await this.ready;
+    db.run("DELETE FROM interview_prep_questions WHERE id = ?", [id]);
+  }
 }

@@ -8,6 +8,7 @@ import {
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
+  type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
   type DsTask,
   type DsUserProfile,
@@ -16,6 +17,7 @@ import {
   type NewContact,
   type NewFollowUp,
   type NewInterview,
+  type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
   type NewTask,
 } from "./types";
@@ -165,5 +167,18 @@ export class ElectronDataSource implements DataSource {
   }
   addInterviewCategory(category: string) {
     return this.invoke<void>("interviewCategories:add", category);
+  }
+
+  getInterviewPrepQuestions() {
+    return this.invoke<DsInterviewPrepQuestion[]>("interviewPrep:list");
+  }
+  addInterviewPrepQuestion(question: NewInterviewPrepQuestion) {
+    return this.invoke<DsInterviewPrepQuestion>("interviewPrep:add", question);
+  }
+  editInterviewPrepQuestion(question: DsInterviewPrepQuestion) {
+    return this.invoke<void>("interviewPrep:edit", question);
+  }
+  deleteInterviewPrepQuestion(id: number) {
+    return this.invoke<void>("interviewPrep:delete", id);
   }
 }

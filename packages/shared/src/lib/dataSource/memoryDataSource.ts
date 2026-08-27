@@ -8,6 +8,7 @@ import {
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
+  type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
   type DsTask,
   type DsUserProfile,
@@ -16,6 +17,7 @@ import {
   type NewContact,
   type NewFollowUp,
   type NewInterview,
+  type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
   type NewTask,
 } from "./types";
@@ -31,6 +33,7 @@ type StoredCompanyLocation = { id: number; companyId: number; city: string; stat
 type StoredContact = DsContact;
 type StoredNetworkingEvent = Omit<DsNetworkingEvent, "contactIds">;
 type StoredNetworkingEventContact = { id: number; eventId: number; contactId: number };
+type StoredInterviewPrepQuestion = DsInterviewPrepQuestion;
 
 /** Simple in-memory table: autoincrement id, Map preserves insertion order (mirrors SQLite rowid order). */
 class Table<T extends { id: number }> {
@@ -112,6 +115,7 @@ export class MemoryDataSource implements DataSource {
   private goals: DsGoals = {};
   private userProfile: DsUserProfile = { name: "" };
   private interviewCategories: string[] = [];
+  private interviewPrepQuestions = new Table<StoredInterviewPrepQuestion>();
 
   constructor(seed: Seed = defaultSeed) {
     this.loadSeed(seed);
@@ -391,6 +395,25 @@ export class MemoryDataSource implements DataSource {
     if (!this.interviewCategories.includes(category)) this.interviewCategories.push(category);
   }
 
+  // ---- interview prep questions ----
+
+  async getInterviewPrepQuestions(): Promise<DsInterviewPrepQuestion[]> {
+    return this.interviewPrepQuestions.list();
+  }
+
+  async addInterviewPrepQuestion(question: NewInterviewPrepQuestion): Promise<DsInterviewPrepQuestion> {
+    return this.interviewPrepQuestions.insert(question);
+  }
+
+  async editInterviewPrepQuestion(question: DsInterviewPrepQuestion): Promise<void> {
+    this.interviewPrepQuestions.getOrThrow(question.id, "InterviewPrepQuestion");
+    this.interviewPrepQuestions.put(question);
+  }
+
+  async deleteInterviewPrepQuestion(id: number): Promise<void> {
+    this.interviewPrepQuestions.delete(id);
+  }
+
   private loadSeed(seed: Seed): void {
     const companyIdMap = new Map<string, number>();
     for (const company of seed.companies) {
@@ -448,5 +471,10 @@ export class MemoryDataSource implements DataSource {
     this.goals = { ...seed.goals };
     this.userProfile = { ...seed.userProfile };
     this.interviewCategories = [...seed.interviewCategories];
+
+    for (const q of seed.interviewPrepQuestions) {
+      const rest = omit(clone(q), "id");
+      this.interviewPrepQuestions.insert(rest as Omit<StoredInterviewPrepQuestion, "id">);
+    }
   }
 }

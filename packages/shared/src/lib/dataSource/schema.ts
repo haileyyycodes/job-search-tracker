@@ -131,6 +131,14 @@ CREATE TABLE user_profile (
   name TEXT NOT NULL
 );
 
+CREATE TABLE interview_prep_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category TEXT NOT NULL,
+  section TEXT,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL
+);
+
 INSERT INTO goals (id) VALUES (1);
 INSERT INTO user_profile (id, name) VALUES (1, '');
 `;

@@ -337,4 +337,37 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
     });
   });
 
+  describe("interview prep questions", () => {
+    it("starts empty, addInterviewPrepQuestion persists it, and getInterviewPrepQuestions returns it", async () => {
+      const ds = makeDataSource();
+      expect(await ds.getInterviewPrepQuestions()).toEqual([]);
+      const created = await ds.addInterviewPrepQuestion({
+        category: "behavioral",
+        section: "Ownership & Ambiguity",
+        question: "Tell me about a time you owned a project end-to-end.",
+        answer: "",
+      });
+      expect(created.id).toBeTypeOf("number");
+      expect(await ds.getInterviewPrepQuestions()).toEqual([created]);
+    });
+
+    it("editInterviewPrepQuestion updates the answer (and other fields) in place", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addInterviewPrepQuestion({
+        category: "recruiter_screening",
+        question: "Why are you looking for a new role?",
+        answer: "",
+      });
+      await ds.editInterviewPrepQuestion({ ...created, answer: "Looking for more ownership." });
+      const [fetched] = await ds.getInterviewPrepQuestions();
+      expect(fetched.answer).toBe("Looking for more ownership.");
+    });
+
+    it("deleteInterviewPrepQuestion removes it", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addInterviewPrepQuestion({ category: "behavioral", question: "Q?", answer: "" });
+      await ds.deleteInterviewPrepQuestion(created.id);
+      expect(await ds.getInterviewPrepQuestions()).toEqual([]);
+    });
+  });
 }

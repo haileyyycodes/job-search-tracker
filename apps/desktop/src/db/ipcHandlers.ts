@@ -10,6 +10,7 @@ import {
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
+  type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
   type DsTask,
   type DsUserProfile,
@@ -18,6 +19,7 @@ import {
   type NewContact,
   type NewFollowUp,
   type NewInterview,
+  type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
   type NewTask,
 } from "../../../../packages/shared/src/lib/dataSource/types";
@@ -134,6 +136,13 @@ interface GoalsRow {
 interface UserProfileRow {
   name: string;
 }
+interface InterviewPrepQuestionRow {
+  id: number;
+  category: string;
+  section: string | null;
+  question: string;
+  answer: string;
+}
 
 // ---- row -> Ds* mappers (identical to WasmDataSource's — same normalized shape) ----
 
@@ -178,6 +187,16 @@ function mapInterview(row: InterviewRow): DsInterview {
 
 function mapFollowUp(row: FollowUpRow): DsFollowUp {
   return { id: row.id, date: row.date, contactId: row.contact_id, notes: row.notes };
+}
+
+function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPrepQuestion {
+  return {
+    id: row.id,
+    category: row.category,
+    section: row.section ?? undefined,
+    question: row.question,
+    answer: row.answer,
+  };
 }
 
 function mapTask(row: TaskRow): DsTask {
@@ -630,6 +649,41 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
       db.prepare("INSERT OR IGNORE INTO interview_categories (name) VALUES (?)").run(category);
     },
 
+    // ---- interview prep questions ----
+
+    async getInterviewPrepQuestions() {
+      return db
+        .prepare<[], InterviewPrepQuestionRow>("SELECT * FROM interview_prep_questions ORDER BY id")
+        .all()
+        .map(mapInterviewPrepQuestion);
+    },
+
+    async addInterviewPrepQuestion(question: NewInterviewPrepQuestion) {
+      const { lastInsertRowid } = db
+        .prepare("INSERT INTO interview_prep_questions (category, section, question, answer) VALUES (?, ?, ?, ?)")
+        .run(question.category, question.section ?? null, question.question, question.answer);
+      return mapInterviewPrepQuestion(
+        requireRow<InterviewPrepQuestionRow>(
+          "SELECT * FROM interview_prep_questions WHERE id = ?",
+          Number(lastInsertRowid),
+          "InterviewPrepQuestion"
+        )
+      );
+    },
+
+    async editInterviewPrepQuestion(question: DsInterviewPrepQuestion) {
+      db.prepare("UPDATE interview_prep_questions SET category = ?, section = ?, question = ?, answer = ? WHERE id = ?").run(
+        question.category,
+        question.section ?? null,
+        question.question,
+        question.answer,
+        question.id
+      );
+    },
+
+    async deleteInterviewPrepQuestion(id: number) {
+      db.prepare("DELETE FROM interview_prep_questions WHERE id = ?").run(id);
+    },
   };
 }
 
@@ -687,6 +741,11 @@ export function registerIpcHandlers(db: Database.Database): void {
 
     "interviewCategories:list": () => ds.getInterviewCategories(),
     "interviewCategories:add": (category) => ds.addInterviewCategory(category as string),
+
+    "interviewPrep:list": () => ds.getInterviewPrepQuestions(),
+    "interviewPrep:add": (question) => ds.addInterviewPrepQuestion(question as NewInterviewPrepQuestion),
+    "interviewPrep:edit": (question) => ds.editInterviewPrepQuestion(question as DsInterviewPrepQuestion),
+    "interviewPrep:delete": (id) => ds.deleteInterviewPrepQuestion(id as number),
   };
 
   for (const [channel, handler] of Object.entries(channels)) {
