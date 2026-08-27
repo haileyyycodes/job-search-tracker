@@ -80,6 +80,23 @@ function getSnapshot() {
   return state;
 }
 
+/**
+ * Deliberately NOT `getSnapshot` — must stay pinned to the frozen, never-mutated
+ * `emptyState` reference. React calls this (not `getSnapshot`) for the first
+ * client render during hydration, specifically so that render matches whatever
+ * the server rendered. The server only ever renders `emptyState` (DataSource
+ * loading is gated behind `typeof window !== "undefined"` below), but real data
+ * can finish loading and mutate the live `state` variable before hydration
+ * actually runs on the client — if this returned `state` too, that first client
+ * render would pick up the real data while the server HTML still shows empty,
+ * producing a hydration mismatch. Returning the frozen `emptyState` here keeps
+ * that first render provably identical to the server's regardless of timing;
+ * `subscribe` then drives the (allowed, post-hydration) re-render into real data.
+ */
+function getServerSnapshot() {
+  return emptyState;
+}
+
 /** Negative ids never collide with real DataSource-assigned (positive) ids. */
 function allocTempId(): number {
   return nextTempId--;
@@ -494,6 +511,6 @@ const actions = {
  * in the background; see withRollback above.
  */
 export function useTrackerData() {
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   return { ...snapshot, ...actions };
 }
