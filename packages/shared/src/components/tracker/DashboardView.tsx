@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Card, StatusTag, statusDotColor } from "@/components/ds";
+import { Card, StatusTag } from "@/components/ds";
 import { statusOrder } from "@/lib/data";
-import { companyName } from "@/lib/companies";
 import { bucketByCalendarWeek } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
 import {
@@ -11,13 +10,12 @@ import {
   getInterviewRatioTier,
   getOfferRatio,
   getResponseRate,
-  getStaleApplications,
   interviewRatioTierLabel,
   reachedInterview,
   type ChannelBreakdownRow,
   type InterviewRatioTier,
 } from "@/lib/funnel";
-import type { Application, Company, NetworkingEvent } from "@/lib/types";
+import type { Application, NetworkingEvent } from "@/lib/types";
 
 const sectionHeadingStyle = {
   margin: 0,
@@ -177,69 +175,6 @@ function FunnelHealth({ responseRate, interviewRatio, interviewRatioTier, offerR
         />
       </div>
     </section>
-  );
-}
-
-// ---- Stale applications ----
-
-interface StaleApplicationsProps {
-  staleApplications: { app: Application; daysSinceActivity: number }[];
-  companies: Company[];
-  onSelectApp: (app: Application) => void;
-  onViewAllApplications: () => void;
-}
-
-function StaleApplications({ staleApplications, companies, onSelectApp, onViewAllApplications }: StaleApplicationsProps) {
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <h2 style={sectionHeadingStyle}>Stale applications</h2>
-        <span onClick={onViewAllApplications} style={{ font: "600 13.5px var(--font-body)", color: "var(--text-link)", cursor: "pointer" }}>
-          View all →
-        </span>
-      </div>
-      <Card padding="lg">
-        {staleApplications.length === 0 ? (
-          <div style={{ padding: "18px 0", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-            Nothing waiting on a reply right now.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {staleApplications.map(({ app, daysSinceActivity }, i) => (
-              <div
-                key={app.id}
-                onClick={() => onSelectApp(app)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 16,
-                  padding: "18px 0",
-                  borderBottom: i < staleApplications.length - 1 ? "1px solid var(--border-default)" : "none",
-                  cursor: "pointer",
-                }}
-              >
-                <div style={{ width: 3, alignSelf: "stretch", borderRadius: "var(--radius-pill)", background: statusDotColor(app.status) }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ font: "700 15px var(--font-display)", color: "var(--text-link)" }}>{app.role}</div>
-                  <div style={{ font: "13px var(--font-body)", color: "var(--text-secondary)", marginTop: 3 }}>
-                    {companyName(app.companyId, companies)}
-                  </div>
-                </div>
-                <StatusTag status={app.status} />
-                <div style={{ textAlign: "right", width: 78 }}>
-                  <div style={{ font: "500 17px var(--font-mono)", letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
-                    {daysSinceActivity}
-                  </div>
-                  <div style={{ font: "11px var(--font-body)", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
-                    {daysSinceActivity === 1 ? "day" : "days"}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
   );
 }
 
@@ -421,20 +356,15 @@ function SplitRateBar({ a, b }: { a: number; b: number }) {
   );
 }
 
-const STALE_LIMIT = 6;
-
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
 interface DashboardViewProps {
   apps: Application[];
-  companies: Company[];
   networkingEvents: NetworkingEvent[];
-  onSelectApp: (app: Application) => void;
-  onViewAllApplications: () => void;
 }
 
-export function DashboardView({ apps, companies, networkingEvents, onSelectApp, onViewAllApplications }: DashboardViewProps) {
+export function DashboardView({ apps, networkingEvents }: DashboardViewProps) {
   const total = apps.length;
   const submittedApps = apps.filter((a) => a.status !== "todo");
   const tailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "tailored"));
@@ -457,7 +387,6 @@ export function DashboardView({ apps, companies, networkingEvents, onSelectApp, 
   const interviewRatioTier = getInterviewRatioTier(interviewRatio);
   const offerRatio = getOfferRatio(apps);
 
-  const staleApplications = getStaleApplications(apps, STALE_LIMIT);
   const channelBreakdown = getChannelBreakdown(apps, networkingEvents);
 
   return (
@@ -473,13 +402,6 @@ export function DashboardView({ apps, companies, networkingEvents, onSelectApp, 
         <VelocityChart buckets={velocityBuckets} />
         <ChannelBreakdown channelBreakdown={channelBreakdown} />
       </div>
-
-      <StaleApplications
-        staleApplications={staleApplications}
-        companies={companies}
-        onSelectApp={onSelectApp}
-        onViewAllApplications={onViewAllApplications}
-      />
 
       <div>
         <h2 style={{ ...sectionHeadingStyle, marginBottom: 16 }}>Pipeline performance</h2>
