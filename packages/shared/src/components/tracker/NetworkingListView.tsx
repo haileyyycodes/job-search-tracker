@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, IconButton } from "@/components/ds";
+import { Input, Select, IconButton, Pagination } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { networkingEventTypes } from "@/lib/data";
 import { companyName } from "@/lib/companies";
@@ -20,6 +20,8 @@ interface NetworkingListViewProps {
 
 const typeOptions: SelectOption[] = [{ value: "", label: "All types" }, ...networkingEventTypes.map((t) => ({ value: t, label: t }))];
 
+const PAGE_SIZE = 10;
+
 export function NetworkingListView({
   events,
   contacts,
@@ -31,6 +33,10 @@ export function NetworkingListView({
 }: NetworkingListViewProps) {
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Any filter change can shrink the result set, so jump back to the first page.
+  const resetPage = () => setPage(1);
 
   const rows = events
     .map((e) => ({
@@ -46,14 +52,33 @@ export function NetworkingListView({
     );
   rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   return (
     <div style={{ padding: "0 32px 32px", overflow: "auto", flex: 1 }}>
       <div style={{ display: "flex", gap: 12, padding: "16px 0" }}>
         <div style={{ width: 260 }}>
-          <Input placeholder="Search contact or company…" value={q} onChange={setQ} />
+          <Input
+            placeholder="Search contact or company…"
+            value={q}
+            onChange={(v) => {
+              setQ(v);
+              resetPage();
+            }}
+          />
         </div>
         <div style={{ width: 200 }}>
-          <Select value={type} options={typeOptions} onChange={setType} placeholder="All types" />
+          <Select
+            value={type}
+            options={typeOptions}
+            onChange={(v) => {
+              setType(v);
+              resetPage();
+            }}
+            placeholder="All types"
+          />
         </div>
         <ListCount shown={rows.length} total={events.length} noun="event" />
       </div>
@@ -78,7 +103,7 @@ export function NetworkingListView({
         <span>Notes</span>
         <span />
       </div>
-      {rows.map((e) => (
+      {visibleRows.map((e) => (
         <div
           key={e.id}
           style={{
@@ -129,6 +154,7 @@ export function NetworkingListView({
           No networking events match.
         </div>
       )}
+      <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

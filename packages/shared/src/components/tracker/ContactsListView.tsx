@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, IconButton } from "@/components/ds";
+import { Input, Select, IconButton, Pagination } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import { ListCount } from "./ListCount";
@@ -22,9 +22,12 @@ interface ContactsListViewProps {
   onRequestDelete: (contact: Contact) => void;
 }
 
+const PAGE_SIZE = 10;
+
 export function ContactsListView({ contacts, companies, onSelect, onSelectCompany, onRequestDelete }: ContactsListViewProps) {
   const [q, setQ] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const isAtTarget = (c: Contact) => companies.find((co) => co.id === c.companyId)?.isTarget === true;
 
@@ -39,17 +42,34 @@ export function ContactsListView({ contacts, companies, onSelect, onSelectCompan
         (c.companyId ? companyName(c.companyId, companies).toLowerCase().includes(q.toLowerCase()) : false))
   );
 
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Any filter change can shrink the result set, so jump back to the first page.
+  const resetPage = () => setPage(1);
+
   return (
     <div style={{ padding: "0 32px 32px", overflow: "auto", flex: 1 }}>
       <div style={{ display: "flex", gap: 12, padding: "16px 0" }}>
         <div style={{ width: 260 }}>
-          <Input placeholder="Search name or employer…" value={q} onChange={setQ} />
+          <Input
+            placeholder="Search name or employer…"
+            value={q}
+            onChange={(v) => {
+              setQ(v);
+              resetPage();
+            }}
+          />
         </div>
         <div style={{ width: 200 }}>
           <Select
             value={companyFilter}
             options={companyFilterOptions}
-            onChange={setCompanyFilter}
+            onChange={(v) => {
+              setCompanyFilter(v);
+              resetPage();
+            }}
             placeholder="All companies"
           />
         </div>
@@ -74,7 +94,7 @@ export function ContactsListView({ contacts, companies, onSelect, onSelectCompan
         <span>Contact info</span>
         <span />
       </div>
-      {filtered.map((c) => (
+      {visible.map((c) => (
         <div
           key={c.id}
           onClick={() => onSelect(c)}
@@ -151,6 +171,7 @@ export function ContactsListView({ contacts, companies, onSelect, onSelectCompan
           No contacts match.
         </div>
       )}
+      <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

@@ -15,3 +15,4 @@ export { Dialog } from "./Dialog";
 export { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
 export { Tabs } from "./Tabs";
 export type { TabDef } from "./Tabs";
+export { Pagination } from "./Pagination";
