@@ -109,6 +109,7 @@ export const contactSchema: z.ZodType<Contact> = z.object({
   website: z.string().optional(),
   companyId: z.number().optional(),
   role: z.string().optional(),
+  relationshipTier: z.enum(["core", "extended", "dormant"]).optional(),
   notes: z.string(),
 });
 

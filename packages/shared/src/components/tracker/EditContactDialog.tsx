@@ -5,7 +5,7 @@ import { Dialog, Button } from "@/components/ds";
 import { ContactFormFields, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
 import type { NewCompany } from "@/lib/dataSource/types";
-import type { Company, Contact } from "@/lib/types";
+import type { Company, Contact, RelationshipTier } from "@/lib/types";
 
 interface EditContactDialogProps {
   contact: Contact;
@@ -25,6 +25,7 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
     website: contact.website ?? "",
     companyId: contact.companyId != null ? String(contact.companyId) : "",
     role: contact.role ?? "",
+    relationshipTier: contact.relationshipTier ?? "",
     notes: contact.notes,
   });
   const [submitted, setSubmitted] = useState(false);
@@ -42,6 +43,7 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
       website: form.website.trim() || undefined,
       companyId: form.companyId ? Number(form.companyId) : undefined,
       role: form.role.trim() || undefined,
+      relationshipTier: (form.relationshipTier || undefined) as RelationshipTier | undefined,
       notes: form.notes.trim(),
     });
   };

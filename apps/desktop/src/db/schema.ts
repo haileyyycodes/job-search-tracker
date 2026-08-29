@@ -29,9 +29,9 @@ export function openDatabase(dbPath: string): Database.Database {
 }
 
 /**
- * Additive, idempotent fixups for databases created before a given table
- * existed. `openDatabase` only runs the full SCHEMA_SQL once (on a brand-new
- * file), so any table added later needs a matching check here or every
+ * Additive, idempotent fixups for databases created before a given table or
+ * column existed. `openDatabase` only runs the full SCHEMA_SQL once (on a
+ * brand-new file), so anything added later needs a matching check here or every
  * pre-existing local DB breaks the moment code starts calling it.
  */
 function migrate(db: Database.Database): void {
@@ -47,4 +47,12 @@ function migrate(db: Database.Database): void {
       INSERT INTO user_profile (id, name) VALUES (1, '');
     `);
   }
+
+  if (!hasColumn(db, "contacts", "relationship_tier")) {
+    db.exec("ALTER TABLE contacts ADD COLUMN relationship_tier TEXT;");
+  }
+}
+
+function hasColumn(db: Database.Database, table: string, column: string): boolean {
+  return (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some((c) => c.name === column);
 }

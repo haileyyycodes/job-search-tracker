@@ -1,5 +1,5 @@
 import initSqlJs, { type BindParams, type Database } from "sql.js";
-import type { ApplicationStatus, Feedback } from "@/lib/types";
+import type { ApplicationStatus, Feedback, RelationshipTier } from "@/lib/types";
 import { SCHEMA_SQL } from "./schema";
 import { defaultSeed, type Seed } from "./seed";
 import {
@@ -76,6 +76,7 @@ interface ContactRow {
   website: string | null;
   company_id: number | null;
   role: string | null;
+  relationship_tier: string | null;
   notes: string;
 }
 interface ApplicationRow {
@@ -190,6 +191,7 @@ function mapContact(row: ContactRow): DsContact {
     website: row.website ?? undefined,
     companyId: row.company_id ?? undefined,
     role: row.role ?? undefined,
+    relationshipTier: (row.relationship_tier as RelationshipTier | null) ?? undefined,
     notes: row.notes,
   };
 }
@@ -323,7 +325,7 @@ export class WasmDataSource implements DataSource {
     const contactIdMap = new Map<string, number>();
     for (const c of seed.contacts) {
       db.run(
-        "INSERT INTO contacts (name, email, phone, linked_in_url, website, company_id, role, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO contacts (name, email, phone, linked_in_url, website, company_id, role, relationship_tier, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           c.name,
           c.email ?? null,
@@ -332,6 +334,7 @@ export class WasmDataSource implements DataSource {
           c.website ?? null,
           c.companyId !== undefined ? companyIdMap.get(c.companyId)! : null,
           c.role ?? null,
+          c.relationshipTier ?? null,
           c.notes,
         ]
       );
@@ -732,7 +735,7 @@ export class WasmDataSource implements DataSource {
   async createContact(contact: NewContact): Promise<DsContact> {
     const db = await this.ready;
     db.run(
-      "INSERT INTO contacts (name, email, phone, linked_in_url, website, company_id, role, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO contacts (name, email, phone, linked_in_url, website, company_id, role, relationship_tier, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         contact.name,
         contact.email ?? null,
@@ -741,6 +744,7 @@ export class WasmDataSource implements DataSource {
         contact.website ?? null,
         contact.companyId ?? null,
         contact.role ?? null,
+        contact.relationshipTier ?? null,
         contact.notes,
       ]
     );
@@ -751,7 +755,7 @@ export class WasmDataSource implements DataSource {
   async editContact(contact: DsContact): Promise<void> {
     const db = await this.ready;
     db.run(
-      "UPDATE contacts SET name = ?, email = ?, phone = ?, linked_in_url = ?, website = ?, company_id = ?, role = ?, notes = ? WHERE id = ?",
+      "UPDATE contacts SET name = ?, email = ?, phone = ?, linked_in_url = ?, website = ?, company_id = ?, role = ?, relationship_tier = ?, notes = ? WHERE id = ?",
       [
         contact.name,
         contact.email ?? null,
@@ -760,6 +764,7 @@ export class WasmDataSource implements DataSource {
         contact.website ?? null,
         contact.companyId ?? null,
         contact.role ?? null,
+        contact.relationshipTier ?? null,
         contact.notes,
         contact.id,
       ]

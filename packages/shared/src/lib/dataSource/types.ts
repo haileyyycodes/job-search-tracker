@@ -5,6 +5,7 @@ import type {
   Goals,
   InterviewStyle,
   InterviewType,
+  RelationshipTier,
   ResumeType,
   StatusHistoryEntry,
   UserProfile,
@@ -44,6 +45,7 @@ export interface DsContact {
   website?: string;
   companyId?: number;
   role?: string;
+  relationshipTier?: RelationshipTier;
   notes: string;
 }
 

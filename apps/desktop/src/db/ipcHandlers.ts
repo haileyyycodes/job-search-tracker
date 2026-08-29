@@ -1,6 +1,6 @@
 import { ipcMain } from "electron";
 import type Database from "better-sqlite3";
-import type { ApplicationStatus, Feedback } from "../../../../packages/shared/src/lib/types";
+import type { ApplicationStatus, Feedback, RelationshipTier } from "../../../../packages/shared/src/lib/types";
 import {
   RestrictedDeleteError,
   type DataSource,
@@ -64,6 +64,7 @@ interface ContactRow {
   website: string | null;
   company_id: number | null;
   role: string | null;
+  relationship_tier: string | null;
   notes: string;
 }
 interface ApplicationRow {
@@ -178,6 +179,7 @@ function mapContact(row: ContactRow): DsContact {
     website: row.website ?? undefined,
     companyId: row.company_id ?? undefined,
     role: row.role ?? undefined,
+    relationshipTier: (row.relationship_tier as RelationshipTier | null) ?? undefined,
     notes: row.notes,
   };
 }
@@ -517,7 +519,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     async createContact(contact: NewContact) {
       const { lastInsertRowid } = db
         .prepare(
-          "INSERT INTO contacts (name, email, phone, linked_in_url, website, company_id, role, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+          "INSERT INTO contacts (name, email, phone, linked_in_url, website, company_id, role, relationship_tier, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         )
         .run(
           contact.name,
@@ -527,6 +529,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
           contact.website ?? null,
           contact.companyId ?? null,
           contact.role ?? null,
+          contact.relationshipTier ?? null,
           contact.notes
         );
       return mapContact(requireRow<ContactRow>("SELECT * FROM contacts WHERE id = ?", Number(lastInsertRowid), "Contact"));
@@ -534,7 +537,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
 
     async editContact(contact: DsContact) {
       db.prepare(
-        "UPDATE contacts SET name = ?, email = ?, phone = ?, linked_in_url = ?, website = ?, company_id = ?, role = ?, notes = ? WHERE id = ?"
+        "UPDATE contacts SET name = ?, email = ?, phone = ?, linked_in_url = ?, website = ?, company_id = ?, role = ?, relationship_tier = ?, notes = ? WHERE id = ?"
       ).run(
         contact.name,
         contact.email ?? null,
@@ -543,6 +546,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         contact.website ?? null,
         contact.companyId ?? null,
         contact.role ?? null,
+        contact.relationshipTier ?? null,
         contact.notes,
         contact.id
       );
