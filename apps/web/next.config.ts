@@ -4,8 +4,12 @@ import path from "path";
 // The app is fully self-contained (no external scripts, styles, fonts, images,
 // or network calls), so the CSP can allowlist 'self' only. 'unsafe-inline' is
 // required for Next.js's bootstrap scripts and React inline style attributes.
-// 'unsafe-eval' is dev-only: React dev mode uses eval() for debugging features;
-// production builds never do, so the deployed policy stays strict.
+// 'wasm-unsafe-eval' is required in every environment: the tracker's data layer
+// is SQLite compiled to WebAssembly (sql.js), and browsers gate
+// WebAssembly.instantiate() behind this directive (or the far broader
+// 'unsafe-eval'). It permits WASM compilation only, not JS eval().
+// 'unsafe-eval' proper is dev-only: React dev mode uses eval() for debugging
+// features; production builds never do, so the deployed policy stays strict.
 const isDev = process.env.NODE_ENV === "development";
 
 const securityHeaders = [
@@ -13,7 +17,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
       "font-src 'self'",

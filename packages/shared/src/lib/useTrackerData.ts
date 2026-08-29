@@ -148,10 +148,17 @@ function ensureLoaded(): Promise<void> {
 // under Vitest __resetTrackerDataForTests drives DataSource selection explicitly instead —
 // both would otherwise hit WasmDataSource's browser-style wasm path, which fails under Node.
 if (typeof window !== "undefined" && !(typeof process !== "undefined" && process.env.VITEST === "true")) {
-  void selectDataSource().then((ds) => {
-    dataSource = ds;
-    void ensureLoaded();
-  });
+  void selectDataSource()
+    .then((ds) => {
+      dataSource = ds;
+      return ensureLoaded();
+    })
+    .catch((err) => {
+      // Don't let this reject silently — a failure here (e.g. the sql.js WASM
+      // module blocked by CSP) leaves every consumer stuck on emptyState with
+      // no visible clue why.
+      console.error("Tracker data source failed to initialize; the app will show no data.", err);
+    });
 }
 
 /**
