@@ -124,11 +124,9 @@ export function InterviewPrepCategoryView({
             {section && (
               <h3
                 style={{
-                  font: "var(--text-label)",
-                  textTransform: "uppercase",
-                  letterSpacing: "var(--tracking-wide)",
-                  color: "var(--text-tertiary)",
-                  margin: "20px 0 4px",
+                  font: "var(--text-heading-s)",
+                  color: "var(--text-primary)",
+                  margin: "28px 0 6px",
                 }}
               >
                 {section}
