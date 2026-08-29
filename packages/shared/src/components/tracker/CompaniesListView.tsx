@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, IconButton } from "@/components/ds";
+import { Input, Select, IconButton, Pagination, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { ListCount } from "./ListCount";
 import { TargetStar } from "./TargetStar";
@@ -15,14 +15,7 @@ const statusOptions: SelectOption[] = [
 
 const gridTemplateColumns = "28px 1fr 160px 200px 130px 110px 40px";
 
-const sectionHeaderStyle = {
-  padding: "18px 4px 8px",
-  font: "var(--text-label)",
-  color: "var(--text-tertiary)",
-  textTransform: "uppercase",
-  letterSpacing: "var(--tracking-wide)",
-  fontSize: 11,
-} as const;
+const PAGE_SIZE = 10;
 
 interface CompanyRowProps {
   company: Company;
@@ -119,35 +112,62 @@ interface CompaniesListViewProps {
 export function CompaniesListView({ companies, apps, onSelect, onToggleTarget, onRequestDelete }: CompaniesListViewProps) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<CompanyStatus | "">("");
+  const [targetsOnly, setTargetsOnly] = useState(false);
+  const [page, setPage] = useState(1);
+
+  // Any filter change can shrink the result set, so jump back to the first page.
+  const resetPage = () => setPage(1);
 
   const matchesSearch = (c: Company) =>
     c.name.toLowerCase().includes(q.toLowerCase()) || (c.industry ?? "").toLowerCase().includes(q.toLowerCase());
 
-  const targets = companies.filter((c) => c.isTarget && matchesSearch(c) && (!status || c.status === status));
-  // Non-targets only ever surface "applied", so any other status filter empties this section.
-  const others = companies.filter(
-    (c) => !c.isTarget && matchesSearch(c) && (!status || displayedCompanyStatus(c) === status)
+  const filtered = companies.filter(
+    (c) =>
+      matchesSearch(c) &&
+      (!status || displayedCompanyStatus(c) === status) &&
+      (!targetsOnly || c.isTarget)
   );
-  const showOthersSection = !status || others.length > 0;
 
   const appCount = (c: Company) => apps.filter((a) => a.companyId === c.id).length;
   const rowProps = { onSelect, onToggleTarget, onRequestDelete };
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div style={{ padding: "0 32px 32px", overflow: "auto", flex: 1 }}>
       <div style={{ display: "flex", gap: 16, padding: "16px 0", alignItems: "center" }}>
         <div style={{ width: 260 }}>
-          <Input placeholder="Search name or industry…" value={q} onChange={setQ} />
+          <Input
+            placeholder="Search name or industry…"
+            value={q}
+            onChange={(v) => {
+              setQ(v);
+              resetPage();
+            }}
+          />
         </div>
         <div style={{ width: 200 }}>
           <Select
             value={status}
             options={statusOptions}
-            onChange={(v) => setStatus(v as CompanyStatus | "")}
+            onChange={(v) => {
+              setStatus(v as CompanyStatus | "");
+              resetPage();
+            }}
             placeholder="All statuses"
           />
         </div>
-        <ListCount shown={targets.length + others.length} total={companies.length} noun="company" nounPlural="companies" />
+        <Switch
+          label="Targets only"
+          checked={targetsOnly}
+          onChange={(v) => {
+            setTargetsOnly(v);
+            resetPage();
+          }}
+        />
+        <ListCount shown={filtered.length} total={companies.length} noun="company" nounPlural="companies" />
       </div>
       <div
         style={{
@@ -172,33 +192,16 @@ export function CompaniesListView({ companies, apps, onSelect, onToggleTarget, o
         <span />
       </div>
 
-      <div style={sectionHeaderStyle}>
-        <TargetStar isTarget size={12} /> Targets ({targets.length})
-      </div>
-      {targets.map((c) => (
+      {visible.map((c) => (
         <CompanyRow key={c.id} company={c} appCount={appCount(c)} {...rowProps} />
       ))}
-      {targets.length === 0 && (
-        <div style={{ padding: "16px 4px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-          {q || status
-            ? "No target companies match."
-            : "No target companies yet — star a company below to build your target list."}
+      {filtered.length === 0 && (
+        <div style={{ padding: "24px 4px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
+          No companies match.
         </div>
       )}
 
-      {showOthersSection && (
-        <>
-          <div style={sectionHeaderStyle}>Other companies ({others.length})</div>
-          {others.map((c) => (
-            <CompanyRow key={c.id} company={c} appCount={appCount(c)} {...rowProps} />
-          ))}
-          {others.length === 0 && (
-            <div style={{ padding: "16px 4px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-              {q ? "No other companies match." : "Nothing here — every company is on your target list."}
-            </div>
-          )}
-        </>
-      )}
+      <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { Input, Select, StatusTag, IconButton, Card } from "@/components/ds";
+import { Input, Select, StatusTag, IconButton, Card, Pagination } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
@@ -42,6 +42,8 @@ const referralOptions: SelectOption[] = [
 
 const GRID_COLUMNS = "minmax(220px,1fr) 150px 100px 110px 150px 160px 90px 130px 40px";
 const GRID_MIN_WIDTH = 1300;
+
+const PAGE_SIZE = 10;
 
 const kanbanColumnDefs: { key: string; label: string; match: (s: ApplicationStatus) => boolean }[] = [
   { key: "saved", label: "Saved", match: (s) => s === "todo" },
@@ -117,6 +119,10 @@ export function ApplicationsListView({
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [referral, setReferral] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Any filter change can shrink the result set, so jump back to the first page.
+  const resetPage = () => setPage(1);
 
   const enriched = useMemo<EnrichedApp[]>(
     () =>
@@ -165,6 +171,10 @@ export function ApplicationsListView({
       (!referral || (referral === "yes" ? e.app.referral : !e.app.referral)) &&
       (e.company.toLowerCase().includes(qLower) || e.app.role.toLowerCase().includes(qLower))
   );
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleApps = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const kanbanColumns = kanbanColumnDefs.map((col) => {
     const columnApps = enriched.filter((e) => col.match(e.app.status));
@@ -219,18 +229,36 @@ export function ApplicationsListView({
         <>
           <div style={{ display: "flex", gap: 12, padding: "8px 0 16px", alignItems: "center" }}>
             <div style={{ width: 280 }}>
-              <Input placeholder="Search company or role…" value={q} onChange={setQ} />
+              <Input
+                placeholder="Search company or role…"
+                value={q}
+                onChange={(v) => {
+                  setQ(v);
+                  resetPage();
+                }}
+              />
             </div>
             <div style={{ width: 200 }}>
               <Select
                 value={status}
                 options={statusOptions}
-                onChange={(v) => setStatus(v as ApplicationStatus | "")}
+                onChange={(v) => {
+                  setStatus(v as ApplicationStatus | "");
+                  resetPage();
+                }}
                 placeholder="All statuses"
               />
             </div>
             <div style={{ width: 180 }}>
-              <Select value={referral} options={referralOptions} onChange={setReferral} placeholder="All referrals" />
+              <Select
+                value={referral}
+                options={referralOptions}
+                onChange={(v) => {
+                  setReferral(v);
+                  resetPage();
+                }}
+                placeholder="All referrals"
+              />
             </div>
             <div style={{ flex: 1 }} />
             <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)", whiteSpace: "nowrap" }}>
@@ -261,7 +289,7 @@ export function ApplicationsListView({
               <span />
             </div>
 
-            {filtered.map((e) => (
+            {visibleApps.map((e) => (
               <div
                 key={e.app.id}
                 onClick={() => onSelect(e.app)}
@@ -341,6 +369,8 @@ export function ApplicationsListView({
               </div>
             )}
           </div>
+
+          <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
         </>
       )}
 
