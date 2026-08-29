@@ -9,7 +9,7 @@
  *  - everything else optional: SET NULL (referrals, contact's company, event's application,
  *    a pitch version's source prep question)
  *  - application/company/event children (interviews, follow_ups, status_history,
- *    tasks, company_locations, networking_event_contacts): CASCADE
+ *    company_locations, networking_event_contacts): CASCADE
  */
 export const SCHEMA_SQL = `
 CREATE TABLE companies (
@@ -88,16 +88,6 @@ CREATE TABLE status_history (
   application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
   at TEXT NOT NULL
-);
-
-CREATE TABLE tasks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
-  due_date TEXT NOT NULL,
-  note TEXT NOT NULL,
-  status TEXT NOT NULL,
-  reminder_rule_type TEXT,
-  reminder_rule_days INTEGER
 );
 
 CREATE TABLE networking_events (

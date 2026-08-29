@@ -11,7 +11,6 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
-  type DsTask,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -21,7 +20,6 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-  type NewTask,
 } from "./types";
 
 /** The typed surface preload.ts exposes via contextBridge — one method per IPC channel. */
@@ -96,19 +94,6 @@ export class ElectronDataSource implements DataSource {
   }
   deleteFollowUp(appId: number, followUpId: number) {
     return this.invoke<void>("followUps:delete", appId, followUpId);
-  }
-
-  getTasks() {
-    return this.invoke<DsTask[]>("tasks:list");
-  }
-  addTask(task: NewTask) {
-    return this.invoke<DsTask>("tasks:add", task);
-  }
-  dismissTask(id: number) {
-    return this.invoke<void>("tasks:dismiss", id);
-  }
-  deleteTask(id: number) {
-    return this.invoke<void>("tasks:delete", id);
   }
 
   getCompanies() {

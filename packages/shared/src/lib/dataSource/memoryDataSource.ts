@@ -11,7 +11,6 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
-  type DsTask,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -21,7 +20,6 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-  type NewTask,
 } from "./types";
 import { defaultSeed, type Seed } from "./seed";
 
@@ -29,7 +27,6 @@ type StoredApplication = Omit<DsApplication, "interviews" | "followUps" | "statu
 type StoredStatusHistoryEntry = { id: number; applicationId: number; status: ApplicationStatus; at: string };
 type StoredInterview = DsInterview & { applicationId: number };
 type StoredFollowUp = DsFollowUp & { applicationId: number };
-type StoredTask = DsTask;
 type StoredCompany = Omit<DsCompany, "locations">;
 type StoredCompanyLocation = { id: number; companyId: number; city: string; state: string };
 type StoredContact = DsContact;
@@ -109,7 +106,6 @@ export class MemoryDataSource implements DataSource {
   private statusHistory = new Table<StoredStatusHistoryEntry>();
   private interviews = new Table<StoredInterview>();
   private followUps = new Table<StoredFollowUp>();
-  private tasks = new Table<StoredTask>();
   private companies = new Table<StoredCompany>();
   private companyLocations = new Table<StoredCompanyLocation>();
   private contacts = new Table<StoredContact>();
@@ -199,7 +195,6 @@ export class MemoryDataSource implements DataSource {
 
   async deleteApplication(id: number): Promise<void> {
     this.requireApplication(id);
-    for (const t of this.tasks.listWhere((t) => t.applicationId === id)) this.tasks.delete(t.id);
     for (const iv of this.interviews.listWhere((i) => i.applicationId === id)) this.interviews.delete(iv.id);
     for (const fu of this.followUps.listWhere((f) => f.applicationId === id)) this.followUps.delete(fu.id);
     for (const sh of this.statusHistory.listWhere((s) => s.applicationId === id)) this.statusHistory.delete(sh.id);
@@ -247,25 +242,6 @@ export class MemoryDataSource implements DataSource {
     const row = this.followUps.getOrThrow(followUpId, "FollowUp");
     if (row.applicationId !== appId) throw new Error(`FollowUp ${followUpId} does not belong to application ${appId}`);
     this.followUps.delete(followUpId);
-  }
-
-  // ---- tasks ----
-
-  async getTasks(): Promise<DsTask[]> {
-    return this.tasks.list();
-  }
-
-  async addTask(task: NewTask): Promise<DsTask> {
-    this.requireApplication(task.applicationId);
-    return this.tasks.insert({ ...task, status: "active" });
-  }
-
-  async dismissTask(id: number): Promise<void> {
-    this.tasks.update(id, { status: "dismissed" }, "Task");
-  }
-
-  async deleteTask(id: number): Promise<void> {
-    this.tasks.delete(id);
   }
 
   // ---- companies ----
@@ -482,11 +458,6 @@ export class MemoryDataSource implements DataSource {
         const fuRest = omit(fu, "id");
         this.followUps.insert({ ...fuRest, contactId: contactIdMap.get(fuRest.contactId)!, applicationId: row.id });
       }
-    }
-
-    for (const task of seed.tasks) {
-      const rest = omit(clone(task), "id");
-      this.tasks.insert({ ...rest, applicationId: applicationIdMap.get(rest.applicationId)! } as Omit<StoredTask, "id">);
     }
 
     for (const event of seed.networkingEvents) {

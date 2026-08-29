@@ -26,11 +26,6 @@ describe("MemoryDataSource seed loading", () => {
     expect(productDesigner.interviews).toHaveLength(1);
     expect(productDesigner.followUps).toEqual([{ id: expect.any(Number), date: "Jun 25, 2026", contactId: contacts[0].id, notes: "Checked in on timeline." }]);
 
-    const tasks = await ds.getTasks();
-    expect(tasks).toHaveLength(1);
-    const feEngineer = applications.find((a) => a.role === "Senior Frontend Engineer")!;
-    expect(tasks[0].applicationId).toBe(feEngineer.id);
-
     const events = await ds.getNetworkingEvents();
     expect(events).toHaveLength(1);
     expect(events[0].contactIds).toEqual([contacts[0].id]);

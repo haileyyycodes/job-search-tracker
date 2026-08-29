@@ -1,5 +1,5 @@
 import initSqlJs, { type BindParams, type Database } from "sql.js";
-import type { ApplicationStatus, Feedback, ReminderRule } from "@/lib/types";
+import type { ApplicationStatus, Feedback } from "@/lib/types";
 import { SCHEMA_SQL } from "./schema";
 import { defaultSeed, type Seed } from "./seed";
 import {
@@ -14,7 +14,6 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
-  type DsTask,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -24,7 +23,6 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-  type NewTask,
 } from "./types";
 
 function isForeignKeyError(err: unknown): boolean {
@@ -124,15 +122,6 @@ interface StatusHistoryRow {
   application_id: number;
   status: string;
   at: string;
-}
-interface TaskRow {
-  id: number;
-  application_id: number;
-  due_date: string;
-  note: string;
-  status: string;
-  reminder_rule_type: string | null;
-  reminder_rule_days: number | null;
 }
 interface NetworkingEventRow {
   id: number;
@@ -249,23 +238,6 @@ function mapElevatorPitchVersion(row: ElevatorPitchVersionRow): DsElevatorPitchV
     seeking: row.seeking,
     closingQuestion: row.closing_question,
     sourceQuestionId: row.source_question_id ?? undefined,
-  };
-}
-
-function mapTask(row: TaskRow): DsTask {
-  const reminderRule: ReminderRule | undefined =
-    row.reminder_rule_type === "days_after_applied"
-      ? { type: "days_after_applied", days: row.reminder_rule_days! }
-      : row.reminder_rule_type === "manual"
-        ? { type: "manual" }
-        : undefined;
-  return {
-    id: row.id,
-    applicationId: row.application_id,
-    dueDate: row.due_date,
-    note: row.note,
-    status: row.status as DsTask["status"],
-    reminderRule,
   };
 }
 
@@ -423,20 +395,6 @@ export class WasmDataSource implements DataSource {
           fu.notes,
         ]);
       }
-    }
-
-    for (const t of seed.tasks) {
-      db.run(
-        "INSERT INTO tasks (application_id, due_date, note, status, reminder_rule_type, reminder_rule_days) VALUES (?, ?, ?, ?, ?, ?)",
-        [
-          applicationIdMap.get(t.applicationId)!,
-          t.dueDate,
-          t.note,
-          t.status,
-          t.reminderRule?.type ?? null,
-          t.reminderRule?.type === "days_after_applied" ? t.reminderRule.days : null,
-        ]
-      );
     }
 
     for (const e of seed.networkingEvents) {
@@ -702,36 +660,6 @@ export class WasmDataSource implements DataSource {
   async deleteFollowUp(appId: number, followUpId: number): Promise<void> {
     const db = await this.ready;
     db.run("DELETE FROM follow_ups WHERE id = ? AND application_id = ?", [followUpId, appId]);
-  }
-
-  // ---- tasks ----
-
-  async getTasks(): Promise<DsTask[]> {
-    const db = await this.ready;
-    return all<TaskRow>(db, "SELECT * FROM tasks ORDER BY id").map(mapTask);
-  }
-
-  async addTask(task: NewTask): Promise<DsTask> {
-    const db = await this.ready;
-    db.run("INSERT INTO tasks (application_id, due_date, note, status, reminder_rule_type, reminder_rule_days) VALUES (?, ?, ?, 'active', ?, ?)", [
-      task.applicationId,
-      task.dueDate,
-      task.note,
-      task.reminderRule?.type ?? null,
-      task.reminderRule?.type === "days_after_applied" ? task.reminderRule.days : null,
-    ]);
-    const id = lastInsertId(db);
-    return mapTask(this.requireRow<TaskRow>(db, "SELECT * FROM tasks WHERE id = ?", id, "Task"));
-  }
-
-  async dismissTask(id: number): Promise<void> {
-    const db = await this.ready;
-    db.run("UPDATE tasks SET status = 'dismissed' WHERE id = ?", [id]);
-  }
-
-  async deleteTask(id: number): Promise<void> {
-    const db = await this.ready;
-    db.run("DELETE FROM tasks WHERE id = ?", [id]);
   }
 
   // ---- companies ----

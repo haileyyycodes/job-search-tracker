@@ -82,7 +82,7 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       ]);
     });
 
-    it("deleteApplication cascades to its interviews, followUps, statusHistory, and tasks", async () => {
+    it("deleteApplication cascades to its interviews, followUps, and statusHistory", async () => {
       const ds = makeDataSource();
       const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
       const contact = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
@@ -102,12 +102,10 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       });
       await ds.logInterview(app.id, { type: "Recruiter Screen", date: "Jan 2, 2026", notes: "" });
       await ds.logFollowUp(app.id, { date: "Jan 3, 2026", contactId: contact.id, notes: "" });
-      await ds.addTask({ applicationId: app.id, dueDate: "Jan 4, 2026", note: "follow up" });
 
       await ds.deleteApplication(app.id);
 
       expect(await ds.getApplications()).toEqual([]);
-      expect(await ds.getTasks()).toEqual([]);
     });
 
     it("deleteApplication sets NetworkingEvent.applicationId to undefined instead of deleting the event", async () => {
@@ -270,32 +268,6 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       const [fetched] = await ds.getApplications();
       expect(fetched.id).toBe(app.id);
       expect(fetched.referredByContactId).toBeUndefined();
-    });
-  });
-
-  describe("tasks", () => {
-    it("addTask defaults status to active; dismissTask sets it to dismissed", async () => {
-      const ds = makeDataSource();
-      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
-      const app = await ds.createApplication({
-        companyId: company.id,
-        role: "Engineer",
-        dateApplied: "",
-        link: "",
-        jobDescription: "",
-        referral: false,
-        resumeType: "tailored",
-        coverLetterSubmitted: false,
-        notes: "",
-        status: "todo",
-        logo: "A",
-        statusHistory: [],
-      });
-      const task = await ds.addTask({ applicationId: app.id, dueDate: "Jan 1, 2026", note: "ping them" });
-      expect(task.status).toBe("active");
-      await ds.dismissTask(task.id);
-      const [fetched] = await ds.getTasks();
-      expect(fetched.status).toBe("dismissed");
     });
   });
 

@@ -71,7 +71,6 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
       {ui.deleteTarget && (
         <ConfirmDeleteApplicationDialog
           app={ui.deleteTarget}
-          tasks={data.tasks}
           companies={data.companies}
           onClose={ui.closeDeleteApplication}
           onConfirm={confirmDeleteApplication}

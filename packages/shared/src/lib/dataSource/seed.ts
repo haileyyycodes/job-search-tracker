@@ -5,10 +5,8 @@ import type {
   Goals,
   InterviewStyle,
   InterviewType,
-  ReminderRule,
   ResumeType,
   StatusHistoryEntry,
-  TaskStatus,
   UserProfile,
   WorkArrangement,
 } from "@/lib/types";
@@ -73,14 +71,6 @@ export interface Seed {
     city?: string;
     state?: string;
   }>;
-  tasks: Array<{
-    id: string;
-    applicationId: string;
-    dueDate: string;
-    note: string;
-    status: TaskStatus;
-    reminderRule?: ReminderRule;
-  }>;
   networkingEvents: Array<{
     id: string;
     contactIds: string[];
@@ -124,7 +114,6 @@ export const emptySeed: Seed = {
   companies: [],
   contacts: [],
   applications: [],
-  tasks: [],
   networkingEvents: [],
   goals: {},
   userProfile: { name: "" },
@@ -299,16 +288,6 @@ export const defaultSeed: Seed = {
       statusHistory: [{ status: "applied", at: "Aug 1, 2026" }],
       interviews: [],
       followUps: [],
-    },
-  ],
-  tasks: [
-    {
-      id: "t1",
-      applicationId: "a2",
-      dueDate: "Jul 17, 2026",
-      note: "Follow up 7 days after applying",
-      status: "active",
-      reminderRule: { type: "days_after_applied", days: 7 },
     },
   ],
   networkingEvents: [

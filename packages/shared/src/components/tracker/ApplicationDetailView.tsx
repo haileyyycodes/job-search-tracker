@@ -4,7 +4,6 @@ import { groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/dat
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
 import { LogFollowUpDialog } from "./LogFollowUpDialog";
-import { AddTaskDialog } from "./AddTaskDialog";
 import { EditApplicationDialog } from "./EditApplicationDialog";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel } from "@/lib/salary";
@@ -22,8 +21,6 @@ import type {
   FollowUp,
   Goals,
   Interview,
-  ReminderRule,
-  Task,
 } from "@/lib/types";
 
 const rejectionStatuses: ApplicationStatus[] = ["rejected_no_interview", "rejected_after_interview"];
@@ -44,7 +41,6 @@ function Field({ label, value }: FieldProps) {
 
 interface ApplicationDetailViewProps {
   app: Application | null;
-  tasks: Task[];
   contacts: Contact[];
   companies: Company[];
   goals: Goals;
@@ -55,12 +51,10 @@ interface ApplicationDetailViewProps {
   onSelectContact: (contact: Contact) => void;
   onSelectCompany: (company: Company) => void;
   onBack: () => void;
-  onDismissTask: (id: number) => void;
   onChangeStatus: (appId: number, status: ApplicationStatus, at: string) => void;
   onLogInterview: (appId: number, interview: Omit<Interview, "id">) => void;
   onEditInterview: (appId: number, interviewId: number, updates: Omit<Interview, "id">) => void;
   onLogFollowUp: (appId: number, followUp: Omit<FollowUp, "id">) => void;
-  onAddTask: (appId: number, note: string, dueDate: string, reminderRule: ReminderRule) => void;
   onEditApplication: (updated: Application) => void;
   onRequestDelete: (app: Application) => void;
   onDeleteInterview: (appId: number, interviewId: number) => void;
@@ -70,7 +64,6 @@ interface ApplicationDetailViewProps {
 
 export function ApplicationDetailView({
   app,
-  tasks,
   contacts,
   companies,
   goals,
@@ -81,12 +74,10 @@ export function ApplicationDetailView({
   onSelectContact,
   onSelectCompany,
   onBack,
-  onDismissTask,
   onChangeStatus,
   onLogInterview,
   onEditInterview,
   onLogFollowUp,
-  onAddTask,
   onEditApplication,
   onRequestDelete,
   onDeleteInterview,
@@ -97,12 +88,10 @@ export function ApplicationDetailView({
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
-  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
 
   if (!app) return null;
-  const myTasks = tasks.filter((t) => t.applicationId === app.id);
 
   return (
     <>
@@ -432,32 +421,6 @@ export function ApplicationDetailView({
               );
             })}
           </Card>
-          <Card padding="md">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Open follow-up tasks</div>
-              <Button variant="ghost" size="sm" onClick={() => setTaskDialogOpen(true)}>
-                + Add task
-              </Button>
-            </div>
-            {myTasks.length === 0 && (
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No follow-up tasks yet.</div>
-            )}
-            {myTasks.map((t) => (
-              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 10 }}>
-                <div>
-                  <div style={{ font: "var(--text-body-s)", color: "var(--text-primary)" }}>{t.note}</div>
-                  <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
-                    Due {t.dueDate} · {t.status}
-                  </div>
-                </div>
-                {t.status === "active" && (
-                  <Button size="sm" variant="secondary" onClick={() => onDismissTask(t.id)}>
-                    Dismiss
-                  </Button>
-                )}
-              </div>
-            ))}
-          </Card>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: "1 1 0%", minWidth: 0 }}>
         <Card padding="md">
@@ -539,16 +502,6 @@ export function ApplicationDetailView({
         onSave={(followUp) => {
           onLogFollowUp(app.id, followUp);
           setFollowUpDialogOpen(false);
-        }}
-      />
-    )}
-    {taskDialogOpen && (
-      <AddTaskDialog
-        dateApplied={app.dateApplied}
-        onClose={() => setTaskDialogOpen(false)}
-        onSave={(note, dueDate, reminderRule) => {
-          onAddTask(app.id, note, dueDate, reminderRule);
-          setTaskDialogOpen(false);
         }}
       />
     )}
