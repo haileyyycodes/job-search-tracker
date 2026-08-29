@@ -14,7 +14,6 @@ const items: SidebarItem[] = [
   { href: "/applications", label: "Applications", icon: "☰" },
   { href: "/companies", label: "Companies", icon: "▣" },
   { href: "/interview-prep", label: "Interview Prep", icon: "◈" },
-  { href: "/followups", label: "Follow-Ups", icon: "↻" },
   { href: "/contacts", label: "Contacts", icon: "◎" },
   { href: "/networking", label: "Networking", icon: "⇄" },
 ];
