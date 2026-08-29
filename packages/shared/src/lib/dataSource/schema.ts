@@ -6,7 +6,8 @@
  *
  *  - applications.company_id: RESTRICT — a company with applications can't be deleted
  *  - follow_ups.contact_id:   RESTRICT — a contact with follow-ups can't be deleted
- *  - everything else optional: SET NULL (referrals, contact's company, event's application)
+ *  - everything else optional: SET NULL (referrals, contact's company, event's application,
+ *    a pitch version's source prep question)
  *  - application/company/event children (interviews, follow_ups, status_history,
  *    tasks, company_locations, networking_event_contacts): CASCADE
  */
@@ -129,6 +130,33 @@ CREATE TABLE interview_categories (
 CREATE TABLE user_profile (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   name TEXT NOT NULL
+);
+
+CREATE TABLE interview_prep_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category TEXT NOT NULL,
+  section TEXT,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  starred INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE elevator_pitch_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  setting TEXT NOT NULL,
+  who TEXT NOT NULL,
+  person_name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  identity TEXT NOT NULL,
+  situation TEXT NOT NULL,
+  action TEXT NOT NULL,
+  result TEXT NOT NULL,
+  themes TEXT NOT NULL,
+  synthesis TEXT NOT NULL,
+  seeking TEXT NOT NULL,
+  closing_question TEXT NOT NULL,
+  source_question_id INTEGER REFERENCES interview_prep_questions(id) ON DELETE SET NULL
 );
 
 INSERT INTO goals (id) VALUES (1);

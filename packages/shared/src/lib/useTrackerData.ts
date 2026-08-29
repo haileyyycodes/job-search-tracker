@@ -9,8 +9,10 @@ import type {
   NewApplication,
   NewCompany,
   NewContact,
+  NewElevatorPitchVersion,
   NewFollowUp,
   NewInterview,
+  NewInterviewPrepQuestion,
   NewNetworkingEvent,
 } from "./dataSource/types";
 import type {
@@ -18,10 +20,12 @@ import type {
   ApplicationStatus,
   Company,
   Contact,
+  ElevatorPitchVersion,
   Feedback,
   FollowUp,
   Goals,
   Interview,
+  InterviewPrepQuestion,
   NetworkingEvent,
   ReminderRule,
   Task,
@@ -37,6 +41,8 @@ interface TrackerState {
   networkingEvents: NetworkingEvent[];
   companies: Company[];
   interviewCategories: string[];
+  interviewPrepQuestions: InterviewPrepQuestion[];
+  elevatorPitchVersions: ElevatorPitchVersion[];
 }
 
 const emptyState: TrackerState = {
@@ -48,6 +54,8 @@ const emptyState: TrackerState = {
   networkingEvents: [],
   companies: [],
   interviewCategories: [],
+  interviewPrepQuestions: [],
+  elevatorPitchVersions: [],
 };
 
 // Placeholder until real boot-time selection (below) resolves and swaps this out.
@@ -76,24 +84,64 @@ function getSnapshot() {
   return state;
 }
 
+/**
+ * Deliberately NOT `getSnapshot` — must stay pinned to the frozen, never-mutated
+ * `emptyState` reference. React calls this (not `getSnapshot`) for the first
+ * client render during hydration, specifically so that render matches whatever
+ * the server rendered. The server only ever renders `emptyState` (DataSource
+ * loading is gated behind `typeof window !== "undefined"` below), but real data
+ * can finish loading and mutate the live `state` variable before hydration
+ * actually runs on the client — if this returned `state` too, that first client
+ * render would pick up the real data while the server HTML still shows empty,
+ * producing a hydration mismatch. Returning the frozen `emptyState` here keeps
+ * that first render provably identical to the server's regardless of timing;
+ * `subscribe` then drives the (allowed, post-hydration) re-render into real data.
+ */
+function getServerSnapshot() {
+  return emptyState;
+}
+
 /** Negative ids never collide with real DataSource-assigned (positive) ids. */
 function allocTempId(): number {
   return nextTempId--;
 }
 
 async function loadAll(): Promise<void> {
-  const [apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories] =
-    await Promise.all([
-      dataSource.getApplications(),
-      dataSource.getTasks(),
-      dataSource.getGoals(),
-      dataSource.getUserProfile(),
-      dataSource.getContacts(),
-      dataSource.getNetworkingEvents(),
-      dataSource.getCompanies(),
-      dataSource.getInterviewCategories(),
-    ]);
-  setState({ apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories });
+  const [
+    apps,
+    tasks,
+    goals,
+    userProfile,
+    contacts,
+    networkingEvents,
+    companies,
+    interviewCategories,
+    interviewPrepQuestions,
+    elevatorPitchVersions,
+  ] = await Promise.all([
+    dataSource.getApplications(),
+    dataSource.getTasks(),
+    dataSource.getGoals(),
+    dataSource.getUserProfile(),
+    dataSource.getContacts(),
+    dataSource.getNetworkingEvents(),
+    dataSource.getCompanies(),
+    dataSource.getInterviewCategories(),
+    dataSource.getInterviewPrepQuestions(),
+    dataSource.getElevatorPitchVersions(),
+  ]);
+  setState({
+    apps,
+    tasks,
+    goals,
+    userProfile,
+    contacts,
+    networkingEvents,
+    companies,
+    interviewCategories,
+    interviewPrepQuestions,
+    elevatorPitchVersions,
+  });
 }
 
 function ensureLoaded(): Promise<void> {
@@ -410,8 +458,79 @@ const toggleTarget = (companyId: number): Promise<void> => {
   return withRollback(() => dataSource.toggleTarget(companyId));
 };
 
+const addInterviewPrepQuestion = (question: NewInterviewPrepQuestion): Promise<InterviewPrepQuestion> => {
+  const tempId = allocTempId();
+  const optimistic: InterviewPrepQuestion = { ...question, id: tempId };
+  setState((prev) => ({ ...prev, interviewPrepQuestions: [...prev.interviewPrepQuestions, optimistic] }));
+  return withRollback(async () => {
+    const created = await dataSource.addInterviewPrepQuestion(question);
+    setState((prev) => ({
+      ...prev,
+      interviewPrepQuestions: prev.interviewPrepQuestions.map((q) => (q.id === tempId ? created : q)),
+    }));
+    return created;
+  });
+};
+
+const editInterviewPrepQuestion = (updated: InterviewPrepQuestion): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    interviewPrepQuestions: prev.interviewPrepQuestions.map((q) => (q.id === updated.id ? updated : q)),
+  }));
+  return withRollback(() => dataSource.editInterviewPrepQuestion(updated));
+};
+
+const deleteInterviewPrepQuestion = (id: number): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    interviewPrepQuestions: prev.interviewPrepQuestions.filter((q) => q.id !== id),
+    // Mirrors the DataSource's ON DELETE SET NULL: a pitch version referencing this
+    // question survives, it just loses the link.
+    elevatorPitchVersions: prev.elevatorPitchVersions.map((v) =>
+      v.sourceQuestionId === id ? { ...v, sourceQuestionId: undefined } : v
+    ),
+  }));
+  return withRollback(() => dataSource.deleteInterviewPrepQuestion(id));
+};
+
+const addElevatorPitchVersion = (version: NewElevatorPitchVersion): Promise<ElevatorPitchVersion> => {
+  const tempId = allocTempId();
+  const optimistic: ElevatorPitchVersion = { ...version, id: tempId };
+  setState((prev) => ({ ...prev, elevatorPitchVersions: [...prev.elevatorPitchVersions, optimistic] }));
+  return withRollback(async () => {
+    const created = await dataSource.addElevatorPitchVersion(version);
+    setState((prev) => ({
+      ...prev,
+      elevatorPitchVersions: prev.elevatorPitchVersions.map((v) => (v.id === tempId ? created : v)),
+    }));
+    return created;
+  });
+};
+
+const editElevatorPitchVersion = (updated: ElevatorPitchVersion): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    elevatorPitchVersions: prev.elevatorPitchVersions.map((v) => (v.id === updated.id ? updated : v)),
+  }));
+  return withRollback(() => dataSource.editElevatorPitchVersion(updated));
+};
+
+const deleteElevatorPitchVersion = (id: number): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    elevatorPitchVersions: prev.elevatorPitchVersions.filter((v) => v.id !== id),
+  }));
+  return withRollback(() => dataSource.deleteElevatorPitchVersion(id));
+};
+
 const actions = {
   addInterviewCategory,
+  addInterviewPrepQuestion,
+  editInterviewPrepQuestion,
+  deleteInterviewPrepQuestion,
+  addElevatorPitchVersion,
+  editElevatorPitchVersion,
+  deleteElevatorPitchVersion,
   updateGoals,
   updateUserProfile,
   dismissTask,
@@ -446,6 +565,6 @@ const actions = {
  * in the background; see withRollback above.
  */
 export function useTrackerData() {
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   return { ...snapshot, ...actions };
 }

@@ -5,17 +5,21 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
+  type DsElevatorPitchVersion,
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
+  type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
   type DsTask,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
   type NewContact,
+  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
+  type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
   type NewTask,
 } from "./types";
@@ -31,6 +35,8 @@ type StoredCompanyLocation = { id: number; companyId: number; city: string; stat
 type StoredContact = DsContact;
 type StoredNetworkingEvent = Omit<DsNetworkingEvent, "contactIds">;
 type StoredNetworkingEventContact = { id: number; eventId: number; contactId: number };
+type StoredInterviewPrepQuestion = DsInterviewPrepQuestion;
+type StoredElevatorPitchVersion = DsElevatorPitchVersion;
 
 /** Simple in-memory table: autoincrement id, Map preserves insertion order (mirrors SQLite rowid order). */
 class Table<T extends { id: number }> {
@@ -112,6 +118,8 @@ export class MemoryDataSource implements DataSource {
   private goals: DsGoals = {};
   private userProfile: DsUserProfile = { name: "" };
   private interviewCategories: string[] = [];
+  private interviewPrepQuestions = new Table<StoredInterviewPrepQuestion>();
+  private elevatorPitchVersions = new Table<StoredElevatorPitchVersion>();
 
   constructor(seed: Seed = defaultSeed) {
     this.loadSeed(seed);
@@ -391,6 +399,53 @@ export class MemoryDataSource implements DataSource {
     if (!this.interviewCategories.includes(category)) this.interviewCategories.push(category);
   }
 
+  // ---- interview prep questions ----
+
+  async getInterviewPrepQuestions(): Promise<DsInterviewPrepQuestion[]> {
+    return this.interviewPrepQuestions.list();
+  }
+
+  async addInterviewPrepQuestion(question: NewInterviewPrepQuestion): Promise<DsInterviewPrepQuestion> {
+    return this.interviewPrepQuestions.insert(question);
+  }
+
+  async editInterviewPrepQuestion(question: DsInterviewPrepQuestion): Promise<void> {
+    this.interviewPrepQuestions.getOrThrow(question.id, "InterviewPrepQuestion");
+    this.interviewPrepQuestions.put(question);
+  }
+
+  async deleteInterviewPrepQuestion(id: number): Promise<void> {
+    for (const v of this.elevatorPitchVersions.listWhere((v) => v.sourceQuestionId === id)) {
+      this.elevatorPitchVersions.update(v.id, { sourceQuestionId: undefined }, "ElevatorPitchVersion");
+    }
+    this.interviewPrepQuestions.delete(id);
+  }
+
+  // ---- elevator pitch versions ----
+
+  async getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]> {
+    return this.elevatorPitchVersions.list();
+  }
+
+  async addElevatorPitchVersion(version: NewElevatorPitchVersion): Promise<DsElevatorPitchVersion> {
+    if (version.sourceQuestionId !== undefined) {
+      this.interviewPrepQuestions.getOrThrow(version.sourceQuestionId, "InterviewPrepQuestion");
+    }
+    return this.elevatorPitchVersions.insert(version);
+  }
+
+  async editElevatorPitchVersion(version: DsElevatorPitchVersion): Promise<void> {
+    this.elevatorPitchVersions.getOrThrow(version.id, "ElevatorPitchVersion");
+    if (version.sourceQuestionId !== undefined) {
+      this.interviewPrepQuestions.getOrThrow(version.sourceQuestionId, "InterviewPrepQuestion");
+    }
+    this.elevatorPitchVersions.put(version);
+  }
+
+  async deleteElevatorPitchVersion(id: number): Promise<void> {
+    this.elevatorPitchVersions.delete(id);
+  }
+
   private loadSeed(seed: Seed): void {
     const companyIdMap = new Map<string, number>();
     for (const company of seed.companies) {
@@ -448,5 +503,20 @@ export class MemoryDataSource implements DataSource {
     this.goals = { ...seed.goals };
     this.userProfile = { ...seed.userProfile };
     this.interviewCategories = [...seed.interviewCategories];
+
+    const interviewPrepQuestionIdMap = new Map<string, number>();
+    for (const q of seed.interviewPrepQuestions) {
+      const { id: seedId, ...rest } = clone(q);
+      const row = this.interviewPrepQuestions.insert(rest as Omit<StoredInterviewPrepQuestion, "id">);
+      interviewPrepQuestionIdMap.set(seedId, row.id);
+    }
+
+    for (const v of seed.elevatorPitchVersions) {
+      const { sourceQuestionId, ...rest } = omit(clone(v), "id");
+      this.elevatorPitchVersions.insert({
+        ...rest,
+        sourceQuestionId: sourceQuestionId !== undefined ? interviewPrepQuestionIdMap.get(sourceQuestionId) : undefined,
+      } as Omit<StoredElevatorPitchVersion, "id">);
+    }
   }
 }

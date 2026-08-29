@@ -5,17 +5,21 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
+  type DsElevatorPitchVersion,
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
+  type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
   type DsTask,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
   type NewContact,
+  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
+  type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
   type NewTask,
 } from "./types";
@@ -165,5 +169,31 @@ export class ElectronDataSource implements DataSource {
   }
   addInterviewCategory(category: string) {
     return this.invoke<void>("interviewCategories:add", category);
+  }
+
+  getInterviewPrepQuestions() {
+    return this.invoke<DsInterviewPrepQuestion[]>("interviewPrep:list");
+  }
+  addInterviewPrepQuestion(question: NewInterviewPrepQuestion) {
+    return this.invoke<DsInterviewPrepQuestion>("interviewPrep:add", question);
+  }
+  editInterviewPrepQuestion(question: DsInterviewPrepQuestion) {
+    return this.invoke<void>("interviewPrep:edit", question);
+  }
+  deleteInterviewPrepQuestion(id: number) {
+    return this.invoke<void>("interviewPrep:delete", id);
+  }
+
+  getElevatorPitchVersions() {
+    return this.invoke<DsElevatorPitchVersion[]>("elevatorPitch:list");
+  }
+  addElevatorPitchVersion(version: NewElevatorPitchVersion) {
+    return this.invoke<DsElevatorPitchVersion>("elevatorPitch:add", version);
+  }
+  editElevatorPitchVersion(version: DsElevatorPitchVersion) {
+    return this.invoke<void>("elevatorPitch:edit", version);
+  }
+  deleteElevatorPitchVersion(id: number) {
+    return this.invoke<void>("elevatorPitch:delete", id);
   }
 }

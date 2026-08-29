@@ -109,10 +109,39 @@ export interface DsNetworkingEvent {
   notes: string;
 }
 
+export interface DsInterviewPrepQuestion {
+  id: number;
+  category: string;
+  section?: string;
+  question: string;
+  answer: string;
+  starred: boolean;
+}
+
+export interface DsElevatorPitchVersion {
+  id: number;
+  name: string;
+  setting: string;
+  who: string;
+  personName: string;
+  role: string;
+  identity: string;
+  situation: string;
+  action: string;
+  result: string;
+  themes: string[];
+  synthesis: string;
+  seeking: string;
+  closingQuestion: string;
+  sourceQuestionId?: number;
+}
+
 export type DsGoals = Goals;
 export type DsUserProfile = UserProfile;
 
 export type NewApplication = Omit<DsApplication, "id" | "interviews" | "followUps">;
+export type NewInterviewPrepQuestion = Omit<DsInterviewPrepQuestion, "id">;
+export type NewElevatorPitchVersion = Omit<DsElevatorPitchVersion, "id">;
 export type NewCompany = Omit<DsCompany, "id" | "locations"> & { locations?: DsCompanyLocation[] };
 export type NewContact = Omit<DsContact, "id">;
 export type NewInterview = Omit<DsInterview, "id">;
@@ -176,4 +205,14 @@ export interface DataSource {
 
   getInterviewCategories(): Promise<string[]>;
   addInterviewCategory(category: string): Promise<void>;
+
+  getInterviewPrepQuestions(): Promise<DsInterviewPrepQuestion[]>;
+  addInterviewPrepQuestion(question: NewInterviewPrepQuestion): Promise<DsInterviewPrepQuestion>;
+  editInterviewPrepQuestion(question: DsInterviewPrepQuestion): Promise<void>;
+  deleteInterviewPrepQuestion(id: number): Promise<void>;
+
+  getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]>;
+  addElevatorPitchVersion(version: NewElevatorPitchVersion): Promise<DsElevatorPitchVersion>;
+  editElevatorPitchVersion(version: DsElevatorPitchVersion): Promise<void>;
+  deleteElevatorPitchVersion(id: number): Promise<void>;
 }

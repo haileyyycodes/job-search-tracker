@@ -138,3 +138,36 @@ export interface Goals {
 export interface UserProfile {
   name: string;
 }
+
+export interface InterviewPrepQuestion {
+  id: number;
+  category: string;
+  section?: string;
+  question: string;
+  answer: string;
+  starred: boolean;
+}
+
+/**
+ * One tailored draft of your elevator pitch (e.g. "Career fair" vs. "Recruiter
+ * call"). Every field below maps to one step of the pitch builder wizard;
+ * `themes` and `sourceQuestionId` are the only non-scalar/optional ones.
+ */
+export interface ElevatorPitchVersion {
+  id: number;
+  name: string;
+  setting: string;
+  who: string;
+  personName: string;
+  role: string;
+  identity: string;
+  situation: string;
+  action: string;
+  result: string;
+  themes: string[];
+  synthesis: string;
+  seeking: string;
+  closingQuestion: string;
+  /** InterviewPrepQuestion this version's proof point was pulled from, if any. */
+  sourceQuestionId?: number;
+}
