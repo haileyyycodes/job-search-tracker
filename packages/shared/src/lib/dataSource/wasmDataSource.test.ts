@@ -20,13 +20,19 @@ describe("WasmDataSource seed loading", () => {
     expect(northwind.locations).toEqual([{ city: "Detroit", state: "MI" }]);
 
     const applications = await ds.getApplications();
-    const productDesigner = applications.find((a) => a.role === "Product Designer")!;
-    expect(productDesigner.companyId).toBe(northwind.id);
-    expect(productDesigner.interviews).toHaveLength(1);
-    expect(productDesigner.followUps).toHaveLength(1);
-    expect(productDesigner.statusHistory).toHaveLength(2);
+    expect(applications).toHaveLength(defaultSeed.applications.length);
 
-    // deleting Northwind should be blocked at the SQL level (RESTRICT), same as MemoryDataSource
-    await expect(ds.deleteCompany(northwind.id)).rejects.toThrow();
+    // nested rows were composed back onto their applications
+    const withInterviews = applications.find((a) => a.interviews.length > 0)!;
+    expect(withInterviews.statusHistory.length).toBeGreaterThan(1);
+    expect(applications.some((a) => a.followUps.length > 0)).toBe(true);
+
+    // every application FK resolves to a real company
+    const companyIds = new Set(companies.map((c) => c.id));
+    expect(applications.every((a) => companyIds.has(a.companyId))).toBe(true);
+
+    // deleting a company that still has applications is blocked at the SQL level (RESTRICT)
+    const companyWithApps = companies.find((c) => applications.some((a) => a.companyId === c.id))!;
+    await expect(ds.deleteCompany(companyWithApps.id)).rejects.toThrow();
   });
 });

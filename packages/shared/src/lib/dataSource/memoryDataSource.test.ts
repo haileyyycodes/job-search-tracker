@@ -10,26 +10,36 @@ describe("MemoryDataSource seed loading", () => {
     const ds = new MemoryDataSource(defaultSeed);
 
     const companies = await ds.getCompanies();
-    expect(companies).toHaveLength(5);
+    const contacts = await ds.getContacts();
+    const applications = await ds.getApplications();
+    const events = await ds.getNetworkingEvents();
+
+    expect(companies).toHaveLength(defaultSeed.companies.length);
+    expect(contacts).toHaveLength(defaultSeed.contacts.length);
+    expect(applications).toHaveLength(defaultSeed.applications.length);
+    expect(events).toHaveLength(defaultSeed.networkingEvents.length);
+    expect(await ds.getElevatorPitchVersions()).toHaveLength(defaultSeed.elevatorPitchVersions.length);
+
     const northwind = companies.find((c) => c.name === "Northwind Co.")!;
     expect(northwind.locations).toEqual([{ city: "Detroit", state: "MI" }]);
+    expect(contacts.find((c) => c.name === "Alex Chen")!.companyId).toBe(northwind.id);
 
-    const contacts = await ds.getContacts();
-    expect(contacts).toHaveLength(1);
-    expect(contacts[0].companyId).toBe(northwind.id);
+    // every string placeholder id was remapped to a numeric one, and every FK still resolves
+    const companyIds = new Set(companies.map((c) => c.id));
+    const contactIds = new Set(contacts.map((c) => c.id));
+    for (const a of applications) {
+      expect(typeof a.id).toBe("number");
+      expect(companyIds.has(a.companyId)).toBe(true);
+      if (a.referredByContactId != null) expect(contactIds.has(a.referredByContactId)).toBe(true);
+      for (const f of a.followUps) expect(contactIds.has(f.contactId)).toBe(true);
+    }
+    for (const e of events) for (const cid of e.contactIds) expect(contactIds.has(cid)).toBe(true);
 
-    const applications = await ds.getApplications();
-    expect(applications).toHaveLength(5);
-    const productDesigner = applications.find((a) => a.role === "Product Designer")!;
-    expect(productDesigner.companyId).toBe(northwind.id);
-    expect(productDesigner.referredByContactId).toBe(contacts[0].id);
-    expect(productDesigner.interviews).toHaveLength(1);
-    expect(productDesigner.followUps).toEqual([{ id: expect.any(Number), date: "Jun 25, 2026", contactId: contacts[0].id, notes: "Checked in on timeline." }]);
-
-    const events = await ds.getNetworkingEvents();
-    expect(events).toHaveLength(1);
-    expect(events[0].contactIds).toEqual([contacts[0].id]);
-    expect(events[0].applicationId).toBe(productDesigner.id);
+    // the composed nested shapes came through
+    expect(applications.some((a) => a.interviews.length > 0)).toBe(true);
+    expect(applications.some((a) => a.followUps.length > 0)).toBe(true);
+    expect(applications.some((a) => a.referredByContactId != null)).toBe(true);
+    expect(applications.every((a) => a.statusHistory.length > 0)).toBe(true);
 
     expect(await ds.getGoals()).toEqual(defaultSeed.goals);
     expect(await ds.getInterviewCategories()).toEqual(defaultSeed.interviewCategories);
