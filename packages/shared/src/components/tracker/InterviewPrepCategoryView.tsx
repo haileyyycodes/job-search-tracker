@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, IconButton, Input } from "@/components/ds";
+import { Button, IconButton } from "@/components/ds";
+import { AddInterviewPrepQuestionDialog } from "./AddInterviewPrepQuestionDialog";
 import { interviewPrepCategory } from "@/lib/interviewPrep";
 import type { NewInterviewPrepQuestion } from "@/lib/dataSource/types";
 import type { InterviewPrepQuestion } from "@/lib/types";
@@ -78,20 +79,7 @@ export function InterviewPrepCategoryView({
   onDeleteQuestion,
 }: InterviewPrepCategoryViewProps) {
   const category = interviewPrepCategory(categorySlug);
-  const [newQuestion, setNewQuestion] = useState("");
-  const [newSection, setNewSection] = useState("");
-
-  const handleAdd = () => {
-    if (!newQuestion.trim()) return;
-    onAddQuestion({
-      category: categorySlug,
-      section: newSection.trim() || undefined,
-      question: newQuestion.trim(),
-      answer: "",
-    });
-    setNewQuestion("");
-    setNewSection("");
-  };
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const groups = groupBySection(questions);
 
@@ -111,12 +99,21 @@ export function InterviewPrepCategoryView({
       >
         ← Back to interview prep
       </button>
-      <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>
-        {category?.label ?? categorySlug}
-      </h1>
-      {category?.description && (
-        <p style={{ font: "var(--text-body-m)", color: "var(--text-secondary)", marginTop: 4 }}>{category.description}</p>
-      )}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+        <div>
+          <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>
+            {category?.label ?? categorySlug}
+          </h1>
+          {category?.description && (
+            <p style={{ font: "var(--text-body-m)", color: "var(--text-secondary)", marginTop: 4 }}>
+              {category.description}
+            </p>
+          )}
+        </div>
+        <Button size="sm" onClick={() => setAddDialogOpen(true)}>
+          + Add question
+        </Button>
+      </div>
 
       <div style={{ marginTop: 24 }}>
         {groups.map(([section, groupQuestions]) => (
@@ -144,36 +141,18 @@ export function InterviewPrepCategoryView({
         ))}
         {questions.length === 0 && (
           <div style={{ padding: "16px 4px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-            No questions yet — add your first one below.
+            No questions yet — add one to get started.
           </div>
         )}
       </div>
 
-      <div
-        style={{
-          marginTop: 24,
-          paddingTop: 20,
-          borderTop: "1px solid var(--border-default)",
-          display: "flex",
-          gap: 12,
-          alignItems: "flex-end",
-        }}
-      >
-        <div style={{ flex: 2 }}>
-          <Input label="New question" placeholder="e.g. Tell me about a time…" value={newQuestion} onChange={setNewQuestion} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <Input
-            label="Section (optional)"
-            placeholder="e.g. Conflict & Disagreement"
-            value={newSection}
-            onChange={setNewSection}
-          />
-        </div>
-        <Button onClick={handleAdd} disabled={!newQuestion.trim()}>
-          + Add question
-        </Button>
-      </div>
+      {addDialogOpen && (
+        <AddInterviewPrepQuestionDialog
+          categorySlug={categorySlug}
+          onClose={() => setAddDialogOpen(false)}
+          onSave={onAddQuestion}
+        />
+      )}
     </div>
   );
 }
