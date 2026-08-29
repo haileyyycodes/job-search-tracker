@@ -24,6 +24,7 @@ const ALLOWED_CHANNELS = new Set([
   "contacts:delete",
   "networkingEvents:list",
   "networkingEvents:add",
+  "networkingEvents:edit",
   "networkingEvents:delete",
   "goals:get",
   "goals:update",

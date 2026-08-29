@@ -118,10 +118,12 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
           apps={data.apps}
           companies={data.companies}
           initialContactId={ui.networkingDialogContactId != null ? String(ui.networkingDialogContactId) : undefined}
+          event={ui.networkingDialogEvent ?? undefined}
           onCreateContact={data.createContact}
           onClose={ui.closeLogNetworkingEvent}
           onSave={(event) => {
-            data.addNetworkingEvent(event);
+            if (ui.networkingDialogEvent) data.editNetworkingEvent({ ...event, id: ui.networkingDialogEvent.id });
+            else data.addNetworkingEvent(event);
             ui.closeLogNetworkingEvent();
           }}
         />

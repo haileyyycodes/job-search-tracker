@@ -131,6 +131,9 @@ export class ElectronDataSource implements DataSource {
   addNetworkingEvent(event: NewNetworkingEvent) {
     return this.invoke<DsNetworkingEvent>("networkingEvents:add", event);
   }
+  editNetworkingEvent(event: DsNetworkingEvent) {
+    return this.invoke<void>("networkingEvents:edit", event);
+  }
   deleteNetworkingEvent(id: number) {
     return this.invoke<void>("networkingEvents:delete", id);
   }

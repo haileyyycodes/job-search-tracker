@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog, Select, Input, Button } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
-import { formatDateInput, todayFormatted } from "@/lib/date";
+import { formatDateInput, todayFormatted, toDateInputValue } from "@/lib/date";
 import { networkingEventTypes } from "@/lib/data";
 import { companyName } from "@/lib/companies";
 import { ContactMultiPicker } from "./ContactMultiPicker";
@@ -17,26 +17,31 @@ interface LogNetworkingEventDialogProps {
   apps: Application[];
   companies: Company[];
   initialContactId?: string;
+  /** When present, the dialog edits this event instead of logging a new one. */
+  event?: NetworkingEvent;
   onClose: () => void;
   onCreateContact: (contact: NewContact) => Promise<Contact>;
   onSave: (event: Omit<NetworkingEvent, "id">) => void;
 }
 
-/** Only ever rendered while the log-networking-event flow is open. */
+/** Only ever rendered while the log/edit-networking-event flow is open; `event` present means edit mode. */
 export function LogNetworkingEventDialog({
   contacts,
   apps,
   companies,
   initialContactId,
+  event,
   onClose,
   onCreateContact,
   onSave,
 }: LogNetworkingEventDialogProps) {
-  const [contactIds, setContactIds] = useState<string[]>(initialContactId ? [initialContactId] : []);
-  const [type, setType] = useState(typeOptions[0].value);
-  const [dateInput, setDateInput] = useState("");
-  const [applicationId, setApplicationId] = useState("");
-  const [notes, setNotes] = useState("");
+  const [contactIds, setContactIds] = useState<string[]>(
+    event ? event.contactIds.map(String) : initialContactId ? [initialContactId] : []
+  );
+  const [type, setType] = useState(event?.type ?? typeOptions[0].value);
+  const [dateInput, setDateInput] = useState(event ? toDateInputValue(event.date) : "");
+  const [applicationId, setApplicationId] = useState(event?.applicationId != null ? String(event.applicationId) : "");
+  const [notes, setNotes] = useState(event?.notes ?? "");
   const [submitted, setSubmitted] = useState(false);
 
   const applicationOptions: SelectOption[] = [
@@ -61,7 +66,7 @@ export function LogNetworkingEventDialog({
   return (
     <Dialog
       open
-      title="Log networking event"
+      title={event ? "Edit networking event" : "Log networking event"}
       onClose={onClose}
       footer={
         <>

@@ -809,6 +809,22 @@ export class WasmDataSource implements DataSource {
     return this.composeNetworkingEvent(db, row);
   }
 
+  async editNetworkingEvent(event: DsNetworkingEvent): Promise<void> {
+    const db = await this.ready;
+    this.requireRow<NetworkingEventRow>(db, "SELECT * FROM networking_events WHERE id = ?", event.id, "NetworkingEvent");
+    db.run("UPDATE networking_events SET type = ?, date = ?, application_id = ?, notes = ? WHERE id = ?", [
+      event.type,
+      event.date,
+      event.applicationId ?? null,
+      event.notes,
+      event.id,
+    ]);
+    db.run("DELETE FROM networking_event_contacts WHERE event_id = ?", [event.id]);
+    for (const contactId of event.contactIds) {
+      db.run("INSERT INTO networking_event_contacts (event_id, contact_id) VALUES (?, ?)", [event.id, contactId]);
+    }
+  }
+
   async deleteNetworkingEvent(id: number): Promise<void> {
     const db = await this.ready;
     db.run("DELETE FROM networking_events WHERE id = ?", [id]);
