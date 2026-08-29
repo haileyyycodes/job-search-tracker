@@ -24,6 +24,12 @@ Open [http://localhost:3000](http://localhost:3000).
 cd apps/desktop && npm start
 ```
 
+Or from the repo root:
+
+```bash
+npm run start --workspace=apps/desktop
+```
+
 **Install** — builds a `.dmg`/`.app` into `apps/desktop/out/`:
 
 ```bash
@@ -33,6 +39,18 @@ cd apps/desktop && npm run make
 Open the `.dmg`, drag `Job Tracker.app` into Applications. It's unsigned, so the first launch needs a right-click → **Open** to get past Gatekeeper.
 
 The installed app is a frozen snapshot — it does **not** auto-update. Re-run `npm run make` and reinstall to pick up new changes. Dev and installed builds share the same database (`~/Library/Application Support/Job Tracker/job-tracker.db`), so data carries over either way.
+
+### Troubleshooting: the app launches but shows no data
+
+If your companies, contacts, and networking events have all vanished at once, the database is fine — the app failed to load it. `openDatabase()` in [`apps/desktop/src/db/schema.ts`](apps/desktop/src/db/schema.ts) runs the full schema only on a brand-new file; every existing file gets `migrate()` instead, which must add any table introduced later. When a table it needs is missing, the renderer's boot-time `Promise.all` of list queries rejects as a whole and every view stays empty.
+
+The fix is to launch from current source on a branch where `migrate()` covers that table:
+
+```bash
+npm run start --workspace=apps/desktop
+```
+
+`migrate()` runs on every launch and is idempotent, so it backfills the missing tables without touching existing rows. A packaged `.app` won't have the fix until you re-run `npm run make`.
 
 ## Commands
 
