@@ -19,7 +19,7 @@ export function AddInterviewPrepQuestionDialog({ categorySlug, onClose, onSave }
   const handleSave = () => {
     setSubmitted(true);
     if (!question.trim()) return;
-    onSave({ category: categorySlug, section: section.trim() || undefined, question: question.trim(), answer: "" });
+    onSave({ category: categorySlug, section: section.trim() || undefined, question: question.trim(), answer: "", starred: false });
     onClose();
   };
 

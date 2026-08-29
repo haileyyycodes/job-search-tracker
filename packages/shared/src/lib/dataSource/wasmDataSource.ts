@@ -154,6 +154,7 @@ interface InterviewPrepQuestionRow {
   section: string | null;
   question: string;
   answer: string;
+  starred: number;
 }
 
 // ---- row -> Ds* mappers ----
@@ -208,6 +209,7 @@ function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPre
     section: row.section ?? undefined,
     question: row.question,
     answer: row.answer,
+    starred: !!row.starred,
   };
 }
 
@@ -433,11 +435,12 @@ export class WasmDataSource implements DataSource {
     db.run("UPDATE user_profile SET name = ? WHERE id = 1", [seed.userProfile.name]);
 
     for (const q of seed.interviewPrepQuestions) {
-      db.run("INSERT INTO interview_prep_questions (category, section, question, answer) VALUES (?, ?, ?, ?)", [
+      db.run("INSERT INTO interview_prep_questions (category, section, question, answer, starred) VALUES (?, ?, ?, ?, ?)", [
         q.category,
         q.section ?? null,
         q.question,
         q.answer,
+        bool(q.starred),
       ]);
     }
   }
@@ -875,11 +878,12 @@ export class WasmDataSource implements DataSource {
 
   async addInterviewPrepQuestion(question: NewInterviewPrepQuestion): Promise<DsInterviewPrepQuestion> {
     const db = await this.ready;
-    db.run("INSERT INTO interview_prep_questions (category, section, question, answer) VALUES (?, ?, ?, ?)", [
+    db.run("INSERT INTO interview_prep_questions (category, section, question, answer, starred) VALUES (?, ?, ?, ?, ?)", [
       question.category,
       question.section ?? null,
       question.question,
       question.answer,
+      bool(question.starred),
     ]);
     const id = lastInsertId(db);
     return mapInterviewPrepQuestion(
@@ -889,11 +893,12 @@ export class WasmDataSource implements DataSource {
 
   async editInterviewPrepQuestion(question: DsInterviewPrepQuestion): Promise<void> {
     const db = await this.ready;
-    db.run("UPDATE interview_prep_questions SET category = ?, section = ?, question = ?, answer = ? WHERE id = ?", [
+    db.run("UPDATE interview_prep_questions SET category = ?, section = ?, question = ?, answer = ?, starred = ? WHERE id = ?", [
       question.category,
       question.section ?? null,
       question.question,
       question.answer,
+      bool(question.starred),
       question.id,
     ]);
   }

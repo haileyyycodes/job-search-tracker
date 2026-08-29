@@ -115,6 +115,7 @@ export interface DsInterviewPrepQuestion {
   section?: string;
   question: string;
   answer: string;
+  starred: boolean;
 }
 
 export type DsGoals = Goals;

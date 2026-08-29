@@ -136,7 +136,8 @@ CREATE TABLE interview_prep_questions (
   category TEXT NOT NULL,
   section TEXT,
   question TEXT NOT NULL,
-  answer TEXT NOT NULL
+  answer TEXT NOT NULL,
+  starred INTEGER NOT NULL DEFAULT 0
 );
 
 INSERT INTO goals (id) VALUES (1);

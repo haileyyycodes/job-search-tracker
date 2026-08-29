@@ -142,6 +142,7 @@ interface InterviewPrepQuestionRow {
   section: string | null;
   question: string;
   answer: string;
+  starred: number;
 }
 
 // ---- row -> Ds* mappers (identical to WasmDataSource's — same normalized shape) ----
@@ -196,6 +197,7 @@ function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPre
     section: row.section ?? undefined,
     question: row.question,
     answer: row.answer,
+    starred: !!row.starred,
   };
 }
 
@@ -660,8 +662,8 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
 
     async addInterviewPrepQuestion(question: NewInterviewPrepQuestion) {
       const { lastInsertRowid } = db
-        .prepare("INSERT INTO interview_prep_questions (category, section, question, answer) VALUES (?, ?, ?, ?)")
-        .run(question.category, question.section ?? null, question.question, question.answer);
+        .prepare("INSERT INTO interview_prep_questions (category, section, question, answer, starred) VALUES (?, ?, ?, ?, ?)")
+        .run(question.category, question.section ?? null, question.question, question.answer, bool(question.starred));
       return mapInterviewPrepQuestion(
         requireRow<InterviewPrepQuestionRow>(
           "SELECT * FROM interview_prep_questions WHERE id = ?",
@@ -672,13 +674,9 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     },
 
     async editInterviewPrepQuestion(question: DsInterviewPrepQuestion) {
-      db.prepare("UPDATE interview_prep_questions SET category = ?, section = ?, question = ?, answer = ? WHERE id = ?").run(
-        question.category,
-        question.section ?? null,
-        question.question,
-        question.answer,
-        question.id
-      );
+      db.prepare(
+        "UPDATE interview_prep_questions SET category = ?, section = ?, question = ?, answer = ?, starred = ? WHERE id = ?"
+      ).run(question.category, question.section ?? null, question.question, question.answer, bool(question.starred), question.id);
     },
 
     async deleteInterviewPrepQuestion(id: number) {

@@ -346,6 +346,7 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
         section: "Ownership & Ambiguity",
         question: "Tell me about a time you owned a project end-to-end.",
         answer: "",
+        starred: false,
       });
       expect(created.id).toBeTypeOf("number");
       expect(await ds.getInterviewPrepQuestions()).toEqual([created]);
@@ -357,15 +358,24 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
         category: "recruiter_screening",
         question: "Why are you looking for a new role?",
         answer: "",
+        starred: false,
       });
       await ds.editInterviewPrepQuestion({ ...created, answer: "Looking for more ownership." });
       const [fetched] = await ds.getInterviewPrepQuestions();
       expect(fetched.answer).toBe("Looking for more ownership.");
     });
 
+    it("editInterviewPrepQuestion toggles starred", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addInterviewPrepQuestion({ category: "behavioral", question: "Q?", answer: "", starred: false });
+      await ds.editInterviewPrepQuestion({ ...created, starred: true });
+      const [fetched] = await ds.getInterviewPrepQuestions();
+      expect(fetched.starred).toBe(true);
+    });
+
     it("deleteInterviewPrepQuestion removes it", async () => {
       const ds = makeDataSource();
-      const created = await ds.addInterviewPrepQuestion({ category: "behavioral", question: "Q?", answer: "" });
+      const created = await ds.addInterviewPrepQuestion({ category: "behavioral", question: "Q?", answer: "", starred: false });
       await ds.deleteInterviewPrepQuestion(created.id);
       expect(await ds.getInterviewPrepQuestions()).toEqual([]);
     });

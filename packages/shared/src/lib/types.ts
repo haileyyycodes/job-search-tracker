@@ -145,4 +145,5 @@ export interface InterviewPrepQuestion {
   section?: string;
   question: string;
   answer: string;
+  starred: boolean;
 }
