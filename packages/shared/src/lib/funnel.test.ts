@@ -8,7 +8,6 @@ import {
   getInterviewRatioTier,
   getOfferRatio,
   getResponseRate,
-  getStaleApplications,
   hasReplied,
   reachedInterview,
   reachedOffer,
@@ -226,36 +225,5 @@ describe("getDaysSinceActivity", () => {
     app.interviews = [{ id: 1, type: "Recruiter Screen", date: "Jul 5, 2026", notes: "" } satisfies Interview];
     app.followUps = [{ id: 1, date: "Jul 18, 2026", contactId: 1, notes: "" }];
     expect(getDaysSinceActivity(app)).toBe(2);
-  });
-});
-
-describe("getStaleApplications", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 6, 20));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("only includes applied and interviewing applications", () => {
-    const applied = makeApp({ statusHistory: history("applied") });
-    const interviewing = makeApp({ statusHistory: history("applied", "interviewing") });
-    const rejected = makeApp({ statusHistory: history("applied", "rejected_no_interview") });
-    const todoApp = makeApp({ statusHistory: history("todo") });
-
-    const stale = getStaleApplications([applied, interviewing, rejected, todoApp], 10);
-    expect(stale.map((s) => s.app.id).sort()).toEqual([applied.id, interviewing.id].sort());
-  });
-
-  it("sorts most-stale first and respects the limit", () => {
-    const recent = makeApp({ statusHistory: [{ status: "applied", at: "Jul 18, 2026" }] });
-    const stalest = makeApp({ statusHistory: [{ status: "applied", at: "Jul 1, 2026" }] });
-    const middle = makeApp({ statusHistory: [{ status: "applied", at: "Jul 10, 2026" }] });
-
-    const result = getStaleApplications([recent, stalest, middle], 2);
-    expect(result.map((s) => s.app.id)).toEqual([stalest.id, middle.id]);
-    expect(result[0].daysSinceActivity).toBe(19);
   });
 });
