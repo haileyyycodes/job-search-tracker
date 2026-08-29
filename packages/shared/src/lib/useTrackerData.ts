@@ -9,6 +9,7 @@ import type {
   NewApplication,
   NewCompany,
   NewContact,
+  NewElevatorPitchVersion,
   NewFollowUp,
   NewInterview,
   NewInterviewPrepQuestion,
@@ -19,6 +20,7 @@ import type {
   ApplicationStatus,
   Company,
   Contact,
+  ElevatorPitchVersion,
   Feedback,
   FollowUp,
   Goals,
@@ -40,6 +42,7 @@ interface TrackerState {
   companies: Company[];
   interviewCategories: string[];
   interviewPrepQuestions: InterviewPrepQuestion[];
+  elevatorPitchVersions: ElevatorPitchVersion[];
 }
 
 const emptyState: TrackerState = {
@@ -52,6 +55,7 @@ const emptyState: TrackerState = {
   companies: [],
   interviewCategories: [],
   interviewPrepQuestions: [],
+  elevatorPitchVersions: [],
 };
 
 // Placeholder until real boot-time selection (below) resolves and swaps this out.
@@ -103,18 +107,29 @@ function allocTempId(): number {
 }
 
 async function loadAll(): Promise<void> {
-  const [apps, tasks, goals, userProfile, contacts, networkingEvents, companies, interviewCategories, interviewPrepQuestions] =
-    await Promise.all([
-      dataSource.getApplications(),
-      dataSource.getTasks(),
-      dataSource.getGoals(),
-      dataSource.getUserProfile(),
-      dataSource.getContacts(),
-      dataSource.getNetworkingEvents(),
-      dataSource.getCompanies(),
-      dataSource.getInterviewCategories(),
-      dataSource.getInterviewPrepQuestions(),
-    ]);
+  const [
+    apps,
+    tasks,
+    goals,
+    userProfile,
+    contacts,
+    networkingEvents,
+    companies,
+    interviewCategories,
+    interviewPrepQuestions,
+    elevatorPitchVersions,
+  ] = await Promise.all([
+    dataSource.getApplications(),
+    dataSource.getTasks(),
+    dataSource.getGoals(),
+    dataSource.getUserProfile(),
+    dataSource.getContacts(),
+    dataSource.getNetworkingEvents(),
+    dataSource.getCompanies(),
+    dataSource.getInterviewCategories(),
+    dataSource.getInterviewPrepQuestions(),
+    dataSource.getElevatorPitchVersions(),
+  ]);
   setState({
     apps,
     tasks,
@@ -125,6 +140,7 @@ async function loadAll(): Promise<void> {
     companies,
     interviewCategories,
     interviewPrepQuestions,
+    elevatorPitchVersions,
   });
 }
 
@@ -468,8 +484,43 @@ const deleteInterviewPrepQuestion = (id: number): Promise<void> => {
   setState((prev) => ({
     ...prev,
     interviewPrepQuestions: prev.interviewPrepQuestions.filter((q) => q.id !== id),
+    // Mirrors the DataSource's ON DELETE SET NULL: a pitch version referencing this
+    // question survives, it just loses the link.
+    elevatorPitchVersions: prev.elevatorPitchVersions.map((v) =>
+      v.sourceQuestionId === id ? { ...v, sourceQuestionId: undefined } : v
+    ),
   }));
   return withRollback(() => dataSource.deleteInterviewPrepQuestion(id));
+};
+
+const addElevatorPitchVersion = (version: NewElevatorPitchVersion): Promise<ElevatorPitchVersion> => {
+  const tempId = allocTempId();
+  const optimistic: ElevatorPitchVersion = { ...version, id: tempId };
+  setState((prev) => ({ ...prev, elevatorPitchVersions: [...prev.elevatorPitchVersions, optimistic] }));
+  return withRollback(async () => {
+    const created = await dataSource.addElevatorPitchVersion(version);
+    setState((prev) => ({
+      ...prev,
+      elevatorPitchVersions: prev.elevatorPitchVersions.map((v) => (v.id === tempId ? created : v)),
+    }));
+    return created;
+  });
+};
+
+const editElevatorPitchVersion = (updated: ElevatorPitchVersion): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    elevatorPitchVersions: prev.elevatorPitchVersions.map((v) => (v.id === updated.id ? updated : v)),
+  }));
+  return withRollback(() => dataSource.editElevatorPitchVersion(updated));
+};
+
+const deleteElevatorPitchVersion = (id: number): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    elevatorPitchVersions: prev.elevatorPitchVersions.filter((v) => v.id !== id),
+  }));
+  return withRollback(() => dataSource.deleteElevatorPitchVersion(id));
 };
 
 const actions = {
@@ -477,6 +528,9 @@ const actions = {
   addInterviewPrepQuestion,
   editInterviewPrepQuestion,
   deleteInterviewPrepQuestion,
+  addElevatorPitchVersion,
+  editElevatorPitchVersion,
+  deleteElevatorPitchVersion,
   updateGoals,
   updateUserProfile,
   dismissTask,

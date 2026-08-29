@@ -5,6 +5,7 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
+  type DsElevatorPitchVersion,
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
@@ -15,6 +16,7 @@ import {
   type NewApplication,
   type NewCompany,
   type NewContact,
+  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
   type NewInterviewPrepQuestion,
@@ -180,5 +182,18 @@ export class ElectronDataSource implements DataSource {
   }
   deleteInterviewPrepQuestion(id: number) {
     return this.invoke<void>("interviewPrep:delete", id);
+  }
+
+  getElevatorPitchVersions() {
+    return this.invoke<DsElevatorPitchVersion[]>("elevatorPitch:list");
+  }
+  addElevatorPitchVersion(version: NewElevatorPitchVersion) {
+    return this.invoke<DsElevatorPitchVersion>("elevatorPitch:add", version);
+  }
+  editElevatorPitchVersion(version: DsElevatorPitchVersion) {
+    return this.invoke<void>("elevatorPitch:edit", version);
+  }
+  deleteElevatorPitchVersion(id: number) {
+    return this.invoke<void>("elevatorPitch:delete", id);
   }
 }

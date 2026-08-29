@@ -39,6 +39,10 @@ const ALLOWED_CHANNELS = new Set([
   "interviewPrep:add",
   "interviewPrep:edit",
   "interviewPrep:delete",
+  "elevatorPitch:list",
+  "elevatorPitch:add",
+  "elevatorPitch:edit",
+  "elevatorPitch:delete",
 ]);
 
 /**

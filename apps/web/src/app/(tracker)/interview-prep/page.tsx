@@ -39,7 +39,9 @@ function InterviewPrepPageContent() {
       <TopBar title="Interview Prep" subtitle="Store commonly asked questions and pre-write your answers." />
       <InterviewPrepView
         questions={data.interviewPrepQuestions}
+        pitchVersionCount={data.elevatorPitchVersions.length}
         onSelectCategory={(slug) => router.push(`/interview-prep?category=${slug}`)}
+        onSelectPitchBuilder={() => router.push("/interview-prep/pitch")}
       />
     </>
   );

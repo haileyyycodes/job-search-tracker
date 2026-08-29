@@ -380,4 +380,61 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       expect(await ds.getInterviewPrepQuestions()).toEqual([]);
     });
   });
+
+  describe("elevator pitch versions", () => {
+    function blankVersion() {
+      return {
+        name: "Career fair",
+        setting: "",
+        who: "",
+        personName: "",
+        role: "",
+        identity: "",
+        situation: "",
+        action: "",
+        result: "",
+        themes: [] as string[],
+        synthesis: "",
+        seeking: "",
+        closingQuestion: "",
+      };
+    }
+
+    it("starts empty, addElevatorPitchVersion persists it, and getElevatorPitchVersions returns it", async () => {
+      const ds = makeDataSource();
+      expect(await ds.getElevatorPitchVersions()).toEqual([]);
+      const created = await ds.addElevatorPitchVersion(blankVersion());
+      expect(created.id).toBeTypeOf("number");
+      expect(await ds.getElevatorPitchVersions()).toEqual([created]);
+    });
+
+    it("editElevatorPitchVersion updates fields (including the themes array) in place", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addElevatorPitchVersion(blankVersion());
+      await ds.editElevatorPitchVersion({ ...created, identity: "A builder who ships.", themes: ["Fast learner", "Collaborator"] });
+      const [fetched] = await ds.getElevatorPitchVersions();
+      expect(fetched.identity).toBe("A builder who ships.");
+      expect(fetched.themes).toEqual(["Fast learner", "Collaborator"]);
+    });
+
+    it("deleteElevatorPitchVersion removes it", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addElevatorPitchVersion(blankVersion());
+      await ds.deleteElevatorPitchVersion(created.id);
+      expect(await ds.getElevatorPitchVersions()).toEqual([]);
+    });
+
+    it("persists a link to its source prep question and clears it (not the version) when that question is deleted", async () => {
+      const ds = makeDataSource();
+      const question = await ds.addInterviewPrepQuestion({ category: "behavioral", question: "Q?", answer: "", starred: false });
+      const created = await ds.addElevatorPitchVersion({ ...blankVersion(), sourceQuestionId: question.id });
+      expect(created.sourceQuestionId).toBe(question.id);
+
+      await ds.deleteInterviewPrepQuestion(question.id);
+
+      const [fetched] = await ds.getElevatorPitchVersions();
+      expect(fetched.id).toBe(created.id);
+      expect(fetched.sourceQuestionId).toBeUndefined();
+    });
+  });
 }

@@ -7,6 +7,7 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
+  type DsElevatorPitchVersion,
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
@@ -17,6 +18,7 @@ import {
   type NewApplication,
   type NewCompany,
   type NewContact,
+  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
   type NewInterviewPrepQuestion,
@@ -144,6 +146,23 @@ interface InterviewPrepQuestionRow {
   answer: string;
   starred: number;
 }
+interface ElevatorPitchVersionRow {
+  id: number;
+  name: string;
+  setting: string;
+  who: string;
+  person_name: string;
+  role: string;
+  identity: string;
+  situation: string;
+  action: string;
+  result: string;
+  themes: string;
+  synthesis: string;
+  seeking: string;
+  closing_question: string;
+  source_question_id: number | null;
+}
 
 // ---- row -> Ds* mappers (identical to WasmDataSource's — same normalized shape) ----
 
@@ -198,6 +217,26 @@ function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPre
     question: row.question,
     answer: row.answer,
     starred: !!row.starred,
+  };
+}
+
+function mapElevatorPitchVersion(row: ElevatorPitchVersionRow): DsElevatorPitchVersion {
+  return {
+    id: row.id,
+    name: row.name,
+    setting: row.setting,
+    who: row.who,
+    personName: row.person_name,
+    role: row.role,
+    identity: row.identity,
+    situation: row.situation,
+    action: row.action,
+    result: row.result,
+    themes: row.themes ? (JSON.parse(row.themes) as string[]) : [],
+    synthesis: row.synthesis,
+    seeking: row.seeking,
+    closingQuestion: row.closing_question,
+    sourceQuestionId: row.source_question_id ?? undefined,
   };
 }
 
@@ -682,6 +721,75 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     async deleteInterviewPrepQuestion(id: number) {
       db.prepare("DELETE FROM interview_prep_questions WHERE id = ?").run(id);
     },
+
+    // ---- elevator pitch versions ----
+
+    async getElevatorPitchVersions() {
+      return db
+        .prepare<[], ElevatorPitchVersionRow>("SELECT * FROM elevator_pitch_versions ORDER BY id")
+        .all()
+        .map(mapElevatorPitchVersion);
+    },
+
+    async addElevatorPitchVersion(version: NewElevatorPitchVersion) {
+      const { lastInsertRowid } = db
+        .prepare(
+          `INSERT INTO elevator_pitch_versions
+            (name, setting, who, person_name, role, identity, situation, action, result, themes, synthesis, seeking, closing_question, source_question_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          version.name,
+          version.setting,
+          version.who,
+          version.personName,
+          version.role,
+          version.identity,
+          version.situation,
+          version.action,
+          version.result,
+          JSON.stringify(version.themes),
+          version.synthesis,
+          version.seeking,
+          version.closingQuestion,
+          version.sourceQuestionId ?? null
+        );
+      return mapElevatorPitchVersion(
+        requireRow<ElevatorPitchVersionRow>(
+          "SELECT * FROM elevator_pitch_versions WHERE id = ?",
+          Number(lastInsertRowid),
+          "ElevatorPitchVersion"
+        )
+      );
+    },
+
+    async editElevatorPitchVersion(version: DsElevatorPitchVersion) {
+      db.prepare(
+        `UPDATE elevator_pitch_versions SET name = ?, setting = ?, who = ?, person_name = ?, role = ?, identity = ?,
+          situation = ?, action = ?, result = ?, themes = ?, synthesis = ?, seeking = ?, closing_question = ?, source_question_id = ?
+         WHERE id = ?`
+      ).run(
+        version.name,
+        version.setting,
+        version.who,
+        version.personName,
+        version.role,
+        version.identity,
+        version.situation,
+        version.action,
+        version.result,
+        JSON.stringify(version.themes),
+        version.synthesis,
+        version.seeking,
+        version.closingQuestion,
+        version.sourceQuestionId ?? null,
+        version.id
+      );
+    },
+
+    async deleteElevatorPitchVersion(id: number) {
+      db.prepare("DELETE FROM elevator_pitch_versions WHERE id = ?").run(id);
+    },
   };
 }
 
@@ -744,6 +852,11 @@ export function registerIpcHandlers(db: Database.Database): void {
     "interviewPrep:add": (question) => ds.addInterviewPrepQuestion(question as NewInterviewPrepQuestion),
     "interviewPrep:edit": (question) => ds.editInterviewPrepQuestion(question as DsInterviewPrepQuestion),
     "interviewPrep:delete": (id) => ds.deleteInterviewPrepQuestion(id as number),
+
+    "elevatorPitch:list": () => ds.getElevatorPitchVersions(),
+    "elevatorPitch:add": (version) => ds.addElevatorPitchVersion(version as NewElevatorPitchVersion),
+    "elevatorPitch:edit": (version) => ds.editElevatorPitchVersion(version as DsElevatorPitchVersion),
+    "elevatorPitch:delete": (id) => ds.deleteElevatorPitchVersion(id as number),
   };
 
   for (const [channel, handler] of Object.entries(channels)) {

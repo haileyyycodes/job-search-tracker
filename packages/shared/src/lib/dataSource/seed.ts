@@ -100,6 +100,23 @@ export interface Seed {
     answer: string;
     starred: boolean;
   }>;
+  elevatorPitchVersions: Array<{
+    id: string;
+    name: string;
+    setting: string;
+    who: string;
+    personName: string;
+    role: string;
+    identity: string;
+    situation: string;
+    action: string;
+    result: string;
+    themes: string[];
+    synthesis: string;
+    seeking: string;
+    closingQuestion: string;
+    sourceQuestionId?: string;
+  }>;
 }
 
 /** Empty seed, used by contract tests that want to start from a blank slate. */
@@ -113,6 +130,7 @@ export const emptySeed: Seed = {
   userProfile: { name: "" },
   interviewCategories: [],
   interviewPrepQuestions: [],
+  elevatorPitchVersions: [],
 };
 
 /**
@@ -379,4 +397,5 @@ export const defaultSeed: Seed = {
     { id: "ipq51", category: "recruiter_screening", section: "Compensation & Process", question: "Are you interviewing elsewhere, and what's your timeline?", answer: "", starred: false },
     { id: "ipq52", category: "recruiter_screening", section: "Compensation & Process", question: "Do you have any questions for me about the role or company?", answer: "", starred: false },
   ],
+  elevatorPitchVersions: [],
 };

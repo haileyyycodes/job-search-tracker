@@ -8,6 +8,7 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
+  type DsElevatorPitchVersion,
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
@@ -18,6 +19,7 @@ import {
   type NewApplication,
   type NewCompany,
   type NewContact,
+  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
   type NewInterviewPrepQuestion,
@@ -156,6 +158,23 @@ interface InterviewPrepQuestionRow {
   answer: string;
   starred: number;
 }
+interface ElevatorPitchVersionRow {
+  id: number;
+  name: string;
+  setting: string;
+  who: string;
+  person_name: string;
+  role: string;
+  identity: string;
+  situation: string;
+  action: string;
+  result: string;
+  themes: string;
+  synthesis: string;
+  seeking: string;
+  closing_question: string;
+  source_question_id: number | null;
+}
 
 // ---- row -> Ds* mappers ----
 
@@ -210,6 +229,26 @@ function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPre
     question: row.question,
     answer: row.answer,
     starred: !!row.starred,
+  };
+}
+
+function mapElevatorPitchVersion(row: ElevatorPitchVersionRow): DsElevatorPitchVersion {
+  return {
+    id: row.id,
+    name: row.name,
+    setting: row.setting,
+    who: row.who,
+    personName: row.person_name,
+    role: row.role,
+    identity: row.identity,
+    situation: row.situation,
+    action: row.action,
+    result: row.result,
+    themes: row.themes ? (JSON.parse(row.themes) as string[]) : [],
+    synthesis: row.synthesis,
+    seeking: row.seeking,
+    closingQuestion: row.closing_question,
+    sourceQuestionId: row.source_question_id ?? undefined,
   };
 }
 
@@ -434,6 +473,7 @@ export class WasmDataSource implements DataSource {
 
     db.run("UPDATE user_profile SET name = ? WHERE id = 1", [seed.userProfile.name]);
 
+    const interviewPrepQuestionIdMap = new Map<string, number>();
     for (const q of seed.interviewPrepQuestions) {
       db.run("INSERT INTO interview_prep_questions (category, section, question, answer, starred) VALUES (?, ?, ?, ?, ?)", [
         q.category,
@@ -442,6 +482,31 @@ export class WasmDataSource implements DataSource {
         q.answer,
         bool(q.starred),
       ]);
+      interviewPrepQuestionIdMap.set(q.id, lastInsertId(db));
+    }
+
+    for (const v of seed.elevatorPitchVersions) {
+      db.run(
+        `INSERT INTO elevator_pitch_versions
+          (name, setting, who, person_name, role, identity, situation, action, result, themes, synthesis, seeking, closing_question, source_question_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          v.name,
+          v.setting,
+          v.who,
+          v.personName,
+          v.role,
+          v.identity,
+          v.situation,
+          v.action,
+          v.result,
+          JSON.stringify(v.themes),
+          v.synthesis,
+          v.seeking,
+          v.closingQuestion,
+          v.sourceQuestionId !== undefined ? interviewPrepQuestionIdMap.get(v.sourceQuestionId)! : null,
+        ]
+      );
     }
   }
 
@@ -906,5 +971,72 @@ export class WasmDataSource implements DataSource {
   async deleteInterviewPrepQuestion(id: number): Promise<void> {
     const db = await this.ready;
     db.run("DELETE FROM interview_prep_questions WHERE id = ?", [id]);
+  }
+
+  // ---- elevator pitch versions ----
+
+  async getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]> {
+    const db = await this.ready;
+    return all<ElevatorPitchVersionRow>(db, "SELECT * FROM elevator_pitch_versions ORDER BY id").map(mapElevatorPitchVersion);
+  }
+
+  async addElevatorPitchVersion(version: NewElevatorPitchVersion): Promise<DsElevatorPitchVersion> {
+    const db = await this.ready;
+    db.run(
+      `INSERT INTO elevator_pitch_versions
+        (name, setting, who, person_name, role, identity, situation, action, result, themes, synthesis, seeking, closing_question, source_question_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        version.name,
+        version.setting,
+        version.who,
+        version.personName,
+        version.role,
+        version.identity,
+        version.situation,
+        version.action,
+        version.result,
+        JSON.stringify(version.themes),
+        version.synthesis,
+        version.seeking,
+        version.closingQuestion,
+        version.sourceQuestionId ?? null,
+      ]
+    );
+    const id = lastInsertId(db);
+    return mapElevatorPitchVersion(
+      this.requireRow<ElevatorPitchVersionRow>(db, "SELECT * FROM elevator_pitch_versions WHERE id = ?", id, "ElevatorPitchVersion")
+    );
+  }
+
+  async editElevatorPitchVersion(version: DsElevatorPitchVersion): Promise<void> {
+    const db = await this.ready;
+    db.run(
+      `UPDATE elevator_pitch_versions SET name = ?, setting = ?, who = ?, person_name = ?, role = ?, identity = ?,
+        situation = ?, action = ?, result = ?, themes = ?, synthesis = ?, seeking = ?, closing_question = ?, source_question_id = ?
+       WHERE id = ?`,
+      [
+        version.name,
+        version.setting,
+        version.who,
+        version.personName,
+        version.role,
+        version.identity,
+        version.situation,
+        version.action,
+        version.result,
+        JSON.stringify(version.themes),
+        version.synthesis,
+        version.seeking,
+        version.closingQuestion,
+        version.sourceQuestionId ?? null,
+        version.id,
+      ]
+    );
+  }
+
+  async deleteElevatorPitchVersion(id: number): Promise<void> {
+    const db = await this.ready;
+    db.run("DELETE FROM elevator_pitch_versions WHERE id = ?", [id]);
   }
 }
