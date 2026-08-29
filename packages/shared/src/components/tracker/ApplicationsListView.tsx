@@ -31,6 +31,7 @@ const statusOptions: SelectOption[] = [
   { value: "offer_declined", label: "Offer declined" },
   { value: "rejected_no_interview", label: "Rejected (no interview)" },
   { value: "rejected_after_interview", label: "Rejected (after interview)" },
+  { value: "ghosted", label: "Ghosted" },
   { value: "withdrawn", label: "Withdrawn" },
 ];
 
@@ -50,6 +51,7 @@ const kanbanColumnDefs: { key: string; label: string; match: (s: ApplicationStat
   { key: "applied", label: "Applied", match: (s) => s === "applied" },
   { key: "interviewing", label: "Interviewing", match: (s) => s === "interviewing" },
   { key: "offer", label: "Offer", match: (s) => s.startsWith("offer") },
+  { key: "ghosted", label: "Ghosted", match: (s) => s === "ghosted" },
   { key: "closed", label: "Rejected / withdrawn", match: (s) => s.includes("rejected") || s === "withdrawn" },
 ];
 

@@ -1268,6 +1268,7 @@ export const statusLabels: Record<Application["status"], string> = {
   offer_declined: "Offer declined",
   rejected_no_interview: "Rejected (no interview)",
   rejected_after_interview: "Rejected (after interview)",
+  ghosted: "Ghosted",
   withdrawn: "Withdrawn",
 };
 
@@ -1299,6 +1300,7 @@ export const statusOrder: Application["status"][] = [
   "offer_declined",
   "rejected_no_interview",
   "rejected_after_interview",
+  "ghosted",
   "withdrawn",
 ];
 

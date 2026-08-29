@@ -7,6 +7,7 @@ export type ApplicationStatus =
   | "offer_declined"
   | "rejected_no_interview"
   | "rejected_after_interview"
+  | "ghosted"
   | "withdrawn";
 
 export interface StatusHistoryEntry {

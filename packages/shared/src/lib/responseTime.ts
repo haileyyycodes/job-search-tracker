@@ -11,6 +11,8 @@ export function getResponseDays(app: Application): number | null {
   if (appliedIndex === -1) return null;
   const next = app.statusHistory[appliedIndex + 1];
   if (!next) return null;
+  // "Ghosted" is the absence of a response, not a response — don't let it count as reply time.
+  if (next.status === "ghosted") return null;
   return daysBetween(app.statusHistory[appliedIndex].at, next.at);
 }
 

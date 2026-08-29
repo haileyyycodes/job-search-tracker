@@ -13,6 +13,7 @@ const config: Record<ApplicationStatus, StatusConfig> = {
   interviewing: { fg: "var(--status-interview-fg)", bg: "var(--status-interview-bg)", dot: "var(--yellow-600)", label: "Interviewing" },
   rejected_no_interview: { fg: "var(--status-rejected-fg)", bg: "var(--status-rejected-bg)", dot: "var(--red-600)", label: "Rejected" },
   rejected_after_interview: { fg: "var(--status-rejected-fg)", bg: "var(--status-rejected-bg)", dot: "var(--red-600)", label: "Rejected" },
+  ghosted: { fg: "var(--status-ghosted-fg)", bg: "var(--status-ghosted-bg)", dot: "var(--purple-600)", label: "Ghosted" },
   offer_extended: { fg: "var(--status-offer-fg)", bg: "var(--status-offer-bg)", dot: "var(--green-600)", label: "Offer extended" },
   offer_accepted: { fg: "var(--status-offer-fg)", bg: "var(--status-offer-bg)", dot: "var(--green-600)", label: "Offer accepted" },
   offer_declined: { fg: "var(--status-saved-fg)", bg: "var(--status-saved-bg)", dot: "var(--ink-500)", label: "Offer declined" },

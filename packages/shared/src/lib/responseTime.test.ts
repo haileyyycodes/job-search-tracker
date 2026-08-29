@@ -48,6 +48,14 @@ describe("getResponseDays", () => {
     ]);
     expect(getResponseDays(app)).toBe(3);
   });
+
+  it("does not count being marked ghosted as a response", () => {
+    const app = makeApp([
+      { status: "applied", at: "Jul 1, 2026" },
+      { status: "ghosted", at: "Oct 1, 2026" },
+    ]);
+    expect(getResponseDays(app)).toBeNull();
+  });
 });
 
 describe("getDaysAwaitingResponse", () => {
