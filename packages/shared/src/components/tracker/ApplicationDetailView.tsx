@@ -10,6 +10,8 @@ import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel }
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
 import { formatResponseTime } from "@/lib/responseTime";
+import { getDaysSinceActivity } from "@/lib/funnel";
+import { todayFormatted } from "@/lib/date";
 import { isValidUrl } from "@/lib/validation";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type {
@@ -24,6 +26,11 @@ import type {
 } from "@/lib/types";
 
 const rejectionStatuses: ApplicationStatus[] = ["rejected_no_interview", "rejected_after_interview"];
+
+/** Open statuses where a long-silent application can still be marked "ghosted". */
+const ghostableStatuses: ApplicationStatus[] = ["applied", "interviewing"];
+/** No reply or activity for this many days on an open application suggests it's been ghosted. */
+const GHOST_SUGGESTION_DAYS = 90;
 
 interface FieldProps {
   label: string;
@@ -93,6 +100,12 @@ export function ApplicationDetailView({
 
   if (!app) return null;
 
+  const daysSinceActivity = getDaysSinceActivity(app);
+  const suggestGhosted =
+    ghostableStatuses.includes(app.status) &&
+    daysSinceActivity !== null &&
+    daysSinceActivity >= GHOST_SUGGESTION_DAYS;
+
   return (
     <>
     <div style={{ padding: "20px 32px 40px", overflow: "auto", flex: 1 }}>
@@ -160,6 +173,36 @@ export function ApplicationDetailView({
           </Button>
         </div>
       </div>
+      {suggestGhosted && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 16,
+            padding: 16,
+            marginBottom: 20,
+            borderRadius: "var(--radius-m)",
+            background: "var(--status-ghosted-bg)",
+            border: "1px solid var(--purple-200)",
+          }}
+        >
+          <div>
+            <div style={{ font: "700 14px var(--font-display)", color: "var(--status-ghosted-fg)", marginBottom: 4 }}>
+              No response in {daysSinceActivity} days
+            </div>
+            <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
+              This application hasn&rsquo;t had a reply or any activity in over {GHOST_SUGGESTION_DAYS} days. If the
+              company has gone quiet, mark it as ghosted to move it out of your active pipeline.
+            </div>
+          </div>
+          <div style={{ flexShrink: 0 }}>
+            <Button variant="secondary" size="sm" onClick={() => onChangeStatus(app.id, "ghosted", todayFormatted())}>
+              Mark as ghosted
+            </Button>
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: "2 1 0%", minWidth: 0 }}>
         <Card padding="md">

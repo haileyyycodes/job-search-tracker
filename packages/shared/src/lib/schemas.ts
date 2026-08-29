@@ -16,6 +16,7 @@ const applicationStatusSchema = z.enum([
   "offer_declined",
   "rejected_no_interview",
   "rejected_after_interview",
+  "ghosted",
   "withdrawn",
 ]);
 

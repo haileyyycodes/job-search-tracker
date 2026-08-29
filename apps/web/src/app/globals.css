@@ -39,6 +39,10 @@
   --yellow-400: oklch(84% 0.14 92);
   --yellow-200: oklch(93% 0.07 95);
   --yellow-100: oklch(96.5% 0.04 96);
+  --purple-700: oklch(42% 0.12 300);
+  --purple-600: oklch(50% 0.14 300);
+  --purple-200: oklch(90% 0.045 300);
+  --purple-100: oklch(95.5% 0.025 300);
 
   --bg-page: var(--off-white);
   --bg-surface: var(--white);
@@ -66,6 +70,8 @@
   --status-offer-bg: var(--green-100);
   --status-rejected-fg: var(--red-600);
   --status-rejected-bg: var(--red-100);
+  --status-ghosted-fg: var(--purple-700);
+  --status-ghosted-bg: var(--purple-100);
   --status-saved-fg: var(--ink-600);
   --status-saved-bg: var(--ink-100);
   --success: var(--green-600);
