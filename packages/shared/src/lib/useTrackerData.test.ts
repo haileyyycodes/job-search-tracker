@@ -154,27 +154,13 @@ describe("editInterview", () => {
 });
 
 describe("deleteApplication", () => {
-  it("removes the application and any tasks referencing it", async () => {
+  it("removes the application", async () => {
     const { result } = renderHook(() => useTrackerData());
     const company = await act(() => result.current.createCompany(makeCompany()));
     const app = await act(() => result.current.addApplication(makeApplication({ companyId: company.id })));
-    await act(() => result.current.addTask(app.id, "Follow up", "Jul 15, 2026", { type: "manual" }));
-    expect(result.current.tasks).toHaveLength(1);
 
     await act(() => result.current.deleteApplication(app.id));
     expect(result.current.apps.find((a) => a.id === app.id)).toBeUndefined();
-    expect(result.current.tasks).toHaveLength(0);
-  });
-});
-
-describe("dismissTask", () => {
-  it("marks the task dismissed without removing it", async () => {
-    const { result } = renderHook(() => useTrackerData());
-    const company = await act(() => result.current.createCompany(makeCompany()));
-    const app = await act(() => result.current.addApplication(makeApplication({ companyId: company.id })));
-    const task = await act(() => result.current.addTask(app.id, "Follow up", "Jul 15, 2026", { type: "manual" }));
-    await act(() => result.current.dismissTask(task.id));
-    expect(result.current.tasks.find((t) => t.id === task.id)?.status).toBe("dismissed");
   });
 });
 

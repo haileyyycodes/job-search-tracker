@@ -5,10 +5,8 @@ import type {
   Goals,
   InterviewStyle,
   InterviewType,
-  ReminderRule,
   ResumeType,
   StatusHistoryEntry,
-  TaskStatus,
   UserProfile,
   WorkArrangement,
 } from "@/lib/types";
@@ -64,15 +62,6 @@ export interface DsFollowUp {
   date: string;
   contactId: number;
   notes: string;
-}
-
-export interface DsTask {
-  id: number;
-  applicationId: number;
-  dueDate: string;
-  note: string;
-  status: TaskStatus;
-  reminderRule?: ReminderRule;
 }
 
 export interface DsApplication {
@@ -146,7 +135,6 @@ export type NewCompany = Omit<DsCompany, "id" | "locations"> & { locations?: DsC
 export type NewContact = Omit<DsContact, "id">;
 export type NewInterview = Omit<DsInterview, "id">;
 export type NewFollowUp = Omit<DsFollowUp, "id">;
-export type NewTask = Omit<DsTask, "id" | "status">;
 export type NewNetworkingEvent = Omit<DsNetworkingEvent, "id">;
 
 /** Thrown when a delete is blocked by a still-referencing row (ON DELETE RESTRICT). */
@@ -176,11 +164,6 @@ export interface DataSource {
 
   logFollowUp(appId: number, followUp: NewFollowUp): Promise<DsFollowUp>;
   deleteFollowUp(appId: number, followUpId: number): Promise<void>;
-
-  getTasks(): Promise<DsTask[]>;
-  addTask(task: NewTask): Promise<DsTask>;
-  dismissTask(id: number): Promise<void>;
-  deleteTask(id: number): Promise<void>;
 
   getCompanies(): Promise<DsCompany[]>;
   createCompany(company: NewCompany): Promise<DsCompany>;

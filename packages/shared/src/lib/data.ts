@@ -9,7 +9,6 @@ import type {
   InterviewType,
   NetworkingEvent,
   ResumeType,
-  Task,
 } from "./types";
 
 /**
@@ -41,10 +40,6 @@ interface RawApplication
   referredByContactId?: string;
   interviews: RawInterview[];
   followUps: RawFollowUp[];
-}
-interface RawTask extends Omit<Task, "id" | "applicationId"> {
-  id: string;
-  applicationId: string;
 }
 interface RawNetworkingEvent extends Omit<NetworkingEvent, "id" | "contactIds" | "applicationId"> {
   id: string;
@@ -1209,49 +1204,6 @@ const rawApplications: RawApplication[] = [
   },
 ];
 
-const rawTasks: RawTask[] = [
-  {
-    id: "t1",
-    applicationId: "2",
-    dueDate: "Jul 17, 2026",
-    note: "Follow up 7 days after applying",
-    status: "active",
-    reminderRule: { type: "days_after_applied", days: 7 },
-  },
-  {
-    id: "t2",
-    applicationId: "6",
-    dueDate: "Jul 15, 2026",
-    note: "Follow up 7 days after applying",
-    status: "active",
-    reminderRule: { type: "days_after_applied", days: 7 },
-  },
-  {
-    id: "t3",
-    applicationId: "1",
-    dueDate: "Jul 9, 2026",
-    note: "Check in after technical interview",
-    status: "active",
-    reminderRule: { type: "manual" },
-  },
-  {
-    id: "t4",
-    applicationId: "4",
-    dueDate: "Jun 22, 2026",
-    note: "Ask about offer timeline",
-    status: "dismissed",
-    reminderRule: { type: "manual" },
-  },
-  {
-    id: "t5",
-    applicationId: "7",
-    dueDate: "Jul 12, 2026",
-    note: "Follow up after screening call",
-    status: "dismissed",
-    reminderRule: { type: "manual" },
-  },
-];
-
 function remapToNumericIds() {
   const companyIdMap = new Map<string, number>();
   const companies: Company[] = rawCompanies.map((c, i) => {
@@ -1288,12 +1240,6 @@ function remapToNumericIds() {
     };
   });
 
-  const initialTasks: Task[] = rawTasks.map((t, i) => ({
-    ...t,
-    id: i + 1,
-    applicationId: applicationIdMap.get(t.applicationId)!,
-  }));
-
   const networkingEvents: NetworkingEvent[] = rawNetworkingEvents.map((e, i) => ({
     ...e,
     id: i + 1,
@@ -1301,10 +1247,10 @@ function remapToNumericIds() {
     applicationId: e.applicationId !== undefined ? applicationIdMap.get(e.applicationId) : undefined,
   }));
 
-  return { companies, contacts, applications, initialTasks, networkingEvents };
+  return { companies, contacts, applications, networkingEvents };
 }
 
-export const { companies, contacts, applications, initialTasks, networkingEvents } = remapToNumericIds();
+export const { companies, contacts, applications, networkingEvents } = remapToNumericIds();
 
 export const initialGoals: Goals = {
   salaryMin: 120000,

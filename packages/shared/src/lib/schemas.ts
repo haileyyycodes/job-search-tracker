@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Application, Company, Contact, Goals, NetworkingEvent, Task } from "./types";
+import type { Application, Company, Contact, Goals, NetworkingEvent } from "./types";
 
 /**
  * Zod schemas mirroring types.ts, used to validate data read back from
@@ -119,20 +119,6 @@ export const networkingEventSchema: z.ZodType<NetworkingEvent> = z.object({
   date: z.string(),
   applicationId: z.number().optional(),
   notes: z.string(),
-});
-
-const reminderRuleSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("manual") }),
-  z.object({ type: z.literal("days_after_applied"), days: z.number() }),
-]);
-
-export const taskSchema: z.ZodType<Task> = z.object({
-  id: z.number(),
-  applicationId: z.number(),
-  dueDate: z.string(),
-  note: z.string(),
-  status: z.enum(["active", "dismissed"]),
-  reminderRule: reminderRuleSchema.optional(),
 });
 
 export const goalsSchema: z.ZodType<Goals> = z.object({

@@ -78,11 +78,6 @@ interface DataSource {
   logFollowUp(appId: number, followUp: NewFollowUp): Promise<void>;
   deleteFollowUp(appId: number, followUpId: number): Promise<void>;
 
-  getTasks(): Promise<Task[]>;
-  addTask(task: NewTask): Promise<Task>;
-  dismissTask(id: number): Promise<void>;
-  deleteTask(id: number): Promise<void>;
-
   getCompanies(): Promise<Company[]>;
   createCompany(company: NewCompany): Promise<Company>;
   editCompany(company: Company): Promise<void>;
@@ -131,7 +126,6 @@ applications(id INTEGER PK, company_id, role, status, ...)
 interviews(id INTEGER PK, application_id FK, type, date, ...)
 follow_ups(id INTEGER PK, application_id FK, date, contact_id, notes)
 status_history(id INTEGER PK, application_id FK, status, at)
-tasks(id INTEGER PK, application_id FK, due_date, note, status, reminder_rule)
 companies(id INTEGER PK, name, is_target, status, industry, website, notes)
 company_locations(id INTEGER PK, company_id FK, city, state)
 contacts(id INTEGER PK, name, email, phone, linkedin_url, website, company_id FK, role, notes)

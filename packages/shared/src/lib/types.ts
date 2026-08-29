@@ -115,19 +115,6 @@ export interface NetworkingEvent {
   notes: string;
 }
 
-export type TaskStatus = "active" | "dismissed";
-
-export type ReminderRule = { type: "manual" } | { type: "days_after_applied"; days: number };
-
-export interface Task {
-  id: number;
-  applicationId: number;
-  dueDate: string;
-  note: string;
-  status: TaskStatus;
-  reminderRule?: ReminderRule;
-}
-
 export interface Goals {
   salaryMin?: number;
   salaryMax?: number;
