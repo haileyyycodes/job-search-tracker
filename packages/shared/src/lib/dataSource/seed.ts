@@ -5,6 +5,7 @@ import type {
   Goals,
   InterviewStyle,
   InterviewType,
+  RelationshipTier,
   ResumeType,
   StatusHistoryEntry,
   UserProfile,
@@ -37,6 +38,7 @@ export interface Seed {
     website?: string;
     companyId?: string;
     role?: string;
+    relationshipTier?: RelationshipTier;
     notes: string;
   }>;
   applications: Array<{
@@ -196,22 +198,22 @@ const IV_NOTES = [
 const WORK_ARRANGEMENTS: (WorkArrangement | undefined)[] = ["remote", "hybrid", "onsite", undefined];
 
 const SEED_CONTACTS: Seed["contacts"] = [
-  { id: "c1", name: "Alex Chen", companyId: "co1", role: "Product Design Lead", email: "alex@northwind.example", linkedInUrl: "https://linkedin.com/in/alexchen", notes: "Referred me to the Product Designer role." },
-  { id: "c2", name: "Priya Nair", companyId: "co4", role: "Engineering Manager", email: "priya@fathom.example", phone: "+1 313 555 0142", notes: "Met at a robotics meetup; hiring for her team." },
-  { id: "c3", name: "Jordan Blake", companyId: "co7", role: "Design Director", email: "jordan@harborlight.example", website: "https://jordanblake.example", notes: "Former colleague; offered to refer." },
-  { id: "c4", name: "Sam Ortiz", companyId: "co9", role: "Staff Engineer", linkedInUrl: "https://linkedin.com/in/samortiz", notes: "Answered questions about the interview loop." },
-  { id: "c5", name: "Riley Okafor", companyId: "co13", role: "Recruiter", email: "riley@brightloom.example", phone: "+1 415 555 0198", notes: "In-house recruiter; very responsive." },
-  { id: "c6", name: "Dana Whitfield", companyId: "co17", role: "Head of Design", email: "dana@pinewood.example", notes: "Spoke on a panel I attended." },
-  { id: "c7", name: "Chris Lindqvist", companyId: "co23", role: "Principal Engineer", email: "chris@basalt.example", linkedInUrl: "https://linkedin.com/in/clindqvist", notes: "" },
-  { id: "c8", name: "Morgan Reyes", role: "Career coach", email: "morgan@example.com", notes: "Not tied to a company — reviews my materials." },
-  { id: "c9", name: "Taylor Fenn", companyId: "co29", role: "Founder", email: "taylor@willowmind.example", website: "https://willowmind.example", notes: "Early-stage; moves fast." },
-  { id: "c10", name: "Jamie Sokolov", companyId: "co2", role: "Senior Recruiter", phone: "+1 206 555 0110", notes: "Coordinated the Beacon loop." },
-  { id: "c11", name: "Noor Haddad", companyId: "co3", role: "Design Manager", email: "noor@cedargrove.example", notes: "Grabbed coffee before applying." },
-  { id: "c12", name: "Devon Pratt", companyId: "co11", role: "Frontend Lead", email: "devon@quill.example", linkedInUrl: "https://linkedin.com/in/devonpratt", notes: "Reviewed my portfolio informally." },
-  { id: "c13", name: "Ana Ruiz", companyId: "co19", role: "Recruiting Coordinator", email: "ana@marigold.example", phone: "+1 312 555 0173", notes: "Scheduled the onsite." },
-  { id: "c14", name: "Ken Abara", companyId: "co25", role: "Engineering Director", email: "ken@halcyon.example", notes: "Met at a conference dinner." },
-  { id: "c15", name: "Wes Delgado", companyId: "co5", role: "Design Lead", email: "wes@lumen.example", notes: "Offered to put in a good word." },
-  { id: "c16", name: "Imani Osei", companyId: "co8", role: "Talent Partner", email: "imani@solstice.example", phone: "+1 617 555 0155", notes: "Sourced me for the role." },
+  { id: "c1", name: "Alex Chen", companyId: "co1", role: "Product Design Lead", email: "alex@northwind.example", linkedInUrl: "https://linkedin.com/in/alexchen", relationshipTier: "core", notes: "Referred me to the Product Designer role." },
+  { id: "c2", name: "Priya Nair", companyId: "co4", role: "Engineering Manager", email: "priya@fathom.example", phone: "+1 313 555 0142", relationshipTier: "core", notes: "Met at a robotics meetup; hiring for her team." },
+  { id: "c3", name: "Jordan Blake", companyId: "co7", role: "Design Director", email: "jordan@harborlight.example", website: "https://jordanblake.example", relationshipTier: "extended", notes: "Former colleague; offered to refer." },
+  { id: "c4", name: "Sam Ortiz", companyId: "co9", role: "Staff Engineer", linkedInUrl: "https://linkedin.com/in/samortiz", relationshipTier: "extended", notes: "Answered questions about the interview loop." },
+  { id: "c5", name: "Riley Okafor", companyId: "co13", role: "Recruiter", email: "riley@brightloom.example", phone: "+1 415 555 0198", relationshipTier: "extended", notes: "In-house recruiter; very responsive." },
+  { id: "c6", name: "Dana Whitfield", companyId: "co17", role: "Head of Design", email: "dana@pinewood.example", relationshipTier: "dormant", notes: "Spoke on a panel I attended." },
+  { id: "c7", name: "Chris Lindqvist", companyId: "co23", role: "Principal Engineer", email: "chris@basalt.example", linkedInUrl: "https://linkedin.com/in/clindqvist", relationshipTier: "dormant", notes: "" },
+  { id: "c8", name: "Morgan Reyes", role: "Career coach", email: "morgan@example.com", relationshipTier: "core", notes: "Not tied to a company — reviews my materials." },
+  { id: "c9", name: "Taylor Fenn", companyId: "co29", role: "Founder", email: "taylor@willowmind.example", website: "https://willowmind.example", relationshipTier: "core", notes: "Early-stage; moves fast." },
+  { id: "c10", name: "Jamie Sokolov", companyId: "co2", role: "Senior Recruiter", phone: "+1 206 555 0110", relationshipTier: "extended", notes: "Coordinated the Beacon loop." },
+  { id: "c11", name: "Noor Haddad", companyId: "co3", role: "Design Manager", email: "noor@cedargrove.example", relationshipTier: "extended", notes: "Grabbed coffee before applying." },
+  { id: "c12", name: "Devon Pratt", companyId: "co11", role: "Frontend Lead", email: "devon@quill.example", linkedInUrl: "https://linkedin.com/in/devonpratt", relationshipTier: "core", notes: "Reviewed my portfolio informally." },
+  { id: "c13", name: "Ana Ruiz", companyId: "co19", role: "Recruiting Coordinator", email: "ana@marigold.example", phone: "+1 312 555 0173", relationshipTier: "dormant", notes: "Scheduled the onsite." },
+  { id: "c14", name: "Ken Abara", companyId: "co25", role: "Engineering Director", email: "ken@halcyon.example", relationshipTier: "dormant", notes: "Met at a conference dinner." },
+  { id: "c15", name: "Wes Delgado", companyId: "co5", role: "Design Lead", email: "wes@lumen.example", relationshipTier: "extended", notes: "Offered to put in a good word." },
+  { id: "c16", name: "Imani Osei", companyId: "co8", role: "Talent Partner", email: "imani@solstice.example", phone: "+1 617 555 0155", relationshipTier: "core", notes: "Sourced me for the role." },
   { id: "c17", name: "Owen Marsh", companyId: "co15", role: "Frontend Manager", email: "owen@vantage.example", notes: "Referred me internally." },
 ];
 

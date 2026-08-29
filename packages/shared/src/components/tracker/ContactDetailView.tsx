@@ -3,8 +3,10 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card, IconButton } from "@/components/ds";
 import { EditContactDialog } from "./EditContactDialog";
+import { OutreachTag } from "./OutreachTag";
 import { companyName } from "@/lib/companies";
 import { isValidUrl } from "@/lib/validation";
+import { RELATIONSHIP_TIERS, outreachInfo, outreachTiming } from "@/lib/outreach";
 import type { NewCompany } from "@/lib/dataSource/types";
 import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
@@ -66,6 +68,8 @@ export function ContactDetailView({
     a.followUps.filter((f) => f.contactId === contact.id).map((f) => ({ ...f, app: a }))
   );
   const events = networkingEvents.filter((e) => e.contactIds.includes(contact.id));
+  const outreach = outreachInfo(contact, networkingEvents);
+  const cadence = outreach.tier ? RELATIONSHIP_TIERS[outreach.tier] : null;
 
   return (
     <>
@@ -170,6 +174,36 @@ export function ContactDetailView({
             {contact.notes && (
               <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
                 <Field label="Notes" value={contact.notes} />
+              </div>
+            )}
+          </Card>
+
+          <Card padding="md">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>Staying in touch</div>
+              {outreach.status !== "untracked" && <OutreachTag info={outreach} />}
+            </div>
+            {cadence ? (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  <Field label="Tier" value={`${cadence.label} · ${cadence.cadence}`} />
+                  <Field label="Last contacted" value={outreach.lastContactedOn ?? "None yet"} />
+                  <Field
+                    label="Reach out by"
+                    value={outreach.reachOutBy ? `${outreach.reachOutBy} (${outreachTiming(outreach)})` : outreachTiming(outreach)}
+                  />
+                </div>
+                <p style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", margin: "14px 0 0" }}>
+                  {cadence.tip}
+                </p>
+              </>
+            ) : (
+              <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
+                No relationship tier set.{" "}
+                {outreach.lastContactedOn
+                  ? `Last contacted ${outreach.lastContactedOn}. `
+                  : "No networking events logged yet. "}
+                Edit this contact to set a tier and track how often to reach out.
               </div>
             )}
           </Card>

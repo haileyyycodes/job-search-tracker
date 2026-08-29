@@ -212,6 +212,25 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
   });
 
   describe("contacts", () => {
+    it("round-trips relationshipTier through create and edit, and can clear it", async () => {
+      const ds = makeDataSource();
+      const created = await ds.createContact({ name: "Sam", notes: "", relationshipTier: "core" });
+      expect(created.relationshipTier).toBe("core");
+      expect((await ds.getContacts())[0].relationshipTier).toBe("core");
+
+      await ds.editContact({ ...created, relationshipTier: "dormant" });
+      expect((await ds.getContacts())[0].relationshipTier).toBe("dormant");
+
+      await ds.editContact({ ...created, relationshipTier: undefined });
+      expect((await ds.getContacts())[0].relationshipTier).toBeUndefined();
+    });
+
+    it("defaults relationshipTier to undefined when omitted", async () => {
+      const ds = makeDataSource();
+      const created = await ds.createContact({ name: "Dana", notes: "" });
+      expect(created.relationshipTier).toBeUndefined();
+    });
+
     it("blocks deleting a contact that a followUp still references", async () => {
       const ds = makeDataSource();
       const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });

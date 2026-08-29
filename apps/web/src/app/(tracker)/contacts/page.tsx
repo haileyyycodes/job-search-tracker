@@ -57,6 +57,7 @@ function ContactsPageContent() {
       <ContactsListView
         contacts={data.contacts}
         companies={data.companies}
+        networkingEvents={data.networkingEvents}
         onSelect={(c) => router.push(`/contacts?id=${c.id}`)}
         onSelectCompany={(c) => router.push(`/companies?id=${c.id}`)}
         onRequestDelete={ui.requestDeleteContact}

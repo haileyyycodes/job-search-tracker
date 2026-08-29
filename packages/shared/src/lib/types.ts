@@ -94,6 +94,14 @@ export interface Application {
   state?: string;
 }
 
+/**
+ * How close the relationship is, which sets how often it's worth reaching out:
+ * `core` (mentors/close peers) every 1–3 months, `extended` (acquaintances/past
+ * colleagues) every 3–6 months, `dormant` (inactive ties) every 6–12 months.
+ * See `lib/outreach.ts` for the cadence windows.
+ */
+export type RelationshipTier = "core" | "extended" | "dormant";
+
 export interface Contact {
   id: number;
   name: string;
@@ -103,6 +111,7 @@ export interface Contact {
   website?: string;
   companyId?: number;
   role?: string;
+  relationshipTier?: RelationshipTier;
   notes: string;
 }
 

@@ -38,6 +38,7 @@ CREATE TABLE contacts (
   website TEXT,
   company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
   role TEXT,
+  relationship_tier TEXT,
   notes TEXT NOT NULL
 );
 

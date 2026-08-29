@@ -5,7 +5,7 @@ import { Dialog, Button } from "@/components/ds";
 import { ContactFormFields, emptyContactForm, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
-import type { Company } from "@/lib/types";
+import type { Company, RelationshipTier } from "@/lib/types";
 
 interface AddContactDialogProps {
   open: boolean;
@@ -37,6 +37,7 @@ export function AddContactDialog({ open, onClose, onAdd, companies, onCreateComp
       website: form.website.trim() || undefined,
       companyId: form.companyId ? Number(form.companyId) : undefined,
       role: form.role.trim() || undefined,
+      relationshipTier: (form.relationshipTier || undefined) as RelationshipTier | undefined,
       notes: form.notes.trim(),
     });
     resetAndClose();

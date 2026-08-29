@@ -1,11 +1,12 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { Input } from "@/components/ds";
+import { Input, Select } from "@/components/ds";
 import { isValidEmail, isValidUrl } from "@/lib/validation";
+import { RELATIONSHIP_TIERS, relationshipTierOptions } from "@/lib/outreach";
 import { CompanyPicker } from "./CompanyPicker";
 import type { NewCompany } from "@/lib/dataSource/types";
-import type { Company } from "@/lib/types";
+import type { Company, RelationshipTier } from "@/lib/types";
 
 export interface ContactFormValues {
   name: string;
@@ -15,6 +16,7 @@ export interface ContactFormValues {
   website: string;
   companyId: string;
   role: string;
+  relationshipTier: string;
   notes: string;
 }
 
@@ -26,8 +28,11 @@ export const emptyContactForm: ContactFormValues = {
   website: "",
   companyId: "",
   role: "",
+  relationshipTier: "",
   notes: "",
 };
+
+const tierSelectOptions = [{ value: "", label: "None — don't track cadence" }, ...relationshipTierOptions];
 
 /** Name is the only required field; email, LinkedIn, and website must be well-formed if provided. */
 export function isContactFormValid(form: ContactFormValues): boolean {
@@ -105,6 +110,20 @@ export function ContactFormFields({ form, setForm, submitted, companies, onCreat
         value={form.role}
         onChange={(v) => setForm((f) => ({ ...f, role: v }))}
       />
+      <div>
+        <Select
+          label="Relationship tier"
+          value={form.relationshipTier}
+          options={tierSelectOptions}
+          onChange={(v) => setForm((f) => ({ ...f, relationshipTier: v }))}
+        />
+        {form.relationshipTier && (
+          <p style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", margin: "6px 0 0" }}>
+            Reach out {RELATIONSHIP_TIERS[form.relationshipTier as RelationshipTier].cadence}.{" "}
+            {RELATIONSHIP_TIERS[form.relationshipTier as RelationshipTier].tip}
+          </p>
+        )}
+      </div>
       <div>
         <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
           Notes
