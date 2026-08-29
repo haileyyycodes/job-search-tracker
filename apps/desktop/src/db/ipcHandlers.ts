@@ -13,7 +13,6 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
-  type DsTask,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -23,7 +22,6 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-  type NewTask,
 } from "../../../../packages/shared/src/lib/dataSource/types";
 
 /**
@@ -112,15 +110,6 @@ interface StatusHistoryRow {
   application_id: number;
   status: string;
   at: string;
-}
-interface TaskRow {
-  id: number;
-  application_id: number;
-  due_date: string;
-  note: string;
-  status: string;
-  reminder_rule_type: string | null;
-  reminder_rule_days: number | null;
 }
 interface NetworkingEventRow {
   id: number;
@@ -237,23 +226,6 @@ function mapElevatorPitchVersion(row: ElevatorPitchVersionRow): DsElevatorPitchV
     seeking: row.seeking,
     closingQuestion: row.closing_question,
     sourceQuestionId: row.source_question_id ?? undefined,
-  };
-}
-
-function mapTask(row: TaskRow): DsTask {
-  const reminderRule =
-    row.reminder_rule_type === "days_after_applied"
-      ? ({ type: "days_after_applied", days: row.reminder_rule_days! } as const)
-      : row.reminder_rule_type === "manual"
-        ? ({ type: "manual" } as const)
-        : undefined;
-  return {
-    id: row.id,
-    applicationId: row.application_id,
-    dueDate: row.due_date,
-    note: row.note,
-    status: row.status as DsTask["status"],
-    reminderRule,
   };
 }
 
@@ -487,35 +459,6 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
 
     async deleteFollowUp(appId: number, followUpId: number) {
       db.prepare("DELETE FROM follow_ups WHERE id = ? AND application_id = ?").run(followUpId, appId);
-    },
-
-    // ---- tasks ----
-
-    async getTasks() {
-      return db.prepare<[], TaskRow>("SELECT * FROM tasks ORDER BY id").all().map(mapTask);
-    },
-
-    async addTask(task: NewTask) {
-      const { lastInsertRowid } = db
-        .prepare(
-          "INSERT INTO tasks (application_id, due_date, note, status, reminder_rule_type, reminder_rule_days) VALUES (?, ?, ?, 'active', ?, ?)"
-        )
-        .run(
-          task.applicationId,
-          task.dueDate,
-          task.note,
-          task.reminderRule?.type ?? null,
-          task.reminderRule?.type === "days_after_applied" ? task.reminderRule.days : null
-        );
-      return mapTask(requireRow<TaskRow>("SELECT * FROM tasks WHERE id = ?", Number(lastInsertRowid), "Task"));
-    },
-
-    async dismissTask(id: number) {
-      db.prepare("UPDATE tasks SET status = 'dismissed' WHERE id = ?").run(id);
-    },
-
-    async deleteTask(id: number) {
-      db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
     },
 
     // ---- companies ----
@@ -818,11 +761,6 @@ export function registerIpcHandlers(db: Database.Database): void {
 
     "followUps:log": (appId, followUp) => ds.logFollowUp(appId as number, followUp as NewFollowUp),
     "followUps:delete": (appId, followUpId) => ds.deleteFollowUp(appId as number, followUpId as number),
-
-    "tasks:list": () => ds.getTasks(),
-    "tasks:add": (task) => ds.addTask(task as NewTask),
-    "tasks:dismiss": (id) => ds.dismissTask(id as number),
-    "tasks:delete": (id) => ds.deleteTask(id as number),
 
     "companies:list": () => ds.getCompanies(),
     "companies:create": (company) => ds.createCompany(company as NewCompany),

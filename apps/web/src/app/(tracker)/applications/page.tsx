@@ -29,7 +29,6 @@ function ApplicationsPageContent() {
     return (
       <ApplicationDetailView
         app={app}
-        tasks={data.tasks}
         contacts={data.contacts}
         companies={data.companies}
         goals={data.goals}
@@ -40,12 +39,10 @@ function ApplicationsPageContent() {
         onSelectContact={(c) => router.push(`/contacts?id=${c.id}`)}
         onSelectCompany={(c) => router.push(`/companies?id=${c.id}`)}
         onBack={() => router.push("/applications")}
-        onDismissTask={data.dismissTask}
         onChangeStatus={data.changeApplicationStatus}
         onLogInterview={data.logInterview}
         onEditInterview={data.editInterview}
         onLogFollowUp={data.logFollowUp}
-        onAddTask={data.addTask}
         onEditApplication={data.editApplication}
         onRequestDelete={ui.requestDeleteApplication}
         onDeleteInterview={data.deleteInterview}

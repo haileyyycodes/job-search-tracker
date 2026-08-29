@@ -27,14 +27,11 @@ import type {
   Interview,
   InterviewPrepQuestion,
   NetworkingEvent,
-  ReminderRule,
-  Task,
   UserProfile,
 } from "./types";
 
 interface TrackerState {
   apps: Application[];
-  tasks: Task[];
   goals: Goals;
   userProfile: UserProfile;
   contacts: Contact[];
@@ -47,7 +44,6 @@ interface TrackerState {
 
 const emptyState: TrackerState = {
   apps: [],
-  tasks: [],
   goals: {},
   userProfile: { name: "" },
   contacts: [],
@@ -109,7 +105,6 @@ function allocTempId(): number {
 async function loadAll(): Promise<void> {
   const [
     apps,
-    tasks,
     goals,
     userProfile,
     contacts,
@@ -120,7 +115,6 @@ async function loadAll(): Promise<void> {
     elevatorPitchVersions,
   ] = await Promise.all([
     dataSource.getApplications(),
-    dataSource.getTasks(),
     dataSource.getGoals(),
     dataSource.getUserProfile(),
     dataSource.getContacts(),
@@ -132,7 +126,6 @@ async function loadAll(): Promise<void> {
   ]);
   setState({
     apps,
-    tasks,
     goals,
     userProfile,
     contacts,
@@ -233,11 +226,6 @@ const updateUserProfile = (userProfile: UserProfile): Promise<void> => {
   return withRollback(() => dataSource.updateUserProfile(userProfile));
 };
 
-const dismissTask = (id: number): Promise<void> => {
-  setState((prev) => ({ ...prev, tasks: prev.tasks.map((t) => (t.id === id ? { ...t, status: "dismissed" } : t)) }));
-  return withRollback(() => dataSource.dismissTask(id));
-};
-
 const addApplication = (app: NewApplication): Promise<Application> => {
   const tempId = allocTempId();
   const optimisticApp: Application = { ...app, id: tempId, interviews: [], followUps: [] };
@@ -331,17 +319,6 @@ const logFollowUp = (appId: number, followUp: NewFollowUp): Promise<FollowUp> =>
   });
 };
 
-const addTask = (applicationId: number, note: string, dueDate: string, reminderRule: ReminderRule): Promise<Task> => {
-  const tempId = allocTempId();
-  const optimisticTask: Task = { id: tempId, applicationId, dueDate, note, status: "active", reminderRule };
-  setState((prev) => ({ ...prev, tasks: [...prev.tasks, optimisticTask] }));
-  return withRollback(async () => {
-    const created = await dataSource.addTask({ applicationId, dueDate, note, reminderRule });
-    setState((prev) => ({ ...prev, tasks: prev.tasks.map((t) => (t.id === tempId ? created : t)) }));
-    return created;
-  });
-};
-
 const editApplication = (updated: Application): Promise<void> => {
   setState((prev) => ({ ...prev, apps: prev.apps.map((a) => (a.id === updated.id ? updated : a)) }));
   const persistCompanyAdvance = maybeAdvanceCompany(updated.companyId, updated.status);
@@ -372,16 +349,10 @@ const deleteFollowUp = (appId: number, followUpId: number): Promise<void> => {
   return withRollback(() => dataSource.deleteFollowUp(appId, followUpId));
 };
 
-const deleteTask = (id: number): Promise<void> => {
-  setState((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== id) }));
-  return withRollback(() => dataSource.deleteTask(id));
-};
-
 const deleteApplication = (appId: number): Promise<void> => {
   setState((prev) => ({
     ...prev,
     apps: prev.apps.filter((a) => a.id !== appId),
-    tasks: prev.tasks.filter((t) => t.applicationId !== appId),
     networkingEvents: prev.networkingEvents.map((e) => (e.applicationId === appId ? { ...e, applicationId: undefined } : e)),
   }));
   return withRollback(() => dataSource.deleteApplication(appId));
@@ -533,18 +504,15 @@ const actions = {
   deleteElevatorPitchVersion,
   updateGoals,
   updateUserProfile,
-  dismissTask,
   addApplication,
   changeApplicationStatus,
   logInterview,
   editInterview,
   logFollowUp,
-  addTask,
   editApplication,
   saveFeedback,
   deleteInterview,
   deleteFollowUp,
-  deleteTask,
   deleteApplication,
   createContact,
   editContact,

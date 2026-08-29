@@ -2,11 +2,10 @@
 
 import { Dialog, Button } from "@/components/ds";
 import { companyName } from "@/lib/companies";
-import type { Application, Company, Task } from "@/lib/types";
+import type { Application, Company } from "@/lib/types";
 
 interface ConfirmDeleteApplicationDialogProps {
   app: Application;
-  tasks: Task[];
   companies: Company[];
   onClose: () => void;
   onConfirm: () => void;
@@ -25,16 +24,13 @@ function pluralize(count: number, noun: string): string {
 /** Only ever rendered while a delete is pending, so there's no internal state to reset between opens. */
 export function ConfirmDeleteApplicationDialog({
   app,
-  tasks,
   companies,
   onClose,
   onConfirm,
 }: ConfirmDeleteApplicationDialogProps) {
-  const taskCount = tasks.filter((t) => t.applicationId === app.id).length;
   const cascadeParts = [
     app.interviews.length > 0 ? pluralize(app.interviews.length, "interview") : null,
     app.followUps.length > 0 ? pluralize(app.followUps.length, "follow-up") : null,
-    taskCount > 0 ? pluralize(taskCount, "task") : null,
   ].filter((p): p is string => p !== null);
 
   const cascadeSentence =
