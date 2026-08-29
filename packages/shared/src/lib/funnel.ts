@@ -135,21 +135,3 @@ export function getDaysSinceActivity(app: Application): number | null {
   if (!last) return null;
   return daysBetween(last, todayFormatted());
 }
-
-/** Applications where the company might have gone quiet — actively in-flight, waiting on an external reply. */
-const STALE_ELIGIBLE_STATUSES: ApplicationStatus[] = ["applied", "interviewing"];
-
-export interface StaleApplication {
-  app: Application;
-  daysSinceActivity: number;
-}
-
-/** Stale-first, capped to `limit` — the dashboard's "needs a follow-up" triage list. */
-export function getStaleApplications(apps: Application[], limit: number): StaleApplication[] {
-  return apps
-    .filter((a) => STALE_ELIGIBLE_STATUSES.includes(a.status))
-    .map((app) => ({ app, daysSinceActivity: getDaysSinceActivity(app) }))
-    .filter((x): x is StaleApplication => x.daysSinceActivity != null)
-    .sort((a, b) => b.daysSinceActivity - a.daysSinceActivity)
-    .slice(0, limit);
-}
