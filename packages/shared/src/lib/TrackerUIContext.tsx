@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { Application, Company, Contact } from "@/lib/types";
+import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
 
 interface TrackerUIContextValue {
   addOpen: boolean;
@@ -34,7 +34,9 @@ interface TrackerUIContextValue {
 
   networkingDialogOpen: boolean;
   networkingDialogContactId: number | null;
+  networkingDialogEvent: NetworkingEvent | null;
   openLogNetworkingEvent: (initialContactId?: number) => void;
+  openEditNetworkingEvent: (event: NetworkingEvent) => void;
   closeLogNetworkingEvent: () => void;
 }
 
@@ -55,6 +57,7 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
   const [deleteCompanyTarget, setDeleteCompanyTarget] = useState<Company | null>(null);
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const [networkingDialogContactId, setNetworkingDialogContactId] = useState<number | null>(null);
+  const [networkingDialogEvent, setNetworkingDialogEvent] = useState<NetworkingEvent | null>(null);
   const [networkingDialogOpen, setNetworkingDialogOpen] = useState(false);
 
   const value: TrackerUIContextValue = {
@@ -88,11 +91,21 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
 
     networkingDialogOpen,
     networkingDialogContactId,
+    networkingDialogEvent,
     openLogNetworkingEvent: (initialContactId) => {
+      setNetworkingDialogEvent(null);
       setNetworkingDialogContactId(initialContactId ?? null);
       setNetworkingDialogOpen(true);
     },
-    closeLogNetworkingEvent: () => setNetworkingDialogOpen(false),
+    openEditNetworkingEvent: (event) => {
+      setNetworkingDialogContactId(null);
+      setNetworkingDialogEvent(event);
+      setNetworkingDialogOpen(true);
+    },
+    closeLogNetworkingEvent: () => {
+      setNetworkingDialogOpen(false);
+      setNetworkingDialogEvent(null);
+    },
   };
 
   return <TrackerUIContext.Provider value={value}>{children}</TrackerUIContext.Provider>;

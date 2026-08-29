@@ -178,6 +178,7 @@ export interface DataSource {
 
   getNetworkingEvents(): Promise<DsNetworkingEvent[]>;
   addNetworkingEvent(event: NewNetworkingEvent): Promise<DsNetworkingEvent>;
+  editNetworkingEvent(event: DsNetworkingEvent): Promise<void>;
   deleteNetworkingEvent(id: number): Promise<void>;
 
   getGoals(): Promise<DsGoals>;

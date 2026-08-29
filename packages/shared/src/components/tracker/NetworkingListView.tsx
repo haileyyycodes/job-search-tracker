@@ -13,6 +13,7 @@ interface NetworkingListViewProps {
   contacts: Contact[];
   apps: Application[];
   companies: Company[];
+  onEdit: (event: NetworkingEvent) => void;
   onDelete: (id: number) => void;
   onSelectContact: (contact: Contact) => void;
   onSelectApp: (app: Application) => void;
@@ -27,6 +28,7 @@ export function NetworkingListView({
   contacts,
   apps,
   companies,
+  onEdit,
   onDelete,
   onSelectContact,
   onSelectApp,
@@ -85,7 +87,7 @@ export function NetworkingListView({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.2fr 150px 130px 1fr 1.4fr 40px",
+          gridTemplateColumns: "1.2fr 150px 130px 1fr 1.4fr 72px",
           columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
@@ -108,7 +110,7 @@ export function NetworkingListView({
           key={e.id}
           style={{
             display: "grid",
-            gridTemplateColumns: "1.2fr 150px 130px 1fr 1.4fr 40px",
+            gridTemplateColumns: "1.2fr 150px 130px 1fr 1.4fr 72px",
             columnGap: 16,
             padding: "14px 4px",
             borderBottom: "1px solid var(--border-default)",
@@ -146,7 +148,29 @@ export function NetworkingListView({
             {e.app ? `${companyName(e.app.companyId, companies)} — ${e.app.role}` : "—"}
           </span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{e.notes || "—"}</span>
-          <IconButton aria-label="Delete networking event" icon={<span>✕</span>} onClick={() => onDelete(e.id)} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <IconButton
+              aria-label="Edit networking event"
+              icon={<span>✎</span>}
+              size="sm"
+              onClick={() =>
+                onEdit({
+                  id: e.id,
+                  contactIds: e.contactIds,
+                  type: e.type,
+                  date: e.date,
+                  applicationId: e.applicationId,
+                  notes: e.notes,
+                })
+              }
+            />
+            <IconButton
+              aria-label="Delete networking event"
+              icon={<span>✕</span>}
+              size="sm"
+              onClick={() => onDelete(e.id)}
+            />
+          </div>
         </div>
       ))}
       {rows.length === 0 && (

@@ -40,6 +40,7 @@ function ContactsPageContent() {
         onSelectApp={(a) => router.push(`/applications?id=${a.id}`)}
         onSelectContact={(c) => router.push(`/contacts?id=${c.id}`)}
         onSelectCompany={(c) => router.push(`/companies?id=${c.id}`)}
+        onEditNetworkingEvent={ui.openEditNetworkingEvent}
         onDeleteNetworkingEvent={data.deleteNetworkingEvent}
         onOpenLogNetworkingEvent={ui.openLogNetworkingEvent}
       />

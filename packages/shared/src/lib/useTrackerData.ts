@@ -400,6 +400,14 @@ const addNetworkingEvent = (event: NewNetworkingEvent): Promise<NetworkingEvent>
   });
 };
 
+const editNetworkingEvent = (updated: NetworkingEvent): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    networkingEvents: prev.networkingEvents.map((e) => (e.id === updated.id ? updated : e)),
+  }));
+  return withRollback(() => dataSource.editNetworkingEvent(updated));
+};
+
 const deleteNetworkingEvent = (id: number): Promise<void> => {
   setState((prev) => ({ ...prev, networkingEvents: prev.networkingEvents.filter((e) => e.id !== id) }));
   return withRollback(() => dataSource.deleteNetworkingEvent(id));
@@ -525,6 +533,7 @@ const actions = {
   editContact,
   deleteContact,
   addNetworkingEvent,
+  editNetworkingEvent,
   deleteNetworkingEvent,
   createCompany,
   editCompany,

@@ -338,6 +338,18 @@ export class MemoryDataSource implements DataSource {
     return this.composeNetworkingEvent(row);
   }
 
+  async editNetworkingEvent(event: DsNetworkingEvent): Promise<void> {
+    this.networkingEvents.getOrThrow(event.id, "NetworkingEvent");
+    for (const contactId of event.contactIds) this.requireContact(contactId);
+    if (event.applicationId !== undefined) this.requireApplication(event.applicationId);
+    const { contactIds, ...scalars } = event;
+    this.networkingEvents.put(scalars as StoredNetworkingEvent);
+    for (const link of this.networkingEventContacts.listWhere((c) => c.eventId === event.id)) {
+      this.networkingEventContacts.delete(link.id);
+    }
+    for (const contactId of contactIds) this.networkingEventContacts.insert({ eventId: event.id, contactId });
+  }
+
   async deleteNetworkingEvent(id: number): Promise<void> {
     for (const link of this.networkingEventContacts.listWhere((c) => c.eventId === id)) {
       this.networkingEventContacts.delete(link.id);

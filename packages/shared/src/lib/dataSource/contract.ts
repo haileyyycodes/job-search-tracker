@@ -278,6 +278,43 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
         ds.addNetworkingEvent({ contactIds: [9999], type: "Coffee chat", date: "", notes: "" })
       ).rejects.toThrow();
     });
+
+    it("editNetworkingEvent replaces scalars and the contact set", async () => {
+      const ds = makeDataSource();
+      const sam = await ds.createContact({ name: "Sam", notes: "" });
+      const dana = await ds.createContact({ name: "Dana", notes: "" });
+      const event = await ds.addNetworkingEvent({
+        contactIds: [sam.id],
+        type: "Coffee chat",
+        date: "Jan 2, 2026",
+        notes: "first pass",
+      });
+
+      await ds.editNetworkingEvent({
+        ...event,
+        contactIds: [dana.id],
+        type: "Video call",
+        date: "Jan 9, 2026",
+        notes: "updated",
+      });
+
+      const [fetched] = await ds.getNetworkingEvents();
+      expect(fetched).toEqual({
+        id: event.id,
+        contactIds: [dana.id],
+        type: "Video call",
+        date: "Jan 9, 2026",
+        applicationId: undefined,
+        notes: "updated",
+      });
+    });
+
+    it("editNetworkingEvent rejects a contactId that doesn't exist", async () => {
+      const ds = makeDataSource();
+      const sam = await ds.createContact({ name: "Sam", notes: "" });
+      const event = await ds.addNetworkingEvent({ contactIds: [sam.id], type: "Coffee chat", date: "", notes: "" });
+      await expect(ds.editNetworkingEvent({ ...event, contactIds: [9999] })).rejects.toThrow();
+    });
   });
 
   describe("goals", () => {

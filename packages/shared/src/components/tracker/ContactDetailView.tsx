@@ -35,6 +35,7 @@ interface ContactDetailViewProps {
   onSelectApp: (app: Application) => void;
   onSelectContact: (contact: Contact) => void;
   onSelectCompany: (company: Company) => void;
+  onEditNetworkingEvent: (event: NetworkingEvent) => void;
   onDeleteNetworkingEvent: (id: number) => void;
   onOpenLogNetworkingEvent: (initialContactId: number) => void;
 }
@@ -52,6 +53,7 @@ export function ContactDetailView({
   onSelectApp,
   onSelectContact,
   onSelectCompany,
+  onEditNetworkingEvent,
   onDeleteNetworkingEvent,
   onOpenLogNetworkingEvent,
 }: ContactDetailViewProps) {
@@ -245,6 +247,12 @@ export function ContactDetailView({
                     <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{e.type}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{e.date}</span>
+                      <IconButton
+                        aria-label="Edit networking event"
+                        icon={<span>✎</span>}
+                        size="sm"
+                        onClick={() => onEditNetworkingEvent(e)}
+                      />
                       <IconButton
                         aria-label="Delete networking event"
                         icon={<span>✕</span>}

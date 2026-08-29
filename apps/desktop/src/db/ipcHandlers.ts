@@ -586,6 +586,20 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
       );
     },
 
+    async editNetworkingEvent(event: DsNetworkingEvent) {
+      requireRow<NetworkingEventRow>("SELECT * FROM networking_events WHERE id = ?", event.id, "NetworkingEvent");
+      db.prepare("UPDATE networking_events SET type = ?, date = ?, application_id = ?, notes = ? WHERE id = ?").run(
+        event.type,
+        event.date,
+        event.applicationId ?? null,
+        event.notes,
+        event.id
+      );
+      db.prepare("DELETE FROM networking_event_contacts WHERE event_id = ?").run(event.id);
+      const insertLink = db.prepare("INSERT INTO networking_event_contacts (event_id, contact_id) VALUES (?, ?)");
+      for (const contactId of event.contactIds) insertLink.run(event.id, contactId);
+    },
+
     async deleteNetworkingEvent(id: number) {
       db.prepare("DELETE FROM networking_events WHERE id = ?").run(id);
     },
@@ -775,6 +789,7 @@ export function registerIpcHandlers(db: Database.Database): void {
 
     "networkingEvents:list": () => ds.getNetworkingEvents(),
     "networkingEvents:add": (event) => ds.addNetworkingEvent(event as NewNetworkingEvent),
+    "networkingEvents:edit": (event) => ds.editNetworkingEvent(event as DsNetworkingEvent),
     "networkingEvents:delete": (id) => ds.deleteNetworkingEvent(id as number),
 
     "goals:get": () => ds.getGoals(),
