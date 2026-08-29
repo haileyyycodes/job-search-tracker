@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Card, StatusTag } from "@/components/ds";
-import { statusOrder } from "@/lib/data";
+import { Card } from "@/components/ds";
 import { bucketByCalendarWeek } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
 import {
@@ -66,8 +65,8 @@ interface FunnelRingProps {
 function FunnelRing({ label, value, stroke, valueColor, sub, position }: FunnelRingProps) {
   const filled = value != null && value > 0;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 20, ...ringPositionStyle(position) }}>
-      <svg width="104" height="104" viewBox="0 0 104 104" style={{ flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 16, ...ringPositionStyle(position) }}>
+      <svg width="84" height="84" viewBox="0 0 104 104" style={{ flexShrink: 0 }}>
         <circle cx="52" cy="52" r={RING_RADIUS} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={10} />
         {filled ? (
           <circle
@@ -86,20 +85,20 @@ function FunnelRing({ label, value, stroke, valueColor, sub, position }: FunnelR
         )}
       </svg>
       <div>
-        <div style={{ font: "11px var(--font-body)", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue-300)", marginBottom: 8 }}>
+        <div style={{ font: "11px var(--font-body)", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue-300)", marginBottom: 5 }}>
           {label}
         </div>
-        <div style={{ font: "800 42px var(--font-display)", lineHeight: 1, letterSpacing: "-0.03em", color: valueColor }}>
+        <div style={{ font: "800 32px var(--font-display)", lineHeight: 1, letterSpacing: "-0.03em", color: valueColor }}>
           {value != null ? `${value}%` : "—"}
         </div>
-        <div style={{ marginTop: 8 }}>{sub}</div>
+        <div style={{ marginTop: 6 }}>{sub}</div>
       </div>
     </div>
   );
 }
 
 function RingCaption({ children }: { children: ReactNode }) {
-  return <div style={{ font: "13.5px var(--font-body)", color: "rgba(255,255,255,0.68)" }}>{children}</div>;
+  return <div style={{ font: "12.5px var(--font-body)", color: "rgba(255,255,255,0.68)" }}>{children}</div>;
 }
 
 function RingBadge({ tier }: { tier: InterviewRatioTier }) {
@@ -128,9 +127,18 @@ interface FunnelHealthProps {
   interviewRatio: number | null;
   interviewRatioTier: InterviewRatioTier | null;
   offerRatio: number | null;
+  avgResponseDays: number | null;
+  responseCount: number;
 }
 
-function FunnelHealth({ responseRate, interviewRatio, interviewRatioTier, offerRatio }: FunnelHealthProps) {
+function FunnelHealth({
+  responseRate,
+  interviewRatio,
+  interviewRatioTier,
+  offerRatio,
+  avgResponseDays,
+  responseCount,
+}: FunnelHealthProps) {
   const tierStyle = interviewRatioTier ? TIER_RING_STYLE[interviewRatioTier] : null;
   const offerFilled = offerRatio != null && offerRatio > 0;
 
@@ -139,12 +147,12 @@ function FunnelHealth({ responseRate, interviewRatio, interviewRatioTier, offerR
       style={{
         background: "var(--blue-900)",
         borderRadius: "var(--radius-l)",
-        padding: "32px 36px 36px",
+        padding: "22px 28px 24px",
         color: "var(--white)",
         boxShadow: "0 12px 32px -18px rgba(20,32,60,0.45)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 28 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18 }}>
         <h2 style={{ ...sectionHeadingStyle, color: "var(--white)" }}>Funnel health</h2>
         <span style={{ ...eyebrowStyle, color: "var(--blue-300)" }}>Conversion at each step</span>
       </div>
@@ -173,6 +181,34 @@ function FunnelHealth({ responseRate, interviewRatio, interviewRatioTier, offerR
           sub={<RingCaption>Offers ÷ interviews reached</RingCaption>}
           position="last"
         />
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: "1px solid rgba(255,255,255,0.14)",
+          display: "flex",
+          alignItems: "baseline",
+          gap: 14,
+        }}
+      >
+        <span style={{ font: "11px var(--font-body)", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--blue-300)" }}>
+          Avg. response time
+        </span>
+        <span style={{ font: "800 22px var(--font-display)", lineHeight: 1, letterSpacing: "-0.03em", color: "var(--white)" }}>
+          {avgResponseDays != null ? (
+            <>
+              {avgResponseDays} <span style={{ font: "700 15px var(--font-display)", color: "rgba(255,255,255,0.68)" }}>days</span>
+            </>
+          ) : (
+            "—"
+          )}
+        </span>
+        <RingCaption>
+          {avgResponseDays != null
+            ? `Based on ${responseCount} application${responseCount === 1 ? "" : "s"}`
+            : "No responses yet"}
+        </RingCaption>
       </div>
     </section>
   );
@@ -212,15 +248,15 @@ function ChannelBar({ row }: { row: ChannelBreakdownRow }) {
 function ChannelBreakdown({ channelBreakdown }: { channelBreakdown: ChannelBreakdownRow[] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <h2 style={{ ...sectionHeadingStyle, marginBottom: 20 }}>Channel breakdown</h2>
+      <h2 style={{ ...sectionHeadingStyle, marginBottom: 14 }}>Channel breakdown</h2>
       <div style={{ flex: 1, display: "grid" }}>
-        <Card padding="lg">
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <Card padding="md">
+          <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
             {channelBreakdown.map((row) => {
               const textColor = row.tier ? TIER_BAR_STYLE[row.tier].text : "var(--text-tertiary)";
               return (
                 <div key={row.channel}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
                     <span style={{ font: "600 14px var(--font-body)", color: row.count === 0 ? "var(--text-secondary)" : "var(--text-primary)" }}>
                       {channelLabels[row.channel]}
                     </span>
@@ -251,7 +287,7 @@ interface VelocityChartProps {
 }
 
 function VelocityChart({ buckets }: VelocityChartProps) {
-  const chartHeight = 196;
+  const chartHeight = 148;
   const maxCount = Math.max(1, ...buckets.map((b) => b.count));
 
   return (
@@ -261,7 +297,7 @@ function VelocityChart({ buckets }: VelocityChartProps) {
         <span style={{ ...eyebrowStyle, color: "var(--text-tertiary)" }}>Applications per week</span>
       </div>
       <div style={{ flex: 1, display: "grid" }}>
-        <Card padding="lg">
+        <Card padding="md">
           <div style={{ position: "relative", height: chartHeight }}>
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div style={{ height: 1, background: "var(--border-default)" }} />
@@ -290,7 +326,7 @@ function VelocityChart({ buckets }: VelocityChartProps) {
               })}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             {buckets.map((b, i) => (
               <div
                 key={i}
@@ -322,12 +358,12 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, bar }: StatCardProps) {
   return (
-    <Card padding="lg">
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <Card padding="md">
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ font: "11px var(--font-body)", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-tertiary)" }}>
           {label}
         </div>
-        <div style={{ font: "800 36px var(--font-display)", lineHeight: 1, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>
+        <div style={{ font: "800 30px var(--font-display)", lineHeight: 1, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>
           {value}
         </div>
         {bar}
@@ -365,7 +401,6 @@ interface DashboardViewProps {
 }
 
 export function DashboardView({ apps, networkingEvents }: DashboardViewProps) {
-  const total = apps.length;
   const submittedApps = apps.filter((a) => a.status !== "todo");
   const tailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "tailored"));
   const untailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "untailored"));
@@ -390,22 +425,24 @@ export function DashboardView({ apps, networkingEvents }: DashboardViewProps) {
   const channelBreakdown = getChannelBreakdown(apps, networkingEvents);
 
   return (
-    <div style={{ padding: "24px 32px 32px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-7)" }}>
+    <div style={{ padding: "18px 32px 28px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
       <FunnelHealth
         responseRate={responseRate}
         interviewRatio={interviewRatio}
         interviewRatioTier={interviewRatioTier}
         offerRatio={offerRatio}
+        avgResponseDays={avgResponseDays}
+        responseCount={responseDaysList.length}
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 20 }}>
         <VelocityChart buckets={velocityBuckets} />
         <ChannelBreakdown channelBreakdown={channelBreakdown} />
       </div>
 
       <div>
-        <h2 style={{ ...sectionHeadingStyle, marginBottom: 16 }}>Pipeline performance</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20 }}>
+        <h2 style={{ ...sectionHeadingStyle, marginBottom: 12 }}>Pipeline performance</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
           <StatCard
             label="Interview rate by resume type"
             value={<SplitRate a={tailoredRate} b={untailoredRate} />}
@@ -418,58 +455,7 @@ export function DashboardView({ apps, networkingEvents }: DashboardViewProps) {
             bar={<SplitRateBar a={withCoverLetterRate} b={withoutCoverLetterRate} />}
             sub="With vs. without cover letter"
           />
-          <StatCard
-            label="Avg. response time"
-            value={
-              avgResponseDays != null ? (
-                <>
-                  {avgResponseDays} <span style={{ font: "700 22px var(--font-display)", color: "var(--text-secondary)" }}>days</span>
-                </>
-              ) : (
-                "—"
-              )
-            }
-            sub={
-              avgResponseDays != null
-                ? `Based on ${responseDaysList.length} application${responseDaysList.length === 1 ? "" : "s"}`
-                : "No responses yet"
-            }
-          />
         </div>
-      </div>
-
-      <div>
-        <h2 style={{ ...sectionHeadingStyle, marginBottom: 22 }}>Status breakdown</h2>
-        <Card padding="lg">
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {statusOrder
-              .filter((s) => apps.some((a) => a.status === s))
-              .map((s) => {
-                const count = apps.filter((a) => a.status === s).length;
-                return (
-                  <div key={s} style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                    <div style={{ width: 120, flexShrink: 0 }}>
-                      <StatusTag status={s} />
-                    </div>
-                    <div
-                      style={{
-                        flex: 1,
-                        height: 10,
-                        borderRadius: "var(--radius-pill)",
-                        background: "var(--bg-surface-sunken)",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div style={{ width: `${(count / total) * 100}%`, height: "100%", borderRadius: "var(--radius-pill)", background: "var(--blue-500)" }} />
-                    </div>
-                    <span style={{ width: 24, textAlign: "right", font: "15px var(--font-mono)", color: "var(--text-primary)" }}>
-                      {count}
-                    </span>
-                  </div>
-                );
-              })}
-          </div>
-        </Card>
       </div>
     </div>
   );
