@@ -364,5 +364,19 @@ export const defaultSeed: Seed = {
     { id: "ipq40", category: "behavioral", section: "Curveballs Common at Senior Level", question: "Describe a time you scaled yourself out of a task by delegating or documenting.", answer: "", starred: false },
     { id: "ipq41", category: "behavioral", section: "Curveballs Common at Senior Level", question: "Tell me about a time you challenged the status quo on your team's process or tooling.", answer: "", starred: false },
     { id: "ipq42", category: "behavioral", section: "Curveballs Common at Senior Level", question: "Describe a time your work was misunderstood or undervalued. How did you handle it?", answer: "", starred: false },
+
+    // Background & Motivation
+    { id: "ipq43", category: "recruiter_screening", section: "Background & Motivation", question: "Walk me through your resume.", answer: "", starred: false },
+    { id: "ipq44", category: "recruiter_screening", section: "Background & Motivation", question: "Why are you looking to leave your current role?", answer: "", starred: false },
+    { id: "ipq45", category: "recruiter_screening", section: "Background & Motivation", question: "Why are you interested in this role and company specifically?", answer: "", starred: false },
+    { id: "ipq46", category: "recruiter_screening", section: "Background & Motivation", question: "What are you looking for in your next role that you're not getting now?", answer: "", starred: false },
+    // Logistics & Availability
+    { id: "ipq47", category: "recruiter_screening", section: "Logistics & Availability", question: "What's your notice period, or how soon could you start?", answer: "", starred: false },
+    { id: "ipq48", category: "recruiter_screening", section: "Logistics & Availability", question: "Are you authorized to work in this country without visa sponsorship, now or in the future?", answer: "", starred: false },
+    { id: "ipq49", category: "recruiter_screening", section: "Logistics & Availability", question: "What's your preference on remote, hybrid, or onsite work?", answer: "", starred: false },
+    // Compensation & Process
+    { id: "ipq50", category: "recruiter_screening", section: "Compensation & Process", question: "What compensation range are you targeting for this role?", answer: "", starred: false },
+    { id: "ipq51", category: "recruiter_screening", section: "Compensation & Process", question: "Are you interviewing elsewhere, and what's your timeline?", answer: "", starred: false },
+    { id: "ipq52", category: "recruiter_screening", section: "Compensation & Process", question: "Do you have any questions for me about the role or company?", answer: "", starred: false },
   ],
 };
