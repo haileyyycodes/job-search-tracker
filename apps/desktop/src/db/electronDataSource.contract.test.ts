@@ -40,8 +40,9 @@ describe("createSqliteDataSource against a real SQLite file", () => {
   it("adds tables introduced after a DB file was created, without touching existing data", async () => {
     const dbPath = `${process.env.TMPDIR ?? "/tmp"}/job-tracker-electron-migrate-${Date.now()}.db`;
 
-    // Simulate a DB file created before `user_profile` existed: create it, then drop the
-    // table a later schema change added, exactly as if that table had never been there.
+    // Simulate a DB file created before `user_profile`, `interview_prep_questions`, and
+    // `elevator_pitch_versions` existed: create it, then drop the tables later schema
+    // changes added, exactly as if they had never been there.
     const first = openDatabase(dbPath);
     const company = await createSqliteDataSource(first).createCompany({
       name: "Acme",
@@ -49,6 +50,8 @@ describe("createSqliteDataSource against a real SQLite file", () => {
       status: "researching",
       notes: "",
     });
+    first.exec("DROP TABLE elevator_pitch_versions;");
+    first.exec("DROP TABLE interview_prep_questions;");
     first.exec("DROP TABLE user_profile;");
     first.close();
 
@@ -56,6 +59,10 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     const secondDs = createSqliteDataSource(second);
     expect(await secondDs.getCompanies()).toEqual([company]);
     expect(await secondDs.getUserProfile()).toEqual({ name: "" });
+    // These would throw "no such table" if migrate() hadn't re-created them, which is
+    // exactly what breaks useTrackerData's boot-time Promise.all for pre-existing DBs.
+    expect(await secondDs.getInterviewPrepQuestions()).toEqual([]);
+    expect(await secondDs.getElevatorPitchVersions()).toEqual([]);
     second.close();
   });
 });
