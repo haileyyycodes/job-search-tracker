@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ds";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Button, TextLink } from "@/components/ds";
 import { AddInterviewPrepQuestionDialog } from "./AddInterviewPrepQuestionDialog";
 import { interviewPrepCategory } from "@/lib/interviewPrep";
 import type { NewInterviewPrepQuestion } from "@/lib/dataSource/types";
@@ -301,20 +301,9 @@ export function InterviewPrepCategoryView({
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div style={{ padding: "20px 32px 18px", borderBottom: "1px solid var(--border-default)", background: "var(--bg-page)" }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--text-link)",
-            font: "700 13px var(--font-body)",
-            cursor: "pointer",
-            padding: 0,
-            marginBottom: 8,
-          }}
-        >
+        <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 8 }}>
           ← Interview prep
-        </button>
+        </TextLink>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
           <div>
             <h1 style={{ margin: 0, font: "800 30px var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
@@ -346,23 +335,9 @@ export function InterviewPrepCategoryView({
             </div>
             <div style={{ display: "flex", background: "var(--bg-surface-sunken)", borderRadius: "var(--radius-pill)", padding: 3, gap: 2 }}>
               {FILTERS.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={{
-                    height: 30,
-                    padding: "0 14px",
-                    border: 0,
-                    borderRadius: "var(--radius-pill)",
-                    fontSize: 13,
-                    cursor: "pointer",
-                    background: filter === f ? "var(--bg-surface)" : "transparent",
-                    color: filter === f ? "var(--text-primary)" : "var(--text-secondary)",
-                    fontWeight: filter === f ? 700 : 500,
-                  }}
-                >
+                <FilterButton key={f} active={filter === f} onClick={() => setFilter(f)}>
                   {f}
-                </button>
+                </FilterButton>
               ))}
             </div>
             <input
@@ -509,5 +484,45 @@ export function InterviewPrepCategoryView({
         />
       )}
     </div>
+  );
+}
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  const background = active
+    ? "var(--bg-surface)"
+    : pressed
+      ? "var(--ink-200)"
+      : hover
+        ? "var(--bg-surface-hover)"
+        : "transparent";
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      style={{
+        height: 30,
+        padding: "0 14px",
+        border: 0,
+        borderRadius: "var(--radius-pill)",
+        fontSize: 13,
+        cursor: "pointer",
+        background,
+        color: active || hover || pressed ? "var(--text-primary)" : "var(--text-secondary)",
+        fontWeight: active ? 700 : 500,
+        transition: "background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard)",
+      }}
+    >
+      {children}
+    </button>
   );
 }

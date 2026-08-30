@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Button } from "@/components/ds";
+import { Button, TextLink } from "@/components/ds";
 import { interviewPrepCategory } from "@/lib/interviewPrep";
 import type { NewElevatorPitchVersion } from "@/lib/dataSource/types";
 import type { ElevatorPitchVersion, InterviewPrepQuestion } from "@/lib/types";
@@ -240,12 +240,9 @@ export function ElevatorPitchView({
   if (!active) {
     return (
       <div style={{ padding: "20px 32px 40px", overflow: "auto", flex: 1 }}>
-        <button
-          onClick={onBack}
-          style={{ background: "none", border: "none", color: "var(--text-link)", font: "700 13px var(--font-body)", cursor: "pointer", padding: 0, marginBottom: 16 }}
-        >
+        <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 16 }}>
           ← Interview prep
-        </button>
+        </TextLink>
         <h1 style={{ margin: 0, font: "800 30px var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
           Elevator pitch
         </h1>
@@ -354,12 +351,9 @@ function PitchWizard({
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div style={{ padding: "20px 32px 18px", borderBottom: "1px solid var(--border-default)", background: "var(--bg-page)" }}>
-        <button
-          onClick={onBack}
-          style={{ background: "none", border: "none", color: "var(--text-link)", font: "700 13px var(--font-body)", cursor: "pointer", padding: 0, marginBottom: 8 }}
-        >
+        <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 8 }}>
           ← Interview prep
-        </button>
+        </TextLink>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
           <div>
             <h1 style={{ margin: 0, font: "800 30px var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-primary)" }}>

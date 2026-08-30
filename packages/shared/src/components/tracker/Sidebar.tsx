@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ReactNode, useState } from "react";
 
 interface SidebarItem {
   href: string;
@@ -20,6 +21,54 @@ const items: SidebarItem[] = [
 
 interface SidebarProps {
   userName: string;
+}
+
+function SidebarLink({ href, active, icon, label }: { href: string; active: boolean; icon: string; label: ReactNode }) {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  const background = active
+    ? pressed
+      ? "var(--blue-300)"
+      : hover
+        ? "var(--blue-200)"
+        : "var(--blue-100)"
+    : pressed
+      ? "var(--ink-200)"
+      : hover
+        ? "var(--bg-surface-hover)"
+        : "transparent";
+
+  return (
+    <Link
+      href={href}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 10px",
+        border: "none",
+        borderRadius: "var(--radius-s)",
+        textAlign: "left",
+        background,
+        color: active ? "var(--blue-700)" : hover ? "var(--text-primary)" : "var(--text-secondary)",
+        font: "var(--text-body-m)",
+        fontWeight: active ? 700 : 400,
+        textDecoration: "none",
+        transition: "background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard)",
+      }}
+    >
+      <span style={{ width: 16, textAlign: "center" }}>{icon}</span>
+      {label}
+    </Link>
+  );
 }
 
 export function Sidebar({ userName }: SidebarProps) {
@@ -53,27 +102,7 @@ export function Sidebar({ userName }: SidebarProps) {
         Job Tracker
       </div>
       {items.map((it) => (
-        <Link
-          key={it.href}
-          href={it.href}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "9px 10px",
-            border: "none",
-            borderRadius: "var(--radius-s)",
-            textAlign: "left",
-            background: isActive(it.href) ? "var(--blue-100)" : "transparent",
-            color: isActive(it.href) ? "var(--blue-700)" : "var(--text-secondary)",
-            font: "var(--text-body-m)",
-            fontWeight: isActive(it.href) ? 700 : 400,
-            textDecoration: "none",
-          }}
-        >
-          <span style={{ width: 16, textAlign: "center" }}>{it.icon}</span>
-          {it.label}
-        </Link>
+        <SidebarLink key={it.href} href={it.href} active={isActive(it.href)} icon={it.icon} label={it.label} />
       ))}
       <div
         style={{
@@ -119,27 +148,9 @@ export function Sidebar({ userName }: SidebarProps) {
             {trimmedName || "Add your name"}
           </span>
         </div>
-        <Link
-          href="/settings"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginTop: 2,
-            padding: "9px 10px",
-            border: "none",
-            borderRadius: "var(--radius-s)",
-            textAlign: "left",
-            background: isActive("/settings") ? "var(--blue-100)" : "transparent",
-            color: isActive("/settings") ? "var(--blue-700)" : "var(--text-secondary)",
-            font: "var(--text-body-m)",
-            fontWeight: isActive("/settings") ? 700 : 400,
-            textDecoration: "none",
-          }}
-        >
-          <span style={{ width: 16, textAlign: "center" }}>⚙</span>
-          Settings
-        </Link>
+        <div style={{ marginTop: 2 }}>
+          <SidebarLink href="/settings" active={isActive("/settings")} icon="⚙" label="Settings" />
+        </div>
       </div>
     </div>
   );

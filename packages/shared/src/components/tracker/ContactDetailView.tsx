@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button, Card, IconButton } from "@/components/ds";
+import { Button, Card, IconButton, TextLink, ListRow } from "@/components/ds";
 import { EditContactDialog } from "./EditContactDialog";
 import { OutreachTag } from "./OutreachTag";
 import { companyName } from "@/lib/companies";
@@ -74,20 +74,9 @@ export function ContactDetailView({
   return (
     <>
       <div style={{ padding: "20px 32px 40px", overflow: "auto", flex: 1 }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--text-link)",
-            font: "700 13px var(--font-body)",
-            cursor: "pointer",
-            padding: 0,
-            marginBottom: 16,
-          }}
-        >
+        <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 16 }}>
           ← Back to contacts
-        </button>
+        </TextLink>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <div
@@ -113,15 +102,14 @@ export function ContactDetailView({
                   {contact.role}
                   {contact.role && contact.companyId && " at "}
                   {contact.companyId && (
-                    <span
+                    <TextLink
                       onClick={() => {
                         const company = companies.find((c) => c.id === contact.companyId);
                         if (company) onSelectCompany(company);
                       }}
-                      style={{ color: "var(--text-link)", cursor: "pointer" }}
                     >
                       {companyName(contact.companyId, companies)}
-                    </span>
+                    </TextLink>
                   )}
                 </div>
               )}
@@ -147,9 +135,9 @@ export function ContactDetailView({
                 value={
                   contact.linkedInUrl ? (
                     isValidUrl(contact.linkedInUrl) ? (
-                      <a href={contact.linkedInUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                      <TextLink href={contact.linkedInUrl} external>
                         View profile
-                      </a>
+                      </TextLink>
                     ) : (
                       contact.linkedInUrl
                     )
@@ -161,9 +149,9 @@ export function ContactDetailView({
                 value={
                   contact.website ? (
                     isValidUrl(contact.website) ? (
-                      <a href={contact.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                      <TextLink href={contact.website} external>
                         {contact.website}
-                      </a>
+                      </TextLink>
                     ) : (
                       contact.website
                     )
@@ -216,18 +204,15 @@ export function ContactDetailView({
               <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No referrals yet.</div>
             )}
             {referredApps.map((a, i) => (
-              <div
+              <ListRow
                 key={a.id}
                 onClick={() => onSelectApp(a)}
-                style={{
-                  padding: "10px 0",
-                  borderBottom: i < referredApps.length - 1 ? "1px solid var(--border-default)" : "none",
-                  cursor: "pointer",
-                }}
+                padding="10px 8px"
+                divider={i < referredApps.length - 1}
               >
-                <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{a.role}</span>
+                <span style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{a.role}</span>
                 <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{` — ${companyName(a.companyId, companies)}`}</span>
-              </div>
+              </ListRow>
             ))}
           </Card>
 
@@ -244,12 +229,9 @@ export function ContactDetailView({
                 style={{ padding: "10px 0", borderBottom: i < followUps.length - 1 ? "1px solid var(--border-default)" : "none" }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span
-                    onClick={() => onSelectApp(f.app)}
-                    style={{ font: "700 13px var(--font-body)", color: "var(--text-link)", cursor: "pointer" }}
-                  >
+                  <TextLink onClick={() => onSelectApp(f.app)} style={{ font: "700 13px var(--font-body)" }}>
                     {companyName(f.app.companyId, companies)} — {f.app.role}
-                  </span>
+                  </TextLink>
                   <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
                 </div>
                 {f.notes && (
@@ -301,12 +283,9 @@ export function ContactDetailView({
                       {others.map((other, oi) => (
                         <span key={other?.id ?? oi}>
                           {oi > 0 && ", "}
-                          <span
-                            onClick={() => other && onSelectContact(other)}
-                            style={{ color: other ? "var(--text-link)" : "var(--text-tertiary)", cursor: other ? "pointer" : "default" }}
-                          >
+                          <TextLink disabled={!other} onClick={() => other && onSelectContact(other)}>
                             {other?.name ?? "Unknown contact"}
-                          </span>
+                          </TextLink>
                         </span>
                       ))}
                     </div>
@@ -314,9 +293,9 @@ export function ContactDetailView({
                   {linkedApp && (
                     <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
                       Re:{" "}
-                      <span onClick={() => onSelectApp(linkedApp)} style={{ color: "var(--text-link)", cursor: "pointer" }}>
+                      <TextLink onClick={() => onSelectApp(linkedApp)}>
                         {companyName(linkedApp.companyId, companies)} — {linkedApp.role}
-                      </span>
+                      </TextLink>
                     </div>
                   )}
                   {e.notes && (

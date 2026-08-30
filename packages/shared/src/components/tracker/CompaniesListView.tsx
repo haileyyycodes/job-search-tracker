@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, IconButton, Pagination, Switch } from "@/components/ds";
+import { Input, Select, RowActionMenu, Pagination, Switch, ListRow } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { ListCount } from "./ListCount";
 import { TargetStar } from "./TargetStar";
@@ -13,7 +13,7 @@ const statusOptions: SelectOption[] = [
   ...(Object.keys(companyStatusLabels) as CompanyStatus[]).map((s) => ({ value: s, label: companyStatusLabels[s] })),
 ];
 
-const gridTemplateColumns = "28px 1fr 160px 200px 130px 110px 40px";
+const gridTemplateColumns = "36px 28px 1fr 160px 200px 130px 110px";
 
 const PAGE_SIZE = 10;
 
@@ -28,18 +28,11 @@ interface CompanyRowProps {
 function CompanyRow({ company: c, appCount, onSelect, onToggleTarget, onRequestDelete }: CompanyRowProps) {
   const shownStatus = displayedCompanyStatus(c);
   return (
-    <div
-      onClick={() => onSelect(c)}
-      style={{
-        display: "grid",
-        gridTemplateColumns,
-        columnGap: 16,
-        alignItems: "center",
-        padding: "14px 4px",
-        borderBottom: "1px solid var(--border-default)",
-        cursor: "pointer",
-      }}
-    >
+    <ListRow columns={gridTemplateColumns} onClick={() => onSelect(c)}>
+      <RowActionMenu
+        label="Company actions"
+        actions={[{ label: "Delete company", tone: "danger", onSelect: () => onRequestDelete(c) }]}
+      />
       <TargetStar isTarget={c.isTarget} onToggle={() => onToggleTarget(c.id)} />
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div
@@ -89,15 +82,7 @@ function CompanyRow({ company: c, appCount, onSelect, onToggleTarget, onRequestD
         <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>—</span>
       )}
       <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{appCount}</span>
-      <IconButton
-        aria-label="Delete company"
-        icon={<span>✕</span>}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRequestDelete(c);
-        }}
-      />
-    </div>
+    </ListRow>
   );
 }
 
@@ -184,12 +169,12 @@ export function CompaniesListView({ companies, apps, onSelect, onToggleTarget, o
         }}
       >
         <span />
+        <span />
         <span>Name</span>
         <span>Industry</span>
         <span>Locations</span>
         <span>Status</span>
         <span>Applications</span>
-        <span />
       </div>
 
       {visible.map((c) => (

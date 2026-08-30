@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
+import { MenuItem } from "./MenuItem";
 
 export interface SelectOption {
   value: string;
@@ -59,22 +60,16 @@ export function Select({ label, value, options = [], onChange, placeholder = "Se
       </button>
       <DropdownSurface open={open} anchorRef={anchorRef}>
         {options.map((o) => (
-          <div
+          <MenuItem
             key={o.value}
+            selected={o.value === value}
             onClick={() => {
               onChange?.(o.value);
               setOpen(false);
             }}
-            style={{
-              padding: "8px 12px",
-              font: "var(--text-body-m)",
-              background: o.value === value ? "var(--blue-100)" : "transparent",
-              color: "var(--text-primary)",
-              cursor: "pointer",
-            }}
           >
             {o.label}
-          </div>
+          </MenuItem>
         ))}
       </DropdownSurface>
       {error && <span style={{ font: "var(--text-caption)", color: "var(--red-600)" }}>{error}</span>}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, IconButton, Pagination } from "@/components/ds";
+import { Input, Select, RowActionMenu, Pagination, TextLink, ListRow } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import { compareByOutreachUrgency, outreachInfo, outreachTiming, type OutreachStatus } from "@/lib/outreach";
@@ -36,7 +36,7 @@ interface ContactsListViewProps {
 
 const PAGE_SIZE = 10;
 
-const GRID = "1.1fr 1fr 0.9fr 132px 40px";
+const GRID = "36px 1.1fr 1fr 0.9fr 132px";
 
 export function ContactsListView({
   contacts,
@@ -138,28 +138,20 @@ export function ContactsListView({
           fontSize: 11,
         }}
       >
+        <span />
         <span>Name</span>
         <span>Employer / role</span>
         <span>Contact info</span>
         <span>Outreach</span>
-        <span />
       </div>
       {visible.map((c) => {
         const info = infoById.get(c.id)!;
         return (
-          <div
-            key={c.id}
-            onClick={() => onSelect(c)}
-            style={{
-              display: "grid",
-              gridTemplateColumns: GRID,
-              columnGap: 16,
-              alignItems: "center",
-              padding: "14px 4px",
-              borderBottom: "1px solid var(--border-default)",
-              cursor: "pointer",
-            }}
-          >
+          <ListRow key={c.id} columns={GRID} onClick={() => onSelect(c)}>
+            <RowActionMenu
+              label="Contact actions"
+              actions={[{ label: "Delete contact", tone: "danger", onSelect: () => onRequestDelete(c) }]}
+            />
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div
                 style={{
@@ -181,16 +173,14 @@ export function ContactsListView({
             </div>
             <div>
               {c.companyId ? (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
+                <TextLink
+                  stopPropagation
+                  onClick={() => {
                     const company = companies.find((co) => co.id === c.companyId);
                     if (company) onSelectCompany(company);
                   }}
                   style={{
                     font: "var(--text-body-s)",
-                    color: "var(--text-link)",
-                    cursor: "pointer",
                     width: "fit-content",
                     display: "flex",
                     alignItems: "center",
@@ -199,7 +189,7 @@ export function ContactsListView({
                 >
                   {companyName(c.companyId, companies)}
                   {companies.find((co) => co.id === c.companyId)?.isTarget && <TargetStar isTarget size={12} />}
-                </div>
+                </TextLink>
               ) : (
                 <div style={{ font: "var(--text-body-s)", color: "var(--text-primary)" }}>—</div>
               )}
@@ -216,15 +206,7 @@ export function ContactsListView({
                 <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{outreachTiming(info)}</span>
               </div>
             )}
-            <IconButton
-              aria-label="Delete contact"
-              icon={<span>✕</span>}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRequestDelete(c);
-              }}
-            />
-          </div>
+          </ListRow>
         );
       })}
       {filtered.length === 0 && (

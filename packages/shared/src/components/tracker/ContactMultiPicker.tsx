@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DropdownSurface, isInsideDropdownSurface } from "@/components/ds";
+import { DropdownSurface, isInsideDropdownSurface, MenuItem } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import type { NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact } from "@/lib/types";
@@ -145,18 +145,14 @@ export function ContactMultiPicker({
       {error && <span style={{ font: "var(--text-caption)", color: "var(--red-600)" }}>{error}</span>}
       <DropdownSurface open={open} anchorRef={anchorRef}>
           {filtered.map((c) => (
-            <div
-              key={c.id}
-              onClick={() => addContact(String(c.id))}
-              style={{ padding: "8px 12px", font: "var(--text-body-m)", color: "var(--text-primary)", cursor: "pointer" }}
-            >
+            <MenuItem key={c.id} onClick={() => addContact(String(c.id))}>
               {c.name}
               {c.companyId && (
                 <span style={{ color: "var(--text-tertiary)", marginLeft: 6, font: "var(--text-caption)" }}>
                   {companyName(c.companyId, companies)}
                 </span>
               )}
-            </div>
+            </MenuItem>
           ))}
           {filtered.length === 0 && !creating && (
             <div style={{ padding: "10px 12px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
@@ -164,21 +160,16 @@ export function ContactMultiPicker({
             </div>
           )}
           {!creating && (
-            <div
+            <MenuItem
+              tone="accent"
               onClick={() => {
                 setCreating(true);
                 setNewName(query);
               }}
-              style={{
-                padding: "8px 12px",
-                font: "700 13px var(--font-body)",
-                color: "var(--blue-600)",
-                cursor: "pointer",
-                borderTop: "1px solid var(--border-default)",
-              }}
+              style={{ borderTop: "1px solid var(--border-default)" }}
             >
               + New contact{query ? `: "${query}"` : ""}
-            </div>
+            </MenuItem>
           )}
           {creating && (
             <div style={{ padding: 10, borderTop: "1px solid var(--border-default)", display: "flex", gap: 8 }}>
