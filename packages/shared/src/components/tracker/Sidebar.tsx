@@ -8,22 +8,59 @@ interface SidebarItem {
   href: string;
   label: string;
   icon: string;
+  beta?: boolean;
 }
 
 const items: SidebarItem[] = [
   { href: "/", label: "Dashboard", icon: "⌂" },
   { href: "/applications", label: "Applications", icon: "☰" },
   { href: "/companies", label: "Companies", icon: "▣" },
-  { href: "/interview-prep", label: "Interview Prep", icon: "◈" },
   { href: "/contacts", label: "Contacts", icon: "◎" },
   { href: "/networking", label: "Networking", icon: "⇄" },
+  { href: "/interview-prep", label: "Interview Prep", icon: "◈", beta: true },
 ];
+
+function BetaBadge() {
+  return (
+    <span
+      style={{
+        marginLeft: "auto",
+        display: "inline-flex",
+        alignItems: "center",
+        height: 16,
+        padding: "0 6px",
+        borderRadius: "var(--radius-pill)",
+        background: "var(--status-interview-bg)",
+        color: "var(--status-interview-fg)",
+        font: "var(--text-caption)",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        flexShrink: 0,
+      }}
+    >
+      beta
+    </span>
+  );
+}
 
 interface SidebarProps {
   userName: string;
 }
 
-function SidebarLink({ href, active, icon, label }: { href: string; active: boolean; icon: string; label: ReactNode }) {
+function SidebarLink({
+  href,
+  active,
+  icon,
+  label,
+  beta,
+}: {
+  href: string;
+  active: boolean;
+  icon: string;
+  label: ReactNode;
+  beta?: boolean;
+}) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
 
@@ -62,11 +99,13 @@ function SidebarLink({ href, active, icon, label }: { href: string; active: bool
         font: "var(--text-body-m)",
         fontWeight: active ? 700 : 400,
         textDecoration: "none",
+        whiteSpace: "nowrap",
         transition: "background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard)",
       }}
     >
       <span style={{ width: 16, textAlign: "center" }}>{icon}</span>
       {label}
+      {beta ? <BetaBadge /> : null}
     </Link>
   );
 }
@@ -102,7 +141,14 @@ export function Sidebar({ userName }: SidebarProps) {
         Job Tracker
       </div>
       {items.map((it) => (
-        <SidebarLink key={it.href} href={it.href} active={isActive(it.href)} icon={it.icon} label={it.label} />
+        <SidebarLink
+          key={it.href}
+          href={it.href}
+          active={isActive(it.href)}
+          icon={it.icon}
+          label={it.label}
+          beta={it.beta}
+        />
       ))}
       <div
         style={{
