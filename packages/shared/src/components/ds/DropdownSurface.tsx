@@ -16,6 +16,13 @@ interface DropdownSurfaceProps {
   anchorRef: RefObject<HTMLElement | null>;
   children: ReactNode;
   maxHeight?: number;
+  /**
+   * Floor for the surface width. Without it the surface matches the anchor
+   * width (right for a full-width Select, useless for a narrow icon trigger).
+   * When wider than the anchor, the surface shifts left as needed to stay in
+   * the viewport.
+   */
+  minWidth?: number;
 }
 
 /**
@@ -25,7 +32,7 @@ interface DropdownSurfaceProps {
  * height to the available space (scrolling internally), and tracks the anchor on
  * scroll/resize.
  */
-export function DropdownSurface({ open, anchorRef, children, maxHeight = 240 }: DropdownSurfaceProps) {
+export function DropdownSurface({ open, anchorRef, children, maxHeight = 240, minWidth }: DropdownSurfaceProps) {
   const [position, setPosition] = useState<CSSProperties | null>(null);
 
   // Position persists while closed (the surface isn't rendered then) and is
@@ -39,9 +46,15 @@ export function DropdownSurface({ open, anchorRef, children, maxHeight = 240 }: 
       const below = window.innerHeight - rect.bottom - GAP - VIEWPORT_MARGIN;
       const above = rect.top - GAP - VIEWPORT_MARGIN;
       const openUp = below < Math.min(maxHeight, 160) && above > below;
+      const width = minWidth ? Math.max(rect.width, minWidth) : rect.width;
+      // Keep a wider-than-anchor surface inside the viewport by shifting it left.
+      const left = Math.max(
+        VIEWPORT_MARGIN,
+        Math.min(rect.left, window.innerWidth - VIEWPORT_MARGIN - width)
+      );
       setPosition({
-        left: rect.left,
-        width: rect.width,
+        left,
+        width,
         maxHeight: Math.max(Math.min(maxHeight, openUp ? above : below), 80),
         ...(openUp ? { bottom: window.innerHeight - rect.top + GAP } : { top: rect.bottom + GAP }),
       });
@@ -53,7 +66,7 @@ export function DropdownSurface({ open, anchorRef, children, maxHeight = 240 }: 
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [open, anchorRef, maxHeight]);
+  }, [open, anchorRef, maxHeight, minWidth]);
 
   if (!open || !position) return null;
 

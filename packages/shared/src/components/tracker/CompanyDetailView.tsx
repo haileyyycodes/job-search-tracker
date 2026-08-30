@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button, Card } from "@/components/ds";
+import { Button, Card, TextLink, ListRow } from "@/components/ds";
 import { EditCompanyDialog } from "./EditCompanyDialog";
 import { TargetStar } from "./TargetStar";
 import { companyStatusLabels, companyStatusColor, displayedCompanyStatus, formatCompanyLocations } from "@/lib/companies";
@@ -56,20 +56,9 @@ export function CompanyDetailView({
   return (
     <>
       <div style={{ padding: "20px 32px 40px", overflow: "auto", flex: 1 }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--text-link)",
-            font: "700 13px var(--font-body)",
-            cursor: "pointer",
-            padding: 0,
-            marginBottom: 16,
-          }}
-        >
+        <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 16 }}>
           ← Back to companies
-        </button>
+        </TextLink>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <div
@@ -147,9 +136,9 @@ export function CompanyDetailView({
                 value={
                   company.website ? (
                     isValidUrl(company.website) ? (
-                      <a href={company.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                      <TextLink href={company.website} external>
                         {company.website}
-                      </a>
+                      </TextLink>
                     ) : (
                       company.website
                     )
@@ -172,20 +161,17 @@ export function CompanyDetailView({
               <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No applications yet.</div>
             )}
             {linkedApps.map((a, i) => (
-              <div
+              <ListRow
                 key={a.id}
                 onClick={() => onSelectApp(a)}
-                style={{
-                  padding: "10px 0",
-                  borderBottom: i < linkedApps.length - 1 ? "1px solid var(--border-default)" : "none",
-                  cursor: "pointer",
-                }}
+                padding="10px 8px"
+                divider={i < linkedApps.length - 1}
               >
                 <span style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{a.role}</span>
                 <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
                   {a.dateApplied ? ` — applied ${a.dateApplied}` : " — not yet applied"}
                 </span>
-              </div>
+              </ListRow>
             ))}
           </Card>
 
@@ -197,18 +183,15 @@ export function CompanyDetailView({
               <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>No contacts yet.</div>
             )}
             {linkedContacts.map((c, i) => (
-              <div
+              <ListRow
                 key={c.id}
                 onClick={() => onSelectContact(c)}
-                style={{
-                  padding: "10px 0",
-                  borderBottom: i < linkedContacts.length - 1 ? "1px solid var(--border-default)" : "none",
-                  cursor: "pointer",
-                }}
+                padding="10px 8px"
+                divider={i < linkedContacts.length - 1}
               >
                 <span style={{ font: "700 13px var(--font-body)", color: "var(--text-link)" }}>{c.name}</span>
                 {c.role && <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{` — ${c.role}`}</span>}
-              </div>
+              </ListRow>
             ))}
           </Card>
         </div>

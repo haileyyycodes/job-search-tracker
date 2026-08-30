@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Select, IconButton, Pagination } from "@/components/ds";
+import { Input, Select, RowActionMenu, Pagination, TextLink } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { networkingEventTypes } from "@/lib/data";
 import { companyName } from "@/lib/companies";
@@ -20,6 +20,8 @@ interface NetworkingListViewProps {
 }
 
 const typeOptions: SelectOption[] = [{ value: "", label: "All types" }, ...networkingEventTypes.map((t) => ({ value: t, label: t }))];
+
+const GRID = "36px 1.2fr 150px 130px 1fr 1.4fr";
 
 const PAGE_SIZE = 10;
 
@@ -87,7 +89,7 @@ export function NetworkingListView({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.2fr 150px 130px 1fr 1.4fr 72px",
+          gridTemplateColumns: GRID,
           columnGap: 16,
           padding: "12px 4px",
           font: "var(--text-label)",
@@ -98,79 +100,68 @@ export function NetworkingListView({
           fontSize: 11,
         }}
       >
+        <span />
         <span>Contacts</span>
         <span>Type</span>
         <span>Date</span>
         <span>Application</span>
         <span>Notes</span>
-        <span />
       </div>
       {visibleRows.map((e) => (
         <div
           key={e.id}
           style={{
             display: "grid",
-            gridTemplateColumns: "1.2fr 150px 130px 1fr 1.4fr 72px",
+            gridTemplateColumns: GRID,
             columnGap: 16,
             padding: "14px 4px",
             borderBottom: "1px solid var(--border-default)",
             alignItems: "start",
           }}
         >
+          <RowActionMenu
+            label="Networking event actions"
+            actions={[
+              {
+                label: "Edit event",
+                onSelect: () =>
+                  onEdit({
+                    id: e.id,
+                    contactIds: e.contactIds,
+                    type: e.type,
+                    date: e.date,
+                    applicationId: e.applicationId,
+                    notes: e.notes,
+                  }),
+              },
+              { label: "Delete event", tone: "danger", onSelect: () => onDelete(e.id) },
+            ]}
+          />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {e.contactIds.map((id, i) => {
               const c = contacts.find((contact) => contact.id === id);
               return (
-                <span
+                <TextLink
                   key={id}
+                  disabled={!c}
                   onClick={() => c && onSelectContact(c)}
-                  style={{
-                    font: "700 13px var(--font-body)",
-                    color: c ? "var(--text-link)" : "var(--text-tertiary)",
-                    cursor: c ? "pointer" : "default",
-                  }}
+                  style={{ font: "700 13px var(--font-body)" }}
                 >
                   {e.contactNames[i]}
-                </span>
+                </TextLink>
               );
             })}
           </div>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{e.type}</span>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{e.date}</span>
-          <span
+          <TextLink
+            disabled={!e.app}
             onClick={() => e.app && onSelectApp(e.app)}
-            style={{
-              font: "var(--text-body-s)",
-              color: e.app ? "var(--text-link)" : "var(--text-tertiary)",
-              cursor: e.app ? "pointer" : "default",
-            }}
+            style={{ font: "var(--text-body-s)" }}
           >
             {e.app ? `${companyName(e.app.companyId, companies)} — ${e.app.role}` : "—"}
-          </span>
+          </TextLink>
           <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{e.notes || "—"}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <IconButton
-              aria-label="Edit networking event"
-              icon={<span>✎</span>}
-              size="sm"
-              onClick={() =>
-                onEdit({
-                  id: e.id,
-                  contactIds: e.contactIds,
-                  type: e.type,
-                  date: e.date,
-                  applicationId: e.applicationId,
-                  notes: e.notes,
-                })
-              }
-            />
-            <IconButton
-              aria-label="Delete networking event"
-              icon={<span>✕</span>}
-              size="sm"
-              onClick={() => onDelete(e.id)}
-            />
-          </div>
         </div>
       ))}
       {rows.length === 0 && (

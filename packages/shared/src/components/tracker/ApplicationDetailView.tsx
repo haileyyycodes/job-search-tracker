@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Button, Card, IconButton, StatusTag, statusDotColor } from "@/components/ds";
+import { Button, Card, IconButton, StatusTag, statusDotColor, TextLink } from "@/components/ds";
 import { groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
@@ -109,20 +109,9 @@ export function ApplicationDetailView({
   return (
     <>
     <div style={{ padding: "20px 32px 40px", overflow: "auto", flex: 1 }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: "none",
-          border: "none",
-          color: "var(--text-link)",
-          font: "700 13px var(--font-body)",
-          cursor: "pointer",
-          padding: 0,
-          marginBottom: 16,
-        }}
-      >
+      <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 16 }}>
         ← Back to applications
-      </button>
+      </TextLink>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
           <div
@@ -143,21 +132,15 @@ export function ApplicationDetailView({
           </div>
           <div>
             <h1 style={{ font: "var(--text-heading-l)", margin: 0, color: "var(--text-primary)" }}>{app.role}</h1>
-            <div
+            <TextLink
               onClick={() => {
                 const company = companies.find((c) => c.id === app.companyId);
                 if (company) onSelectCompany(company);
               }}
-              style={{
-                font: "var(--text-body-m)",
-                color: "var(--text-link)",
-                marginTop: 2,
-                cursor: "pointer",
-                width: "fit-content",
-              }}
+              style={{ font: "var(--text-body-m)", marginTop: 2, display: "inline-block", width: "fit-content" }}
             >
               {companyName(app.companyId, companies)}
-            </div>
+            </TextLink>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -214,9 +197,9 @@ export function ApplicationDetailView({
                 value={
                   app.link ? (
                     isValidUrl(app.link) ? (
-                      <a href={app.link} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-link)" }}>
+                      <TextLink href={app.link} external>
                         View posting
-                      </a>
+                      </TextLink>
                     ) : (
                       app.link
                     )
@@ -234,12 +217,7 @@ export function ApplicationDetailView({
                       return referrer ? (
                         <>
                           Yes —{" "}
-                          <span
-                            onClick={() => onSelectContact(referrer)}
-                            style={{ color: "var(--text-link)", cursor: "pointer" }}
-                          >
-                            {referrer.name}
-                          </span>
+                          <TextLink onClick={() => onSelectContact(referrer)}>{referrer.name}</TextLink>
                         </>
                       ) : (
                         "Yes — Unknown contact"
@@ -430,16 +408,13 @@ export function ApplicationDetailView({
                   style={{ padding: "10px 0", borderBottom: i < app.followUps.length - 1 ? "1px solid var(--border-default)" : "none" }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span
+                    <TextLink
+                      disabled={!c}
                       onClick={() => c && onSelectContact(c)}
-                      style={{
-                        font: "700 13px var(--font-body)",
-                        color: c ? "var(--text-link)" : "var(--text-primary)",
-                        cursor: c ? "pointer" : "default",
-                      }}
+                      style={{ font: "700 13px var(--font-body)" }}
                     >
                       {c?.name ?? "Unknown contact"}
-                    </span>
+                    </TextLink>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{f.date}</span>
                       {f.id && (

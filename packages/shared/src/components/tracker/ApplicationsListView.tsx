@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { Input, Select, StatusTag, IconButton, Card, Pagination } from "@/components/ds";
+import { Input, Select, StatusTag, RowActionMenu, Card, Pagination, TextLink, ListRow } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
@@ -41,8 +41,12 @@ const referralOptions: SelectOption[] = [
   { value: "no", label: "Not referred" },
 ];
 
-const GRID_COLUMNS = "minmax(220px,1fr) 150px 100px 110px 150px 160px 90px 130px 40px";
-const GRID_MIN_WIDTH = 1300;
+const GRID_COLUMNS = "36px minmax(220px,1fr) 150px 100px 110px 150px 160px 90px 130px";
+const GRID_MIN_WIDTH = 1340;
+
+/** Trimmed column set for the grouped "Needs action" list. */
+const NA_GRID_COLUMNS = "36px minmax(200px,1fr) 130px 150px 140px minmax(150px,1fr)";
+const NA_GRID_MIN_WIDTH = 920;
 
 const PAGE_SIZE = 10;
 
@@ -91,12 +95,6 @@ const sectionSubStyle = {
   font: "var(--text-body-s)",
   color: "var(--text-tertiary)",
   margin: "0 0 12px",
-} as const;
-
-const cardGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-  gap: 16,
 } as const;
 
 interface ApplicationsListViewProps {
@@ -280,6 +278,7 @@ export function ApplicationsListView({
                 borderBottom: "1px solid var(--border-default)",
               }}
             >
+              <span />
               <span>Role</span>
               <span>Status</span>
               <span>Applied</span>
@@ -288,63 +287,20 @@ export function ApplicationsListView({
               <span>Salary</span>
               <span>Referral</span>
               <span>Resume</span>
-              <span />
             </div>
 
             {visibleApps.map((e) => (
-              <div
+              <ListRow
                 key={e.app.id}
+                columns={GRID_COLUMNS}
                 onClick={() => onSelect(e.app)}
-                style={{
-                  minWidth: GRID_MIN_WIDTH,
-                  display: "grid",
-                  gridTemplateColumns: GRID_COLUMNS,
-                  columnGap: 16,
-                  alignItems: "center",
-                  padding: "14px 4px",
-                  borderBottom: "1px solid var(--border-default)",
-                  cursor: "pointer",
-                }}
+                style={{ minWidth: GRID_MIN_WIDTH }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "var(--radius-s)",
-                      background: "var(--blue-100)",
-                      color: "var(--blue-700)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      font: "700 14px var(--font-display)",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {e.app.logo}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ font: "700 14px var(--font-body)", color: "var(--text-primary)" }}>{e.app.role}</div>
-                    <div
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openCompany(e.app.companyId);
-                      }}
-                      style={{
-                        font: "var(--text-body-s)",
-                        color: "var(--text-link)",
-                        cursor: "pointer",
-                        width: "fit-content",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                      }}
-                    >
-                      {e.company}
-                      {e.isTarget && <TargetStar isTarget size={12} />}
-                    </div>
-                  </div>
-                </div>
+                <RowActionMenu
+                  label="Application actions"
+                  actions={[{ label: "Delete application", tone: "danger", onSelect: () => onRequestDelete(e.app) }]}
+                />
+                <RoleCell e={e} openCompany={openCompany} />
                 {e.isSaved ? <SavedTag /> : <StatusTag status={e.app.status} />}
                 <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{e.dateAppliedLabel}</span>
                 <span style={{ font: "var(--text-body-s)", color: e.staleColor }}>{e.lastActivityLabel}</span>
@@ -354,15 +310,7 @@ export function ApplicationsListView({
                 </span>
                 <span style={{ font: "var(--text-body-s)", color: e.referralColor }}>{e.referralLabel}</span>
                 <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{e.resumeLabel}</span>
-                <IconButton
-                  aria-label="Delete application"
-                  icon={<span>✕</span>}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRequestDelete(e.app);
-                  }}
-                />
-              </div>
+              </ListRow>
             ))}
 
             {filtered.length === 0 && (
@@ -377,68 +325,52 @@ export function ApplicationsListView({
       )}
 
       {viewMode === "list" && tab === "needs_action" && (
-        <div style={{ padding: "24px 0", display: "flex", flexDirection: "column", gap: 32 }}>
-          <section>
-            <h2 style={sectionHeadingStyle}>Ready to apply</h2>
-            <p style={sectionSubStyle}>Saved roles you haven&rsquo;t applied to yet.</p>
-            {savedApps.length === 0 ? (
-              <EmptyLine>Nothing saved right now.</EmptyLine>
-            ) : (
-              <div style={cardGridStyle}>
-                {savedApps.map((e) => (
-                  <Card key={e.app.id} hover onClick={() => onSelect(e.app)}>
-                    <NeedsActionCardBody e={e} footer={<span style={{ color: "var(--text-tertiary)" }}>Saved {e.lastActivityLabel}</span>} />
-                  </Card>
-                ))}
-              </div>
+        <div style={{ padding: "24px 0", display: "flex", flexDirection: "column", gap: 36 }}>
+          <NeedsActionGroup
+            heading="Ready to apply"
+            sub="Saved roles you haven’t applied to yet."
+            signalHeading="Saved"
+            rows={savedApps}
+            emptyText="Nothing saved right now."
+            onSelect={onSelect}
+            onRequestDelete={onRequestDelete}
+            openCompany={openCompany}
+            renderSignal={(e) => (
+              <span style={{ color: "var(--text-tertiary)" }}>{e.lastActivityLabel}</span>
             )}
-          </section>
+          />
 
-          <section>
-            <h2 style={sectionHeadingStyle}>Awaiting your response</h2>
-            <p style={sectionSubStyle}>Offers on the table — don&rsquo;t leave these too long.</p>
-            {offerApps.length === 0 ? (
-              <EmptyLine>No open offers right now.</EmptyLine>
-            ) : (
-              <div style={cardGridStyle}>
-                {offerApps.map((e) => (
-                  <Card key={e.app.id} hover onClick={() => onSelect(e.app)}>
-                    <NeedsActionCardBody
-                      e={e}
-                      footer={
-                        <span style={{ color: "var(--green-700)", fontWeight: 700 }}>
-                          Offer received {e.lastActivityLabel}
-                        </span>
-                      }
-                    />
-                  </Card>
-                ))}
-              </div>
+          <NeedsActionGroup
+            heading="Awaiting your response"
+            sub="Offers on the table — don’t leave these too long."
+            signalHeading="Offer"
+            rows={offerApps}
+            emptyText="No open offers right now."
+            onSelect={onSelect}
+            onRequestDelete={onRequestDelete}
+            openCompany={openCompany}
+            renderSignal={(e) => (
+              <span style={{ color: "var(--green-700)", fontWeight: 700 }}>
+                Received {e.lastActivityLabel}
+              </span>
             )}
-          </section>
+          />
 
-          <section>
-            <h2 style={sectionHeadingStyle}>Needs a follow-up</h2>
-            <p style={sectionSubStyle}>Applied, but no reply in a while — worth a nudge.</p>
-            {staleApps.length === 0 ? (
-              <EmptyLine>No stale applications — nice work.</EmptyLine>
-            ) : (
-              <div style={cardGridStyle}>
-                {staleApps.map((e) => (
-                  <Card key={e.app.id} hover onClick={() => onSelect(e.app)}>
-                    <NeedsActionCardBody
-                      e={e}
-                      footer={
-                        <span style={{ color: e.staleColor, fontWeight: 700 }}>
-                          {e.daysSinceActivity === 1 ? "1 day" : `${e.daysSinceActivity} days`} since last activity
-                        </span>
-                      }
-                    />
-                  </Card>
-                ))}
-              </div>
+          <NeedsActionGroup
+            heading="Needs a follow-up"
+            sub="Applied, but no reply in a while — worth a nudge."
+            signalHeading="Last activity"
+            rows={staleApps}
+            emptyText="No stale applications — nice work."
+            onSelect={onSelect}
+            onRequestDelete={onRequestDelete}
+            openCompany={openCompany}
+            renderSignal={(e) => (
+              <span style={{ color: e.staleColor, fontWeight: 700 }}>
+                {e.daysSinceActivity === 1 ? "1 day ago" : `${e.daysSinceActivity} days ago`}
+              </span>
             )}
-          </section>
+          />
         </div>
       )}
 
@@ -480,17 +412,31 @@ export function ApplicationsListView({
 }
 
 function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
       style={{
         background: "none",
         border: "none",
-        borderBottom: `2px solid ${active ? "var(--accent-primary)" : "transparent"}`,
+        borderBottom: `2px solid ${
+          active ? "var(--accent-primary)" : hover || pressed ? "var(--border-strong)" : "transparent"
+        }`,
         padding: "10px 2px",
         font: "700 13px var(--font-body)",
-        color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+        color: active || pressed ? "var(--text-primary)" : hover ? "var(--text-secondary)" : "var(--text-tertiary)",
         cursor: "pointer",
+        transition:
+          "color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard)",
       }}
     >
       {children}
@@ -509,9 +455,27 @@ function ViewModeButton({
   active: boolean;
   onClick: () => void;
 }) {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  const background = active
+    ? "var(--bg-surface)"
+    : pressed
+      ? "var(--ink-200)"
+      : hover
+        ? "var(--bg-surface-hover)"
+        : "transparent";
+
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
       aria-label={label}
       aria-pressed={active}
       style={{
@@ -524,8 +488,9 @@ function ViewModeButton({
         borderRadius: 8,
         cursor: "pointer",
         fontSize: 15,
-        background: active ? "var(--bg-surface)" : "transparent",
-        color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+        background,
+        color: active || hover || pressed ? "var(--text-primary)" : "var(--text-tertiary)",
+        transition: "background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard)",
       }}
     >
       {glyph}
@@ -559,17 +524,123 @@ function EmptyLine({ children }: { children: ReactNode }) {
   return <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{children}</div>;
 }
 
-function NeedsActionCardBody({ e, footer }: { e: EnrichedApp; footer: ReactNode }) {
+/** Logo tile + role name + company link — shared by the "All" list and the grouped "Needs action" list. */
+function RoleCell({ e, openCompany }: { e: EnrichedApp; openCompany: (companyId: number) => void }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div>
-        <div style={{ font: "700 15px var(--font-body)", color: "var(--text-primary)" }}>{e.app.role}</div>
-        <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{e.company}</div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: "var(--radius-s)",
+          background: "var(--blue-100)",
+          color: "var(--blue-700)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          font: "700 14px var(--font-display)",
+          flexShrink: 0,
+        }}
+      >
+        {e.app.logo}
       </div>
-      <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
-        {e.location} · {e.salaryLabel}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ font: "700 14px var(--font-body)", color: "var(--text-primary)" }}>{e.app.role}</div>
+        <TextLink
+          stopPropagation
+          onClick={() => openCompany(e.app.companyId)}
+          style={{
+            font: "var(--text-body-s)",
+            width: "fit-content",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+          }}
+        >
+          {e.company}
+          {e.isTarget && <TargetStar isTarget size={12} />}
+        </TextLink>
       </div>
-      <div style={{ font: "var(--text-caption)" }}>{footer}</div>
     </div>
+  );
+}
+
+interface NeedsActionGroupProps {
+  heading: string;
+  sub: string;
+  /** Column header for the group-specific right-hand signal column. */
+  signalHeading: string;
+  rows: EnrichedApp[];
+  emptyText: string;
+  onSelect: (app: Application) => void;
+  onRequestDelete: (app: Application) => void;
+  openCompany: (companyId: number) => void;
+  renderSignal: (e: EnrichedApp) => ReactNode;
+}
+
+function NeedsActionGroup({
+  heading,
+  sub,
+  signalHeading,
+  rows,
+  emptyText,
+  onSelect,
+  onRequestDelete,
+  openCompany,
+  renderSignal,
+}: NeedsActionGroupProps) {
+  return (
+    <section>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        <h2 style={sectionHeadingStyle}>{heading}</h2>
+        <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{rows.length}</span>
+      </div>
+      <p style={sectionSubStyle}>{sub}</p>
+      {rows.length === 0 ? (
+        <EmptyLine>{emptyText}</EmptyLine>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <div
+            style={{
+              minWidth: NA_GRID_MIN_WIDTH,
+              display: "grid",
+              gridTemplateColumns: NA_GRID_COLUMNS,
+              columnGap: 16,
+              padding: "10px 4px",
+              ...eyebrowStyle,
+              borderBottom: "1px solid var(--border-default)",
+            }}
+          >
+            <span />
+            <span>Role</span>
+            <span>Status</span>
+            <span>Location</span>
+            <span>Salary</span>
+            <span>{signalHeading}</span>
+          </div>
+
+          {rows.map((e) => (
+            <ListRow
+              key={e.app.id}
+              columns={NA_GRID_COLUMNS}
+              onClick={() => onSelect(e.app)}
+              style={{ minWidth: NA_GRID_MIN_WIDTH }}
+            >
+              <RowActionMenu
+                label="Application actions"
+                actions={[{ label: "Delete application", tone: "danger", onSelect: () => onRequestDelete(e.app) }]}
+              />
+              <RoleCell e={e} openCompany={openCompany} />
+              {e.isSaved ? <SavedTag /> : <StatusTag status={e.app.status} />}
+              <span style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>{e.location}</span>
+              <span style={{ font: "var(--text-mono-s)", color: e.salaryColor, whiteSpace: "nowrap" }}>
+                {e.salaryLabel}
+              </span>
+              <span style={{ font: "var(--text-body-s)" }}>{renderSignal(e)}</span>
+            </ListRow>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
+import { MenuItem } from "./MenuItem";
 
 interface MultiSelectProps {
   label?: string;
@@ -126,36 +127,24 @@ export function MultiSelect({ label, values, options, onChange, onCreateOption, 
       </div>
       <DropdownSurface open={open} anchorRef={anchorRef} maxHeight={220}>
             {matches.map((o) => (
-              <div
+              <MenuItem
                 key={o}
+                selected={values.includes(o)}
                 onClick={() => toggle(o)}
-                style={{
-                  padding: "8px 12px",
-                  font: "var(--text-body-m)",
-                  background: values.includes(o) ? "var(--blue-100)" : "transparent",
-                  color: "var(--text-primary)",
-                  cursor: "pointer",
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
+                style={{ display: "flex", justifyContent: "space-between" }}
               >
                 <span>{o}</span>
                 {values.includes(o) && <span>✓</span>}
-              </div>
+              </MenuItem>
             ))}
             {normalizedQuery && !exactMatch && (
-              <div
+              <MenuItem
+                tone="accent"
                 onClick={create}
-                style={{
-                  padding: "8px 12px",
-                  font: "var(--text-body-m)",
-                  color: "var(--text-link)",
-                  cursor: "pointer",
-                  borderTop: matches.length > 0 ? "1px solid var(--border-default)" : "none",
-                }}
+                style={{ borderTop: matches.length > 0 ? "1px solid var(--border-default)" : "none" }}
               >
                 Create &ldquo;{normalizedQuery}&rdquo;
-              </div>
+              </MenuItem>
             )}
             {matches.length === 0 && !normalizedQuery && (
               <div style={{ padding: "8px 12px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
