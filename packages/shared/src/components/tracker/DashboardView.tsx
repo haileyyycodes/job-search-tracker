@@ -286,9 +286,28 @@ interface VelocityChartProps {
   buckets: { weekStart: Date; label: string; count: number }[];
 }
 
+/** A round y-axis ceiling that sits just above the data, so bars never touch the top and their value labels have headroom. */
+function velocityAxisMax(dataMax: number): number {
+  if (dataMax <= 1) return 2;
+  if (dataMax <= 4) return dataMax + 1;
+  if (dataMax <= 10) return Math.ceil((dataMax + 1) / 2) * 2;
+  return Math.ceil((dataMax + 1) / 5) * 5;
+}
+
+/** Evenly spaced whole-number gridline values from 0 to axisMax. */
+function velocityTicks(axisMax: number): number[] {
+  const step = axisMax <= 5 ? 1 : axisMax <= 10 ? 2 : 5;
+  const ticks: number[] = [];
+  for (let v = 0; v <= axisMax; v += step) ticks.push(v);
+  return ticks;
+}
+
 function VelocityChart({ buckets }: VelocityChartProps) {
   const chartHeight = 148;
-  const maxCount = Math.max(1, ...buckets.map((b) => b.count));
+  const axisWidth = 22;
+  const dataMax = Math.max(0, ...buckets.map((b) => b.count));
+  const axisMax = velocityAxisMax(dataMax);
+  const ticks = velocityTicks(axisMax);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -298,35 +317,60 @@ function VelocityChart({ buckets }: VelocityChartProps) {
       </div>
       <div style={{ flex: 1, display: "grid" }}>
         <Card padding="md">
-          <div style={{ position: "relative", height: chartHeight }}>
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div style={{ height: 1, background: "var(--border-default)" }} />
-              <div style={{ height: 1, background: "var(--ink-100)" }} />
-              <div style={{ height: 1, background: "var(--ink-100)" }} />
-              <div style={{ height: 1, background: "var(--border-default)" }} />
+          <div style={{ display: "flex" }}>
+            {/* y axis — one number per gridline, so bar heights read against real application counts */}
+            <div style={{ position: "relative", width: axisWidth, height: chartHeight, flexShrink: 0 }}>
+              {ticks.map((t) => (
+                <span
+                  key={t}
+                  style={{
+                    position: "absolute",
+                    right: 6,
+                    bottom: `${(t / axisMax) * 100}%`,
+                    transform: "translateY(50%)",
+                    font: "11px var(--font-mono)",
+                    color: "var(--text-tertiary)",
+                    lineHeight: 1,
+                  }}
+                >
+                  {t}
+                </span>
+              ))}
             </div>
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
-              {buckets.map((b, i) => {
-                const pct = Math.max((b.count / maxCount) * 100, b.count > 0 ? 4 : 0);
-                return (
-                  <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, height: "100%", justifyContent: "flex-end" }}>
-                    {b.count > 0 && <span style={{ font: "13px var(--font-mono)", color: "var(--blue-700)" }}>{b.count}</span>}
+            <div style={{ position: "relative", height: chartHeight, flex: 1 }}>
+              {ticks.map((t) => (
+                <div
+                  key={t}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: `${(t / axisMax) * 100}%`,
+                    height: 1,
+                    background: t === 0 ? "var(--border-default)" : "var(--ink-100)",
+                  }}
+                />
+              ))}
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
+                {buckets.map((b, i) => (
+                  <div key={i} style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
                     <div
                       style={{
                         width: "100%",
                         maxWidth: 38,
-                        height: `${pct}%`,
+                        alignSelf: "flex-end",
+                        height: `${(b.count / axisMax) * 100}%`,
                         minHeight: b.count > 0 ? 3 : 1,
                         background: b.count > 0 ? "var(--blue-500)" : "var(--ink-100)",
                         borderRadius: "8px 8px 3px 3px",
                       }}
                     />
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
             {buckets.map((b, i) => (
               <div
                 key={i}
