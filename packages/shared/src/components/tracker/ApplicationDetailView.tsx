@@ -23,6 +23,7 @@ import type {
   FollowUp,
   Goals,
   Interview,
+  NetworkingEvent,
 } from "@/lib/types";
 
 const rejectionStatuses: ApplicationStatus[] = ["rejected_no_interview", "rejected_after_interview"];
@@ -50,6 +51,7 @@ interface ApplicationDetailViewProps {
   app: Application | null;
   contacts: Contact[];
   companies: Company[];
+  networkingEvents: NetworkingEvent[];
   goals: Goals;
   interviewCategories: string[];
   onCreateInterviewCategory: (category: string) => void;
@@ -67,12 +69,16 @@ interface ApplicationDetailViewProps {
   onDeleteInterview: (appId: number, interviewId: number) => void;
   onDeleteFollowUp: (appId: number, followUpId: number) => void;
   onSaveFeedback: (appId: number, feedback: Feedback) => void;
+  onLogNetworkingEvent: () => void;
+  onEditNetworkingEvent: (event: NetworkingEvent) => void;
+  onDeleteNetworkingEvent: (id: number) => void;
 }
 
 export function ApplicationDetailView({
   app,
   contacts,
   companies,
+  networkingEvents,
   goals,
   interviewCategories,
   onCreateInterviewCategory,
@@ -90,6 +96,9 @@ export function ApplicationDetailView({
   onDeleteInterview,
   onDeleteFollowUp,
   onSaveFeedback,
+  onLogNetworkingEvent,
+  onEditNetworkingEvent,
+  onDeleteNetworkingEvent,
 }: ApplicationDetailViewProps) {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
@@ -105,6 +114,10 @@ export function ApplicationDetailView({
     ghostableStatuses.includes(app.status) &&
     daysSinceActivity !== null &&
     daysSinceActivity >= GHOST_SUGGESTION_DAYS;
+
+  const linkedNetworkingEvents = networkingEvents
+    .filter((e) => e.applicationId === app.id)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <>
@@ -483,6 +496,72 @@ export function ApplicationDetailView({
               </div>
             ))}
           </div>
+        </Card>
+        <Card padding="md">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>
+              Networking{linkedNetworkingEvents.length > 0 ? ` (${linkedNetworkingEvents.length})` : ""}
+            </div>
+            <Button variant="ghost" size="sm" onClick={onLogNetworkingEvent}>
+              + Log event
+            </Button>
+          </div>
+          {linkedNetworkingEvents.length === 0 ? (
+            <div style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
+              No networking activity linked to this application yet.
+            </div>
+          ) : (
+            linkedNetworkingEvents.map((e, i) => (
+              <div
+                key={e.id}
+                style={{
+                  padding: "10px 0",
+                  borderBottom: i < linkedNetworkingEvents.length - 1 ? "1px solid var(--border-default)" : "none",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>{e.type}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{e.date}</span>
+                    <IconButton
+                      aria-label="Edit networking event"
+                      icon={<span>✎</span>}
+                      size="sm"
+                      onClick={() => onEditNetworkingEvent(e)}
+                    />
+                    <IconButton
+                      aria-label="Delete networking event"
+                      icon={<span>✕</span>}
+                      size="sm"
+                      onClick={() => onDeleteNetworkingEvent(e.id)}
+                    />
+                  </div>
+                </div>
+                {e.contactIds.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", columnGap: 8, rowGap: 2, marginTop: 4 }}>
+                    {e.contactIds.map((id, ci) => {
+                      const c = contacts.find((contact) => contact.id === id);
+                      return (
+                        <span key={id} style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
+                          <TextLink
+                            disabled={!c}
+                            onClick={() => c && onSelectContact(c)}
+                            style={{ font: "700 13px var(--font-body)" }}
+                          >
+                            {c?.name ?? "Unknown contact"}
+                          </TextLink>
+                          {ci < e.contactIds.length - 1 ? "," : ""}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                {e.notes && (
+                  <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{e.notes}</div>
+                )}
+              </div>
+            ))
+          )}
         </Card>
       </div>
       </div>

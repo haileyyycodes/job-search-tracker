@@ -17,6 +17,7 @@ interface LogNetworkingEventDialogProps {
   apps: Application[];
   companies: Company[];
   initialContactId?: string;
+  initialApplicationId?: string;
   /** When present, the dialog edits this event instead of logging a new one. */
   event?: NetworkingEvent;
   onClose: () => void;
@@ -30,6 +31,7 @@ export function LogNetworkingEventDialog({
   apps,
   companies,
   initialContactId,
+  initialApplicationId,
   event,
   onClose,
   onCreateContact,
@@ -40,7 +42,9 @@ export function LogNetworkingEventDialog({
   );
   const [type, setType] = useState(event?.type ?? typeOptions[0].value);
   const [dateInput, setDateInput] = useState(event ? toDateInputValue(event.date) : "");
-  const [applicationId, setApplicationId] = useState(event?.applicationId != null ? String(event.applicationId) : "");
+  const [applicationId, setApplicationId] = useState(
+    event?.applicationId != null ? String(event.applicationId) : (initialApplicationId ?? "")
+  );
   const [notes, setNotes] = useState(event?.notes ?? "");
   const [submitted, setSubmitted] = useState(false);
 
