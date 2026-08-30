@@ -17,7 +17,7 @@ export default function DashboardPage() {
           + Log application
         </Button>
       </TopBar>
-      <DashboardView apps={data.apps} networkingEvents={data.networkingEvents} />
+      <DashboardView apps={data.apps} companies={data.companies} networkingEvents={data.networkingEvents} />
     </>
   );
 }

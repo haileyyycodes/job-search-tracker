@@ -56,38 +56,62 @@ export interface WeekBucket {
   count: number;
 }
 
+export interface WeekItemBucket<T> {
+  weekStart: Date;
+  label: string;
+  items: T[];
+}
+
 /**
- * Buckets "Jul 15, 2026"-formatted dates into the last `weeks` Monday-Sunday calendar weeks
- * (oldest first, ending with the current week), including weeks with zero matches so a trend
- * chart has a continuous x-axis.
+ * Buckets `items` into the last `weeks` Monday-Sunday calendar weeks (oldest first, ending with
+ * the current week) by the "Jul 15, 2026"-formatted date returned from `getDate`. Weeks with no
+ * matches are still included so a trend chart has a continuous x-axis.
  */
-export function bucketByCalendarWeek(dates: string[], weeks: number): WeekBucket[] {
+export function bucketItemsByCalendarWeek<T>(
+  items: T[],
+  getDate: (item: T) => string,
+  weeks: number
+): WeekItemBucket<T>[] {
   const currentWeekStart = startOfCalendarWeek(new Date());
-  const buckets: WeekBucket[] = [];
+  const buckets: WeekItemBucket<T>[] = [];
   for (let i = weeks - 1; i >= 0; i--) {
     const weekStart = new Date(currentWeekStart);
     weekStart.setDate(weekStart.getDate() - i * 7);
     buckets.push({
       weekStart,
       label: weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      count: 0,
+      items: [],
     });
   }
 
-  for (const raw of dates) {
+  for (const item of items) {
+    const raw = getDate(item);
     if (!raw) continue;
     const time = new Date(raw).getTime();
     for (const bucket of buckets) {
       const weekEnd = new Date(bucket.weekStart);
       weekEnd.setDate(weekEnd.getDate() + 7);
       if (time >= bucket.weekStart.getTime() && time < weekEnd.getTime()) {
-        bucket.count++;
+        bucket.items.push(item);
         break;
       }
     }
   }
 
   return buckets;
+}
+
+/**
+ * Buckets "Jul 15, 2026"-formatted dates into the last `weeks` Monday-Sunday calendar weeks
+ * (oldest first, ending with the current week), including weeks with zero matches so a trend
+ * chart has a continuous x-axis.
+ */
+export function bucketByCalendarWeek(dates: string[], weeks: number): WeekBucket[] {
+  return bucketItemsByCalendarWeek(dates, (d) => d, weeks).map(({ weekStart, label, items }) => ({
+    weekStart,
+    label,
+    count: items.length,
+  }));
 }
 
 /** True if a "Jul 15, 2026"-formatted date falls in the same Monday-Sunday week as today. */
