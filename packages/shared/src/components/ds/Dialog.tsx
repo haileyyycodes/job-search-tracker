@@ -6,9 +6,11 @@ interface DialogProps {
   children: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
+  /** Content width in px. Defaults to the standard 480; pass a larger value for wide content like charts. */
+  width?: number;
 }
 
-export function Dialog({ open, title, children, onClose, footer }: DialogProps) {
+export function Dialog({ open, title, children, onClose, footer, width = 480 }: DialogProps) {
   if (!open) return null;
 
   const stop = (e: MouseEvent) => e.stopPropagation();
@@ -29,7 +31,7 @@ export function Dialog({ open, title, children, onClose, footer }: DialogProps) 
       <div
         onClick={stop}
         style={{
-          width: 480,
+          width,
           maxWidth: "90vw",
           background: "var(--bg-surface)",
           borderRadius: "var(--radius-l)",
