@@ -2,14 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addDays,
   bucketByCalendarWeek,
+  bucketItemsByPeriod,
   daysBetween,
   daysUntil,
   formatDateInput,
   isInCurrentCalendarMonth,
   isInCurrentCalendarWeek,
   isWithinDateRange,
+  startOfCalendarMonth,
   startOfCalendarWeek,
   todayFormatted,
+  toDateInputString,
   toDateInputValue,
 } from "./date";
 
@@ -196,5 +199,45 @@ describe("bucketByCalendarWeek", () => {
   it("ignores dates outside the requested window and empty strings", () => {
     const buckets = bucketByCalendarWeek(["", "Jan 1, 2020"], 2);
     expect(buckets.reduce((sum, b) => sum + b.count, 0)).toBe(0);
+  });
+});
+
+describe("startOfCalendarMonth", () => {
+  it("returns the 1st of the month at midnight", () => {
+    expect(startOfCalendarMonth(new Date(2026, 6, 15, 9, 30))).toEqual(new Date(2026, 6, 1));
+  });
+});
+
+describe("toDateInputString", () => {
+  it("formats a Date as YYYY-MM-DD, zero-padded", () => {
+    expect(toDateInputString(new Date(2026, 0, 5))).toBe("2026-01-05");
+    expect(toDateInputString(new Date(2026, 10, 30))).toBe("2026-11-30");
+  });
+});
+
+describe("bucketItemsByPeriod", () => {
+  const item = (dateApplied: string) => ({ dateApplied });
+  const get = (i: { dateApplied: string }) => i.dateApplied;
+
+  it("makes one weekly bucket per Monday-Sunday week across the range, oldest first", () => {
+    const buckets = bucketItemsByPeriod([], get, new Date(2026, 6, 1), new Date(2026, 6, 20), "week");
+    expect(buckets.map((b) => b.label)).toEqual(["Jun 29", "Jul 6", "Jul 13", "Jul 20"]);
+    expect(buckets.every((b) => b.items.length === 0)).toBe(true);
+  });
+
+  it("makes one monthly bucket per calendar month across the range", () => {
+    const buckets = bucketItemsByPeriod([], get, new Date(2026, 0, 15), new Date(2026, 3, 2), "month");
+    expect(buckets.map((b) => b.label)).toEqual(["Jan", "Feb", "Mar", "Apr"]);
+  });
+
+  it("labels months with a 2-digit year when the range crosses a year boundary", () => {
+    const buckets = bucketItemsByPeriod([], get, new Date(2025, 10, 1), new Date(2026, 0, 10), "month");
+    expect(buckets.map((b) => b.label)).toEqual(["Nov '25", "Dec '25", "Jan '26"]);
+  });
+
+  it("drops items into the period that contains them and ignores out-of-range/empty dates", () => {
+    const items = [item("Jul 2, 2026"), item("Jul 9, 2026"), item("Jul 10, 2026"), item(""), item("Jan 1, 2020")];
+    const buckets = bucketItemsByPeriod(items, get, new Date(2026, 5, 29), new Date(2026, 6, 13), "week");
+    expect(buckets.map((b) => b.items.length)).toEqual([1, 2, 0]);
   });
 });
