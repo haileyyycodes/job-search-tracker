@@ -57,6 +57,7 @@ export function ContactFormFields({ form, setForm, submitted, companies, onCreat
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}>
       <Input
         label="Name"
+        required
         placeholder="e.g. Alex Chen"
         value={form.name}
         onChange={(v) => setForm((f) => ({ ...f, name: v }))}

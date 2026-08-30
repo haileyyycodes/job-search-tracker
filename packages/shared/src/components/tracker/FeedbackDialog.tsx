@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Input, Button } from "@/components/ds";
+import { Dialog, Input, Button, FieldLabel } from "@/components/ds";
 import { formatDateInput, todayFormatted, toDateInputValue } from "@/lib/date";
 import type { Feedback } from "@/lib/types";
 
@@ -43,9 +43,9 @@ export function FeedbackDialog({ feedback, onClose, onSave }: FeedbackDialogProp
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div>
-          <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
+          <FieldLabel required block>
             Feedback
-          </label>
+          </FieldLabel>
           <textarea
             placeholder="What did they say?"
             rows={4}

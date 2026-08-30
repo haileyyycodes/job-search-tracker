@@ -42,6 +42,7 @@ export function AddInterviewPrepQuestionDialog({ categorySlug, onClose, onSave }
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <Input
           label="Question"
+          required
           placeholder="e.g. Tell me about a time…"
           value={question}
           onChange={setQuestion}
