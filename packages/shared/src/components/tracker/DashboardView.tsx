@@ -1,5 +1,5 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Card, Dialog, IconButton, Input, statusDotColor } from "@/components/ds";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { Card, IconButton, Input, StatusTag } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import {
   bucketItemsByCalendarWeek,
@@ -572,8 +572,8 @@ interface VelocityExpandedModalProps {
 }
 
 function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplication, onClose }: VelocityExpandedModalProps) {
-  const chartHeight = 300;
-  const axisWidth = 26;
+  const chartHeight = 440;
+  const axisWidth = 30;
 
   const appliedApps = useMemo(() => apps.filter((a) => a.dateApplied), [apps]);
   const today = useMemo(() => {
@@ -597,6 +597,7 @@ function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplicat
   const [preset, setPreset] = useState<RangePreset>("6m");
   const [customFrom, setCustomFrom] = useState<string | null>(null);
   const [customTo, setCustomTo] = useState<string | null>(null);
+  const [selectedStart, setSelectedStart] = useState<number | null>(null);
   const isCustom = customFrom != null || customTo != null;
 
   const presetFrom = useMemo(() => {
@@ -619,6 +620,18 @@ function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplicat
     () => bucketItemsByPeriod(appliedApps, (a) => a.dateApplied, from, to, unit),
     [appliedApps, from, to, unit]
   );
+  // A selection whose bar falls outside a newly-chosen range simply resolves to null here,
+  // which shows the sidebar's empty state — no need to clear the stored start.
+  const selectedBucket =
+    selectedStart != null ? (buckets.find((b) => b.start.getTime() === selectedStart) ?? null) : null;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   // The goal is per-week; when bars are monthly, scale it up so the line still means something.
   const targetPerBucket =
@@ -638,205 +651,290 @@ function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplicat
   };
 
   return (
-    <Dialog open title="Application velocity" onClose={onClose} width={860}>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16, marginBottom: 18 }}>
-        <div
-          style={{
-            display: "inline-flex",
-            gap: 2,
-            padding: 3,
-            background: "var(--bg-surface-sunken)",
-            borderRadius: "var(--radius-s)",
-          }}
-        >
-          {(Object.keys(PRESET_LABELS) as RangePreset[]).map((p) => (
-            <RangePresetButton key={p} active={!isCustom && preset === p} onClick={() => applyPreset(p)}>
-              {PRESET_LABELS[p]}
-            </RangePresetButton>
-          ))}
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-          <div style={{ width: 150 }}>
-            <Input
-              type="date"
-              size="sm"
-              label="From"
-              value={toDateInputString(from)}
-              onChange={(v) => setCustomFrom(v || null)}
-            />
-          </div>
-          <div style={{ width: 150 }}>
-            <Input
-              type="date"
-              size="sm"
-              label="To"
-              value={toDateInputString(to)}
-              onChange={(v) => setCustomTo(v || null)}
-            />
-          </div>
-        </div>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        background: "var(--bg-surface)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 14px 14px 24px",
+          borderBottom: "1px solid var(--border-default)",
+          flexShrink: 0,
+        }}
+      >
+        <h3 style={{ font: "var(--text-heading-m)", margin: 0, color: "var(--text-primary)" }}>Application velocity</h3>
+        <IconButton
+          icon={<span style={{ fontSize: 15, lineHeight: 1 }}>✕</span>}
+          aria-label="Close expanded chart"
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+        />
       </div>
 
-      {buckets.length === 0 ? (
-        <div style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", padding: "48px 0" }}>
-          No applications in this range.
-        </div>
-      ) : (
-        <>
-          <VelocityPlot
-            ticks={ticks}
-            axisMax={axisMax}
-            chartHeight={chartHeight}
-            axisWidth={axisWidth}
-            target={targetPerBucket}
-            targetLabel={targetPerBucket != null ? `Target ${targetPerBucket}/${unit === "month" ? "mo" : "wk"}` : ""}
-          >
-            {buckets.map((b, i) => (
-              <ExpandedBar
-                key={i}
-                bucket={b}
-                index={i}
-                total={buckets.length}
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", padding: "20px 24px", overflow: "auto" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16, flexShrink: 0 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                gap: 2,
+                padding: 3,
+                background: "var(--bg-surface-sunken)",
+                borderRadius: "var(--radius-s)",
+              }}
+            >
+              {(Object.keys(PRESET_LABELS) as RangePreset[]).map((p) => (
+                <RangePresetButton key={p} active={!isCustom && preset === p} onClick={() => applyPreset(p)}>
+                  {PRESET_LABELS[p]}
+                </RangePresetButton>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+              <div style={{ width: 150 }}>
+                <Input
+                  type="date"
+                  size="sm"
+                  label="From"
+                  value={toDateInputString(from)}
+                  onChange={(v) => setCustomFrom(v || null)}
+                />
+              </div>
+              <div style={{ width: 150 }}>
+                <Input
+                  type="date"
+                  size="sm"
+                  label="To"
+                  value={toDateInputString(to)}
+                  onChange={(v) => setCustomTo(v || null)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {buckets.length === 0 ? (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                font: "13px var(--font-body)",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              No applications in this range.
+            </div>
+          ) : (
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <VelocityPlot
+                ticks={ticks}
                 axisMax={axisMax}
                 chartHeight={chartHeight}
-                unit={unit}
-                companies={companies}
-                onSelectApplication={onSelectApplication}
-              />
-            ))}
-          </VelocityPlot>
-          <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
-            {buckets.map((b, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  textAlign: "center",
-                  font: `${b.items.length > 0 ? 500 : 400} 11px var(--font-mono)`,
-                  color: b.items.length > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
+                axisWidth={axisWidth}
+                target={targetPerBucket}
+                targetLabel={
+                  targetPerBucket != null ? `Target ${targetPerBucket}/${unit === "month" ? "mo" : "wk"}` : ""
+                }
               >
-                {b.label}
+                {buckets.map((b) => (
+                  <ExpandedBar
+                    key={b.start.getTime()}
+                    bucket={b}
+                    axisMax={axisMax}
+                    selected={selectedStart === b.start.getTime()}
+                    onSelect={() => setSelectedStart(b.start.getTime())}
+                  />
+                ))}
+              </VelocityPlot>
+              <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
+                {buckets.map((b) => (
+                  <div
+                    key={b.start.getTime()}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      textAlign: "center",
+                      font: `${b.items.length > 0 ? 500 : 400} 11px var(--font-mono)`,
+                      color: b.items.length > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {b.label}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginTop: 12 }}>
-            Hover a bar to list its applications.
-          </div>
-        </>
-      )}
-    </Dialog>
+            </div>
+          )}
+        </div>
+
+        <div
+          style={{
+            width: 340,
+            flexShrink: 0,
+            borderLeft: "1px solid var(--border-default)",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <ExpandedSidebar
+            bucket={selectedBucket}
+            unit={unit}
+            companies={companies}
+            onSelectApplication={onSelectApplication}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
 interface ExpandedBarProps {
   bucket: PeriodItemBucket<Application>;
-  index: number;
-  total: number;
   axisMax: number;
-  chartHeight: number;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+/** A clickable bar: hover states signal it opens the sidebar; the selected bar keeps a ring. */
+function ExpandedBar({ bucket, axisMax, selected, onSelect }: ExpandedBarProps) {
+  const [hover, setHover] = useState(false);
+  const count = bucket.items.length;
+  const pct = count / axisMax;
+
+  if (count === 0) {
+    return (
+      <div style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 36,
+            alignSelf: "flex-end",
+            height: `${pct * 100}%`,
+            minHeight: 1,
+            background: "var(--ink-100)",
+            borderRadius: "8px 8px 3px 3px",
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ flex: 1, position: "relative", display: "flex", justifyContent: "center", height: "100%" }}>
+      <span
+        style={{
+          position: "absolute",
+          bottom: `calc(${pct * 100}% + 5px)`,
+          font: "11px var(--font-mono)",
+          fontWeight: selected ? 700 : 400,
+          color: selected || hover ? "var(--blue-900)" : "var(--blue-700)",
+        }}
+      >
+        {count}
+      </span>
+      <button
+        type="button"
+        onClick={onSelect}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        aria-label={`${count} application${count === 1 ? "" : "s"} — ${bucket.label}`}
+        aria-pressed={selected}
+        style={{
+          width: "100%",
+          maxWidth: 36,
+          alignSelf: "flex-end",
+          height: `${pct * 100}%`,
+          minHeight: 3,
+          padding: 0,
+          border: "none",
+          cursor: "pointer",
+          background: selected ? "var(--blue-700)" : hover ? "var(--blue-600)" : "var(--blue-500)",
+          boxShadow: selected
+            ? "0 0 0 3px var(--blue-300)"
+            : hover
+              ? "0 0 0 3px var(--blue-100)"
+              : "none",
+          borderRadius: "8px 8px 3px 3px",
+          transition:
+            "background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard)",
+        }}
+      />
+    </div>
+  );
+}
+
+interface ExpandedSidebarProps {
+  bucket: PeriodItemBucket<Application> | null;
   unit: BucketUnit;
   companies: Company[];
   onSelectApplication?: (app: Application) => void;
 }
 
-function ExpandedBar({ bucket, index, total, axisMax, chartHeight, unit, companies, onSelectApplication }: ExpandedBarProps) {
-  const [hover, setHover] = useState(false);
-  const count = bucket.items.length;
-  const pct = count / axisMax;
+function ExpandedSidebar({ bucket, unit, companies, onSelectApplication }: ExpandedSidebarProps) {
+  const periodNoun = unit === "month" ? "month" : "week";
 
-  const sortedApps = useMemo(
-    () => [...bucket.items].sort((a, b) => new Date(a.dateApplied).getTime() - new Date(b.dateApplied).getTime()),
-    [bucket]
+  if (!bucket) {
+    return (
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
+        <p style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", maxWidth: 220, lineHeight: 1.5 }}>
+          Select a bar to see the applications from that {periodNoun}.
+        </p>
+      </div>
+    );
+  }
+
+  const sortedApps = [...bucket.items].sort(
+    (a, b) => new Date(a.dateApplied).getTime() - new Date(b.dateApplied).getTime()
   );
-
-  // Keep the popover inside the plot: sit it above the bar unless the bar is tall, then hang it below the bar top.
-  const above = pct <= 0.55;
-  const availAbove = Math.round(chartHeight * (1 - pct)) - 12;
-  const availBelow = Math.round(chartHeight * pct) - 12;
-  const popMaxHeight = Math.max(120, Math.min(230, above ? availAbove : availBelow));
-  const horizontal: CSSProperties =
-    index < total * 0.22
-      ? { left: 0 }
-      : index > total * 0.78
-        ? { right: 0 }
-        : { left: "50%", transform: "translateX(-50%)" };
-
   const periodLabel =
     unit === "week"
       ? weekRangeLabel(bucket.start)
       : bucket.start.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <div
-      style={{ flex: 1, position: "relative", display: "flex", justifyContent: "center", height: "100%" }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      {count > 0 && (
-        <span
-          style={{
-            position: "absolute",
-            bottom: `calc(${pct * 100}% + 4px)`,
-            font: "11px var(--font-mono)",
-            color: hover ? "var(--blue-900)" : "var(--blue-700)",
-          }}
-        >
-          {count}
-        </span>
-      )}
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 34,
-          alignSelf: "flex-end",
-          height: `${pct * 100}%`,
-          minHeight: count > 0 ? 3 : 1,
-          background: count === 0 ? "var(--ink-100)" : hover ? "var(--blue-600)" : "var(--blue-500)",
-          borderRadius: "8px 8px 3px 3px",
-          transition: "background var(--duration-fast) var(--ease-standard)",
-        }}
-      />
-      {hover && count > 0 && (
-        <div
-          role="tooltip"
-          style={{
-            position: "absolute",
-            ...(above ? { bottom: `calc(${pct * 100}% + 8px)` } : { top: `calc(${(1 - pct) * 100}% + 8px)` }),
-            ...horizontal,
-            width: 236,
-            maxHeight: popMaxHeight,
-            overflowY: "auto",
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-            borderRadius: "var(--radius-m)",
-            boxShadow: "var(--shadow-l)",
-            padding: 8,
-            zIndex: 5,
-          }}
-        >
-          <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", padding: "2px 6px 6px" }}>
-            {periodLabel} · {count} application{count === 1 ? "" : "s"}
-          </div>
-          {sortedApps.map((app) => (
-            <PopoverAppRow
+    <>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border-default)", flexShrink: 0 }}>
+        <div style={{ font: "700 15px var(--font-display)", letterSpacing: "-0.01em", color: "var(--text-primary)" }}>
+          {periodLabel}
+        </div>
+        <div style={{ font: "var(--text-caption)", color: "var(--text-secondary)", marginTop: 3 }}>
+          {sortedApps.length} application{sortedApps.length === 1 ? "" : "s"}
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
+        {sortedApps.length === 0 ? (
+          <p style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", padding: "24px 12px" }}>
+            No applications this {periodNoun}.
+          </p>
+        ) : (
+          sortedApps.map((app) => (
+            <SidebarAppRow
               key={app.id}
               app={app}
               company={companyName(app.companyId, companies)}
               onSelect={onSelectApplication ? () => onSelectApplication(app) : undefined}
             />
-          ))}
-        </div>
-      )}
-    </div>
+          ))
+        )}
+      </div>
+    </>
   );
 }
 
-function PopoverAppRow({ app, company, onSelect }: { app: Application; company: string; onSelect?: () => void }) {
+function SidebarAppRow({ app, company, onSelect }: { app: Application; company: string; onSelect?: () => void }) {
   const [hover, setHover] = useState(false);
   return (
     <button
@@ -848,23 +946,23 @@ function PopoverAppRow({ app, company, onSelect }: { app: Application; company: 
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: 10,
         width: "100%",
-        padding: "6px",
+        padding: "8px",
         border: "none",
-        borderRadius: "var(--radius-xs)",
+        borderRadius: "var(--radius-s)",
         background: hover && onSelect ? "var(--bg-surface-hover)" : "transparent",
         cursor: onSelect ? "pointer" : "default",
         textAlign: "left",
         transition: "background var(--duration-fast) var(--ease-standard)",
       }}
     >
-      <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>{app.logo}</span>
+      <span style={{ fontSize: 17, flexShrink: 0, lineHeight: 1 }}>{app.logo}</span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span
           style={{
             display: "block",
-            font: "600 12px var(--font-body)",
+            font: "600 13px var(--font-body)",
             color: "var(--text-primary)",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -876,20 +974,20 @@ function PopoverAppRow({ app, company, onSelect }: { app: Application; company: 
         <span
           style={{
             display: "block",
-            font: "11px var(--font-body)",
+            font: "var(--text-body-s)",
             color: "var(--text-tertiary)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}
         >
-          {company} · {app.dateApplied}
+          {company}
         </span>
       </span>
-      <span
-        style={{ width: 7, height: 7, borderRadius: "50%", background: statusDotColor(app.status), flexShrink: 0 }}
-        title={app.status}
-      />
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+        <StatusTag status={app.status} />
+        <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{app.dateApplied}</span>
+      </span>
     </button>
   );
 }
