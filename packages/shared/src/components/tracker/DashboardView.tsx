@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { Card, Dialog, StatusTag } from "@/components/ds";
+import { Card, Dialog, IconButton, StatusTag } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import { bucketItemsByCalendarWeek, type WeekItemBucket } from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
@@ -15,7 +15,7 @@ import {
   type ChannelBreakdownRow,
   type InterviewRatioTier,
 } from "@/lib/funnel";
-import type { Application, Company, NetworkingEvent } from "@/lib/types";
+import type { Application, Company, Goals, NetworkingEvent } from "@/lib/types";
 
 const sectionHeadingStyle = {
   margin: 0,
@@ -376,26 +376,27 @@ function VelocityBar({
 interface VelocityChartProps {
   buckets: VelocityBucket[];
   companies: Company[];
+  /** Applications-per-week goal; drawn as a reference line when set to a positive number. */
+  weeklyTarget?: number;
 }
 
-function VelocityChart({ buckets, companies }: VelocityChartProps) {
+function VelocityChart({ buckets, companies, weeklyTarget }: VelocityChartProps) {
   const chartHeight = 148;
   const axisWidth = 22;
-  const dataMax = Math.max(0, ...buckets.map((b) => b.items.length));
+  const target = weeklyTarget && weeklyTarget > 0 ? weeklyTarget : null;
+  const dataMax = Math.max(0, target ?? 0, ...buckets.map((b) => b.items.length));
   const axisMax = velocityAxisMax(dataMax);
   const ticks = velocityTicks(axisMax);
-  const [selected, setSelected] = useState<VelocityBucket | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  const selected = selectedIndex != null ? buckets[selectedIndex] : null;
   const selectedApps = selected
     ? [...selected.items].sort((a, b) => new Date(a.dateApplied).getTime() - new Date(b.dateApplied).getTime())
     : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-        <h2 style={sectionHeadingStyle}>Application velocity</h2>
-        <span style={{ ...eyebrowStyle, color: "var(--text-tertiary)" }}>Applications per week &middot; click a bar</span>
-      </div>
+      <h2 style={{ ...sectionHeadingStyle, marginBottom: 6 }}>Application velocity</h2>
       <div style={{ flex: 1, display: "grid" }}>
         <Card padding="md">
           <div style={{ display: "flex" }}>
@@ -434,9 +435,38 @@ function VelocityChart({ buckets, companies }: VelocityChartProps) {
               ))}
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
                 {buckets.map((b, i) => (
-                  <VelocityBar key={i} bucket={b} axisMax={axisMax} onOpen={() => setSelected(b)} />
+                  <VelocityBar key={i} bucket={b} axisMax={axisMax} onOpen={() => setSelectedIndex(i)} />
                 ))}
               </div>
+              {target != null && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: `${(target / axisMax) * 100}%`,
+                    borderTop: "2px dashed var(--green-600)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      bottom: 2,
+                      padding: "1px 5px",
+                      borderRadius: "var(--radius-pill)",
+                      background: "var(--green-100)",
+                      color: "var(--green-700)",
+                      font: "10px var(--font-mono)",
+                      lineHeight: 1.4,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Target {target}/wk
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
@@ -457,15 +487,39 @@ function VelocityChart({ buckets, companies }: VelocityChartProps) {
         </Card>
       </div>
 
-      <Dialog
-        open={selected != null}
-        title={selected ? weekRangeLabel(selected.weekStart) : ""}
-        onClose={() => setSelected(null)}
-      >
-        <div style={{ font: "13px var(--font-body)", color: "var(--text-secondary)", marginBottom: 12 }}>
-          {selectedApps.length} application{selectedApps.length === 1 ? "" : "s"} sent this week
+      <Dialog open={selectedIndex != null} title="Applications by week" onClose={() => setSelectedIndex(null)}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+          <IconButton
+            icon={<span style={{ font: "16px var(--font-body)", lineHeight: 1 }}>‹</span>}
+            aria-label="Previous week"
+            variant="secondary"
+            size="sm"
+            disabled={selectedIndex == null || selectedIndex === 0}
+            onClick={() => setSelectedIndex((i) => (i != null && i > 0 ? i - 1 : i))}
+          />
+          <div style={{ textAlign: "center", minWidth: 0 }}>
+            <div style={{ font: "600 14px var(--font-body)", color: "var(--text-primary)" }}>
+              {selected ? weekRangeLabel(selected.weekStart) : ""}
+            </div>
+            <div style={{ font: "var(--text-caption)", color: "var(--text-secondary)" }}>
+              {selectedApps.length} application{selectedApps.length === 1 ? "" : "s"} sent
+            </div>
+          </div>
+          <IconButton
+            icon={<span style={{ font: "16px var(--font-body)", lineHeight: 1 }}>›</span>}
+            aria-label="Next week"
+            variant="secondary"
+            size="sm"
+            disabled={selectedIndex == null || selectedIndex === buckets.length - 1}
+            onClick={() => setSelectedIndex((i) => (i != null && i < buckets.length - 1 ? i + 1 : i))}
+          />
         </div>
         <div style={{ maxHeight: 340, overflowY: "auto", margin: "0 -4px" }}>
+          {selectedApps.length === 0 && (
+            <div style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", padding: "24px 0" }}>
+              No applications this week.
+            </div>
+          )}
           {selectedApps.map((app, i) => (
             <div
               key={app.id}
@@ -565,10 +619,11 @@ const rateOf = (list: Application[]) =>
 interface DashboardViewProps {
   apps: Application[];
   companies: Company[];
+  goals: Goals;
   networkingEvents: NetworkingEvent[];
 }
 
-export function DashboardView({ apps, companies, networkingEvents }: DashboardViewProps) {
+export function DashboardView({ apps, companies, goals, networkingEvents }: DashboardViewProps) {
   const submittedApps = apps.filter((a) => a.status !== "todo");
   const tailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "tailored"));
   const untailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "untailored"));
@@ -605,7 +660,7 @@ export function DashboardView({ apps, companies, networkingEvents }: DashboardVi
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 20 }}>
-        <VelocityChart buckets={velocityBuckets} companies={companies} />
+        <VelocityChart buckets={velocityBuckets} companies={companies} weeklyTarget={goals.applicationsPerWeekTarget} />
         <ChannelBreakdown channelBreakdown={channelBreakdown} />
       </div>
 
