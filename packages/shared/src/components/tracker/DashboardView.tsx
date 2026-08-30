@@ -30,6 +30,9 @@ const eyebrowStyle = {
   textTransform: "uppercase",
 } as const;
 
+/** Uniform gap between a section heading and the card(s) it labels. */
+const CARD_HEADER_GAP = 14;
+
 // ---- Funnel health hero ----
 
 const RING_RADIUS = 42;
@@ -153,7 +156,7 @@ function FunnelHealth({
         boxShadow: "0 12px 32px -18px rgba(20,32,60,0.45)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: CARD_HEADER_GAP }}>
         <h2 style={{ ...sectionHeadingStyle, color: "var(--white)" }}>Funnel health</h2>
         <span style={{ ...eyebrowStyle, color: "var(--blue-300)" }}>Conversion at each step</span>
       </div>
@@ -249,7 +252,7 @@ function ChannelBar({ row }: { row: ChannelBreakdownRow }) {
 function ChannelBreakdown({ channelBreakdown }: { channelBreakdown: ChannelBreakdownRow[] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <h2 style={{ ...sectionHeadingStyle, marginBottom: 14 }}>Channel breakdown</h2>
+      <h2 style={{ ...sectionHeadingStyle, marginBottom: CARD_HEADER_GAP }}>Channel breakdown</h2>
       <div style={{ flex: 1, display: "grid" }}>
         <Card padding="md">
           <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
@@ -396,7 +399,7 @@ function VelocityChart({ buckets, companies, weeklyTarget }: VelocityChartProps)
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <h2 style={{ ...sectionHeadingStyle, marginBottom: 6 }}>Application velocity</h2>
+      <h2 style={{ ...sectionHeadingStyle, marginBottom: CARD_HEADER_GAP }}>Application velocity</h2>
       <div style={{ flex: 1, display: "grid" }}>
         <Card padding="md">
           <div style={{ display: "flex" }}>
@@ -665,7 +668,7 @@ export function DashboardView({ apps, companies, goals, networkingEvents }: Dash
       </div>
 
       <div>
-        <h2 style={{ ...sectionHeadingStyle, marginBottom: 12 }}>Pipeline performance</h2>
+        <h2 style={{ ...sectionHeadingStyle, marginBottom: CARD_HEADER_GAP }}>Pipeline performance</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
           <StatCard
             label="Interview rate by resume type"
