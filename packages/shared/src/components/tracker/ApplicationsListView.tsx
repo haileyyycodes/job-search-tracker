@@ -19,7 +19,7 @@ const STALE_DAYS = 14;
 const VERY_STALE_DAYS = 45;
 
 type ViewMode = "list" | "kanban";
-type Tab = "all" | "needs_action";
+type Tab = "all" | "ready_to_apply" | "awaiting_response" | "needs_followup";
 
 const statusOptions: SelectOption[] = [
   { value: "", label: "All statuses" },
@@ -83,12 +83,6 @@ const eyebrowStyle = {
   textTransform: "uppercase",
   letterSpacing: "var(--tracking-wide)",
   fontSize: 11,
-} as const;
-
-const sectionHeadingStyle = {
-  font: "var(--text-heading-s)",
-  color: "var(--text-primary)",
-  margin: "0 0 4px",
 } as const;
 
 const sectionSubStyle = {
@@ -162,7 +156,43 @@ export function ApplicationsListView({
   const staleApps = enriched
     .filter((e) => e.isStale)
     .sort((a, b) => (b.daysSinceActivity ?? 0) - (a.daysSinceActivity ?? 0));
-  const needsActionCount = savedApps.length + offerApps.length + staleApps.length;
+
+  const needsActionGroups: NeedsActionGroupConfig[] = [
+    {
+      key: "ready_to_apply",
+      tabLabel: "Ready to apply",
+      sub: "Saved roles you haven’t applied to yet.",
+      signalHeading: "Saved",
+      rows: savedApps,
+      emptyText: "Nothing saved right now.",
+      renderSignal: (e) => <span style={{ color: "var(--text-tertiary)" }}>{e.lastActivityLabel}</span>,
+    },
+    {
+      key: "awaiting_response",
+      tabLabel: "Awaiting your response",
+      sub: "Offers on the table — don’t leave these too long.",
+      signalHeading: "Offer",
+      rows: offerApps,
+      emptyText: "No open offers right now.",
+      renderSignal: (e) => (
+        <span style={{ color: "var(--green-700)", fontWeight: 700 }}>Received {e.lastActivityLabel}</span>
+      ),
+    },
+    {
+      key: "needs_followup",
+      tabLabel: "Needs a follow-up",
+      sub: "Applied, but no reply in a while — worth a nudge.",
+      signalHeading: "Last activity",
+      rows: staleApps,
+      emptyText: "No stale applications — nice work.",
+      renderSignal: (e) => (
+        <span style={{ color: e.staleColor, fontWeight: 700 }}>
+          {e.daysSinceActivity === 1 ? "1 day ago" : `${e.daysSinceActivity} days ago`}
+        </span>
+      ),
+    },
+  ];
+  const activeGroup = needsActionGroups.find((g) => g.key === tab) ?? null;
 
   const qLower = q.toLowerCase();
   const filtered = enriched.filter(
@@ -194,9 +224,11 @@ export function ApplicationsListView({
             <TabButton active={tab === "all"} onClick={() => setTab("all")}>
               All
             </TabButton>
-            <TabButton active={tab === "needs_action"} onClick={() => setTab("needs_action")}>
-              Needs action · {needsActionCount}
-            </TabButton>
+            {needsActionGroups.map((g) => (
+              <TabButton key={g.key} active={tab === g.key} onClick={() => setTab(g.key)}>
+                {g.tabLabel} · {g.rows.length}
+              </TabButton>
+            ))}
           </div>
         ) : (
           <div />
@@ -324,52 +356,17 @@ export function ApplicationsListView({
         </>
       )}
 
-      {viewMode === "list" && tab === "needs_action" && (
-        <div style={{ padding: "24px 0", display: "flex", flexDirection: "column", gap: 36 }}>
+      {viewMode === "list" && activeGroup && (
+        <div style={{ padding: "24px 0" }}>
           <NeedsActionGroup
-            heading="Ready to apply"
-            sub="Saved roles you haven’t applied to yet."
-            signalHeading="Saved"
-            rows={savedApps}
-            emptyText="Nothing saved right now."
+            sub={activeGroup.sub}
+            signalHeading={activeGroup.signalHeading}
+            rows={activeGroup.rows}
+            emptyText={activeGroup.emptyText}
             onSelect={onSelect}
             onRequestDelete={onRequestDelete}
             openCompany={openCompany}
-            renderSignal={(e) => (
-              <span style={{ color: "var(--text-tertiary)" }}>{e.lastActivityLabel}</span>
-            )}
-          />
-
-          <NeedsActionGroup
-            heading="Awaiting your response"
-            sub="Offers on the table — don’t leave these too long."
-            signalHeading="Offer"
-            rows={offerApps}
-            emptyText="No open offers right now."
-            onSelect={onSelect}
-            onRequestDelete={onRequestDelete}
-            openCompany={openCompany}
-            renderSignal={(e) => (
-              <span style={{ color: "var(--green-700)", fontWeight: 700 }}>
-                Received {e.lastActivityLabel}
-              </span>
-            )}
-          />
-
-          <NeedsActionGroup
-            heading="Needs a follow-up"
-            sub="Applied, but no reply in a while — worth a nudge."
-            signalHeading="Last activity"
-            rows={staleApps}
-            emptyText="No stale applications — nice work."
-            onSelect={onSelect}
-            onRequestDelete={onRequestDelete}
-            openCompany={openCompany}
-            renderSignal={(e) => (
-              <span style={{ color: e.staleColor, fontWeight: 700 }}>
-                {e.daysSinceActivity === 1 ? "1 day ago" : `${e.daysSinceActivity} days ago`}
-              </span>
-            )}
+            renderSignal={activeGroup.renderSignal}
           />
         </div>
       )}
@@ -565,21 +562,28 @@ function RoleCell({ e, openCompany }: { e: EnrichedApp; openCompany: (companyId:
   );
 }
 
-interface NeedsActionGroupProps {
-  heading: string;
+/** Per-tab config for the three needs-action lists. Tab labels and content stay in sync from one source. */
+interface NeedsActionGroupConfig {
+  key: Exclude<Tab, "all">;
+  tabLabel: string;
   sub: string;
   /** Column header for the group-specific right-hand signal column. */
   signalHeading: string;
   rows: EnrichedApp[];
   emptyText: string;
-  onSelect: (app: Application) => void;
-  onRequestDelete: (app: Application) => void;
-  openCompany: (companyId: number) => void;
   renderSignal: (e: EnrichedApp) => ReactNode;
 }
 
+type NeedsActionGroupProps = Pick<
+  NeedsActionGroupConfig,
+  "sub" | "signalHeading" | "rows" | "emptyText" | "renderSignal"
+> & {
+  onSelect: (app: Application) => void;
+  onRequestDelete: (app: Application) => void;
+  openCompany: (companyId: number) => void;
+};
+
 function NeedsActionGroup({
-  heading,
   sub,
   signalHeading,
   rows,
@@ -591,10 +595,6 @@ function NeedsActionGroup({
 }: NeedsActionGroupProps) {
   return (
     <section>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-        <h2 style={sectionHeadingStyle}>{heading}</h2>
-        <span style={{ font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>{rows.length}</span>
-      </div>
       <p style={sectionSubStyle}>{sub}</p>
       {rows.length === 0 ? (
         <EmptyLine>{emptyText}</EmptyLine>
