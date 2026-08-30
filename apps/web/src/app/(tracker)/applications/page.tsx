@@ -31,6 +31,7 @@ function ApplicationsPageContent() {
         app={app}
         contacts={data.contacts}
         companies={data.companies}
+        networkingEvents={data.networkingEvents}
         goals={data.goals}
         interviewCategories={data.interviewCategories}
         onCreateInterviewCategory={data.addInterviewCategory}
@@ -48,6 +49,9 @@ function ApplicationsPageContent() {
         onDeleteInterview={data.deleteInterview}
         onDeleteFollowUp={data.deleteFollowUp}
         onSaveFeedback={data.saveFeedback}
+        onLogNetworkingEvent={() => ui.openLogNetworkingEvent(undefined, app.id)}
+        onEditNetworkingEvent={ui.openEditNetworkingEvent}
+        onDeleteNetworkingEvent={data.deleteNetworkingEvent}
       />
     );
   }
