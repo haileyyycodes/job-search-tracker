@@ -335,7 +335,7 @@ function ExpandGlyph() {
 function VelocityPlot({
   ticks,
   axisMax,
-  chartHeight,
+  height,
   axisWidth,
   target,
   targetLabel,
@@ -343,16 +343,17 @@ function VelocityPlot({
 }: {
   ticks: number[];
   axisMax: number;
-  chartHeight: number;
+  /** A fixed pixel height, or "100%" to fill a flex parent that has a definite height. */
+  height: number | string;
   axisWidth: number;
   target: number | null;
   targetLabel: string;
   children: ReactNode;
 }) {
   return (
-    <div style={{ display: "flex" }}>
+    <div style={{ display: "flex", width: "100%", height, minHeight: 0 }}>
       {/* y axis — one number per gridline, so bar heights read against real application counts */}
-      <div style={{ position: "relative", width: axisWidth, height: chartHeight, flexShrink: 0 }}>
+      <div style={{ position: "relative", width: axisWidth, height: "100%", flexShrink: 0 }}>
         {ticks.map((t) => (
           <span
             key={t}
@@ -370,7 +371,7 @@ function VelocityPlot({
           </span>
         ))}
       </div>
-      <div style={{ position: "relative", height: chartHeight, flex: 1 }}>
+      <div style={{ position: "relative", height: "100%", flex: 1 }}>
         {ticks.map((t) => (
           <div
             key={t}
@@ -459,7 +460,7 @@ function VelocityChart({ apps, companies, weeklyTarget, onSelectApplication }: V
           <VelocityPlot
             ticks={ticks}
             axisMax={axisMax}
-            chartHeight={chartHeight}
+            height={chartHeight}
             axisWidth={axisWidth}
             target={target}
             targetLabel={target != null ? `Target ${target}/wk` : ""}
@@ -572,7 +573,6 @@ interface VelocityExpandedModalProps {
 }
 
 function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplication, onClose }: VelocityExpandedModalProps) {
-  const chartHeight = 440;
   const axisWidth = 30;
 
   const appliedApps = useMemo(() => apps.filter((a) => a.dateApplied), [apps]);
@@ -735,28 +735,30 @@ function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplicat
               No applications in this range.
             </div>
           ) : (
-            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <VelocityPlot
-                ticks={ticks}
-                axisMax={axisMax}
-                chartHeight={chartHeight}
-                axisWidth={axisWidth}
-                target={targetPerBucket}
-                targetLabel={
-                  targetPerBucket != null ? `Target ${targetPerBucket}/${unit === "month" ? "mo" : "wk"}` : ""
-                }
-              >
-                {buckets.map((b) => (
-                  <ExpandedBar
-                    key={b.start.getTime()}
-                    bucket={b}
-                    axisMax={axisMax}
-                    selected={selectedStart === b.start.getTime()}
-                    onSelect={() => setSelectedStart(b.start.getTime())}
-                  />
-                ))}
-              </VelocityPlot>
-              <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 20 }}>
+              <div style={{ flex: 1, minHeight: 260, display: "flex", flexDirection: "column" }}>
+                <VelocityPlot
+                  ticks={ticks}
+                  axisMax={axisMax}
+                  height="100%"
+                  axisWidth={axisWidth}
+                  target={targetPerBucket}
+                  targetLabel={
+                    targetPerBucket != null ? `Target ${targetPerBucket}/${unit === "month" ? "mo" : "wk"}` : ""
+                  }
+                >
+                  {buckets.map((b) => (
+                    <ExpandedBar
+                      key={b.start.getTime()}
+                      bucket={b}
+                      axisMax={axisMax}
+                      selected={selectedStart === b.start.getTime()}
+                      onSelect={() => setSelectedStart(b.start.getTime())}
+                    />
+                  ))}
+                </VelocityPlot>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth, flexShrink: 0 }}>
                 {buckets.map((b) => (
                   <div
                     key={b.start.getTime()}
