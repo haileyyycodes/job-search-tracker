@@ -1,11 +1,13 @@
 "use client";
 
 import { ReactNode, useState } from "react";
+import { FieldLabel } from "./FieldLabel";
 
 export type InputSize = "sm" | "md" | "lg";
 
 interface InputProps {
   label?: string;
+  required?: boolean;
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -21,6 +23,7 @@ const heightMap: Record<InputSize, number> = { sm: 32, md: 40, lg: 48 };
 
 export function Input({
   label,
+  required = false,
   placeholder,
   value,
   onChange,
@@ -36,7 +39,7 @@ export function Input({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", minWidth: 0 }}>
-      {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
+      {label && <FieldLabel required={required}>{label}</FieldLabel>}
       <div
         style={{
           display: "flex",
