@@ -114,6 +114,78 @@ export function bucketByCalendarWeek(dates: string[], weeks: number): WeekBucket
   }));
 }
 
+/** First day 00:00 of the month containing `date`. */
+export function startOfCalendarMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+/** A Date as a `YYYY-MM-DD` string, for pre-filling an `<input type="date">`. */
+export function toDateInputString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export type BucketUnit = "week" | "month";
+
+export interface PeriodItemBucket<T> {
+  /** Inclusive start of the period: Monday 00:00 for weeks, the 1st for months. */
+  start: Date;
+  /** Short x-axis label, e.g. "Jul 15" for weeks, "Jul" (or "Jul '26" across a year boundary) for months. */
+  label: string;
+  items: T[];
+}
+
+/**
+ * Buckets `items` into consecutive `week`- or `month`-long periods covering [from, to] — each
+ * end is widened to a whole period — oldest first, keyed by the "Jul 15, 2026"-formatted date
+ * from `getDate`. Empty periods are kept so a trend chart has a continuous x-axis.
+ */
+export function bucketItemsByPeriod<T>(
+  items: T[],
+  getDate: (item: T) => string,
+  from: Date,
+  to: Date,
+  unit: BucketUnit
+): PeriodItemBucket<T>[] {
+  const spansYears = from.getFullYear() !== to.getFullYear();
+  const advance = (d: Date) => (unit === "week" ? d.setDate(d.getDate() + 7) : d.setMonth(d.getMonth() + 1));
+
+  const buckets: PeriodItemBucket<T>[] = [];
+  const cursor = unit === "week" ? startOfCalendarWeek(from) : startOfCalendarMonth(from);
+  while (cursor.getTime() <= to.getTime()) {
+    const monthLabel = cursor.toLocaleDateString("en-US", { month: "short" });
+    const label =
+      unit === "week"
+        ? cursor.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        : spansYears
+          ? `${monthLabel} '${String(cursor.getFullYear()).slice(-2)}`
+          : monthLabel;
+    buckets.push({ start: new Date(cursor), label, items: [] });
+    advance(cursor);
+  }
+  if (buckets.length === 0) return buckets;
+
+  for (const item of items) {
+    const raw = getDate(item);
+    if (!raw) continue;
+    const time = new Date(raw).getTime();
+    for (let i = 0; i < buckets.length; i += 1) {
+      const startT = buckets[i].start.getTime();
+      const endBoundary = new Date(buckets[i].start);
+      advance(endBoundary);
+      const endT = i + 1 < buckets.length ? buckets[i + 1].start.getTime() : endBoundary.getTime();
+      if (time >= startT && time < endT) {
+        buckets[i].items.push(item);
+        break;
+      }
+    }
+  }
+
+  return buckets;
+}
+
 /** True if a "Jul 15, 2026"-formatted date falls in the same Monday-Sunday week as today. */
 export function isInCurrentCalendarWeek(displayDate: string): boolean {
   const date = new Date(displayDate);
