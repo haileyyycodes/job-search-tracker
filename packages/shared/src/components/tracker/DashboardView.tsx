@@ -1,7 +1,13 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
-import { Card, Dialog, IconButton, StatusTag } from "@/components/ds";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { Card, IconButton, Input, StatusTag } from "@/components/ds";
 import { companyName } from "@/lib/companies";
-import { bucketItemsByCalendarWeek, type WeekItemBucket } from "@/lib/date";
+import {
+  bucketItemsByCalendarWeek,
+  bucketItemsByPeriod,
+  toDateInputString,
+  type BucketUnit,
+  type PeriodItemBucket,
+} from "@/lib/date";
 import { getResponseDays } from "@/lib/responseTime";
 import {
   channelLabels,
@@ -286,8 +292,6 @@ function ChannelBreakdown({ channelBreakdown }: { channelBreakdown: ChannelBreak
 
 const VELOCITY_WEEKS = 8;
 
-type VelocityBucket = WeekItemBucket<Application>;
-
 /** "Jul 13 – Jul 19" for the Monday-Sunday week beginning at `weekStart`. */
 function weekRangeLabel(weekStart: Date): string {
   const weekEnd = new Date(weekStart);
@@ -312,166 +316,178 @@ function velocityTicks(axisMax: number): number[] {
   return ticks;
 }
 
-/**
- * One column of the velocity chart. Weeks with applications render a clickable bar with hover
- * and press states that opens the drill-down; empty weeks render an inert stub.
- */
-function VelocityBar({
-  bucket,
-  axisMax,
-  onOpen,
-}: {
-  bucket: VelocityBucket;
-  axisMax: number;
-  onOpen: () => void;
-}) {
-  const [hover, setHover] = useState(false);
-  const [active, setActive] = useState(false);
-  const count = bucket.items.length;
-
-  const wrap: CSSProperties = { flex: 1, display: "flex", justifyContent: "center", height: "100%" };
-  const barBase: CSSProperties = {
-    width: "100%",
-    maxWidth: 38,
-    alignSelf: "flex-end",
-    height: `${(count / axisMax) * 100}%`,
-    borderRadius: "8px 8px 3px 3px",
-  };
-
-  if (count === 0) {
-    return (
-      <div style={wrap}>
-        <div style={{ ...barBase, minHeight: 1, background: "var(--ink-100)" }} />
-      </div>
-    );
-  }
-
+function ExpandGlyph() {
   return (
-    <div style={wrap}>
-      <button
-        type="button"
-        onClick={onOpen}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => {
-          setHover(false);
-          setActive(false);
-        }}
-        onMouseDown={() => setActive(true)}
-        onMouseUp={() => setActive(false)}
-        aria-label={`${count} application${count === 1 ? "" : "s"} the week of ${bucket.label} — view list`}
-        style={{
-          ...barBase,
-          minHeight: 3,
-          padding: 0,
-          border: "none",
-          cursor: "pointer",
-          background: active ? "var(--blue-700)" : hover ? "var(--blue-600)" : "var(--blue-500)",
-          boxShadow: hover && !active ? "0 0 0 3px var(--blue-100)" : "none",
-          transform: active ? "translateY(1px)" : "none",
-          transition:
-            "background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard)",
-        }}
-      />
+    <svg
+      viewBox="0 0 16 16"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4" />
+    </svg>
+  );
+}
+
+/** Y-axis numbers, gridlines and an optional dashed goal line. `children` are the bar columns. */
+function VelocityPlot({
+  ticks,
+  axisMax,
+  height,
+  axisWidth,
+  target,
+  targetLabel,
+  children,
+}: {
+  ticks: number[];
+  axisMax: number;
+  /** A fixed pixel height, or "100%" to fill a flex parent that has a definite height. */
+  height: number | string;
+  axisWidth: number;
+  target: number | null;
+  targetLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", width: "100%", height, minHeight: 0 }}>
+      {/* y axis — one number per gridline, so bar heights read against real application counts */}
+      <div style={{ position: "relative", width: axisWidth, height: "100%", flexShrink: 0 }}>
+        {ticks.map((t) => (
+          <span
+            key={t}
+            style={{
+              position: "absolute",
+              right: 6,
+              bottom: `${(t / axisMax) * 100}%`,
+              transform: "translateY(50%)",
+              font: "11px var(--font-mono)",
+              color: "var(--text-tertiary)",
+              lineHeight: 1,
+            }}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+      <div style={{ position: "relative", height: "100%", flex: 1 }}>
+        {ticks.map((t) => (
+          <div
+            key={t}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: `${(t / axisMax) * 100}%`,
+              height: 1,
+              background: t === 0 ? "var(--border-default)" : "var(--ink-100)",
+            }}
+          />
+        ))}
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>{children}</div>
+        {target != null && (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: `${(target / axisMax) * 100}%`,
+              borderTop: "2px dashed var(--green-600)",
+              pointerEvents: "none",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                right: 0,
+                bottom: 2,
+                padding: "1px 5px",
+                borderRadius: "var(--radius-pill)",
+                background: "var(--green-100)",
+                color: "var(--green-700)",
+                font: "10px var(--font-mono)",
+                lineHeight: 1.4,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {targetLabel}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 interface VelocityChartProps {
-  buckets: VelocityBucket[];
+  apps: Application[];
   companies: Company[];
   /** Applications-per-week goal; drawn as a reference line when set to a positive number. */
   weeklyTarget?: number;
+  onSelectApplication?: (app: Application) => void;
 }
 
-function VelocityChart({ buckets, companies, weeklyTarget }: VelocityChartProps) {
+/** Compact dashboard chart: the last 8 weeks, plus an Expand action for the full history. */
+function VelocityChart({ apps, companies, weeklyTarget, onSelectApplication }: VelocityChartProps) {
   const chartHeight = 148;
   const axisWidth = 22;
+  const [expanded, setExpanded] = useState(false);
+
+  const buckets = useMemo(
+    () => bucketItemsByCalendarWeek(apps.filter((a) => a.dateApplied), (a) => a.dateApplied, VELOCITY_WEEKS),
+    [apps]
+  );
   const target = weeklyTarget && weeklyTarget > 0 ? weeklyTarget : null;
   const dataMax = Math.max(0, target ?? 0, ...buckets.map((b) => b.items.length));
   const axisMax = velocityAxisMax(dataMax);
   const ticks = velocityTicks(axisMax);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-
-  const selected = selectedIndex != null ? buckets[selectedIndex] : null;
-  const selectedApps = selected
-    ? [...selected.items].sort((a, b) => new Date(a.dateApplied).getTime() - new Date(b.dateApplied).getTime())
-    : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <h2 style={{ ...sectionHeadingStyle, marginBottom: CARD_HEADER_GAP }}>Application velocity</h2>
       <div style={{ flex: 1, display: "grid" }}>
         <Card padding="md">
-          <div style={{ display: "flex" }}>
-            {/* y axis — one number per gridline, so bar heights read against real application counts */}
-            <div style={{ position: "relative", width: axisWidth, height: chartHeight, flexShrink: 0 }}>
-              {ticks.map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    position: "absolute",
-                    right: 6,
-                    bottom: `${(t / axisMax) * 100}%`,
-                    transform: "translateY(50%)",
-                    font: "11px var(--font-mono)",
-                    color: "var(--text-tertiary)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-            <div style={{ position: "relative", height: chartHeight, flex: 1 }}>
-              {ticks.map((t) => (
-                <div
-                  key={t}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: `${(t / axisMax) * 100}%`,
-                    height: 1,
-                    background: t === 0 ? "var(--border-default)" : "var(--ink-100)",
-                  }}
-                />
-              ))}
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
-                {buckets.map((b, i) => (
-                  <VelocityBar key={i} bucket={b} axisMax={axisMax} onOpen={() => setSelectedIndex(i)} />
-                ))}
-              </div>
-              {target != null && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: `${(target / axisMax) * 100}%`,
-                    borderTop: "2px dashed var(--green-600)",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      bottom: 2,
-                      padding: "1px 5px",
-                      borderRadius: "var(--radius-pill)",
-                      background: "var(--green-100)",
-                      color: "var(--green-700)",
-                      font: "10px var(--font-mono)",
-                      lineHeight: 1.4,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Target {target}/wk
-                  </span>
-                </div>
-              )}
-            </div>
+          {/* action bar sits above the chart's top gridline — it acts on the chart, it isn't part of it */}
+          <div style={{ display: "flex", justifyContent: "flex-end", height: 28, marginBottom: 6 }}>
+            <IconButton
+              icon={<ExpandGlyph />}
+              aria-label="Expand application velocity chart"
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(true)}
+            />
           </div>
+          <VelocityPlot
+            ticks={ticks}
+            axisMax={axisMax}
+            height={chartHeight}
+            axisWidth={axisWidth}
+            target={target}
+            targetLabel={target != null ? `Target ${target}/wk` : ""}
+          >
+            {buckets.map((b, i) => {
+              const count = b.items.length;
+              return (
+                <div key={i} style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
+                  <div
+                    style={{
+                      width: "100%",
+                      maxWidth: 38,
+                      alignSelf: "flex-end",
+                      height: `${(count / axisMax) * 100}%`,
+                      minHeight: count > 0 ? 3 : 1,
+                      background: count > 0 ? "var(--blue-500)" : "var(--ink-100)",
+                      borderRadius: "8px 8px 3px 3px",
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </VelocityPlot>
           <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
             {buckets.map((b, i) => (
               <div
@@ -490,84 +506,495 @@ function VelocityChart({ buckets, companies, weeklyTarget }: VelocityChartProps)
         </Card>
       </div>
 
-      <Dialog open={selectedIndex != null} title="Applications by week" onClose={() => setSelectedIndex(null)}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
-          <IconButton
-            icon={<span style={{ font: "16px var(--font-body)", lineHeight: 1 }}>‹</span>}
-            aria-label="Previous week"
-            variant="secondary"
-            size="sm"
-            disabled={selectedIndex == null || selectedIndex === 0}
-            onClick={() => setSelectedIndex((i) => (i != null && i > 0 ? i - 1 : i))}
-          />
-          <div style={{ textAlign: "center", minWidth: 0 }}>
-            <div style={{ font: "600 14px var(--font-body)", color: "var(--text-primary)" }}>
-              {selected ? weekRangeLabel(selected.weekStart) : ""}
-            </div>
-            <div style={{ font: "var(--text-caption)", color: "var(--text-secondary)" }}>
-              {selectedApps.length} application{selectedApps.length === 1 ? "" : "s"} sent
-            </div>
-          </div>
-          <IconButton
-            icon={<span style={{ font: "16px var(--font-body)", lineHeight: 1 }}>›</span>}
-            aria-label="Next week"
-            variant="secondary"
-            size="sm"
-            disabled={selectedIndex == null || selectedIndex === buckets.length - 1}
-            onClick={() => setSelectedIndex((i) => (i != null && i < buckets.length - 1 ? i + 1 : i))}
-          />
-        </div>
-        <div style={{ maxHeight: 340, overflowY: "auto", margin: "0 -4px" }}>
-          {selectedApps.length === 0 && (
-            <div style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", padding: "24px 0" }}>
-              No applications this week.
-            </div>
-          )}
-          {selectedApps.map((app, i) => (
+      {expanded && (
+        <VelocityExpandedModal
+          apps={apps}
+          companies={companies}
+          weeklyTarget={target}
+          onSelectApplication={onSelectApplication}
+          onClose={() => setExpanded(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---- Expanded velocity view ----
+
+type RangePreset = "3m" | "6m" | "1y" | "all";
+const PRESET_LABELS: Record<RangePreset, string> = { "3m": "3M", "6m": "6M", "1y": "1Y", all: "All" };
+
+function subtractMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() - months);
+  return d;
+}
+
+function RangePresetButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const background = active
+    ? "var(--bg-surface)"
+    : pressed
+      ? "var(--ink-200)"
+      : hover
+        ? "var(--bg-surface-hover)"
+        : "transparent";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      style={{
+        border: "none",
+        background,
+        color: active ? "var(--text-primary)" : "var(--text-secondary)",
+        font: "700 12px var(--font-body)",
+        padding: "5px 12px",
+        borderRadius: "var(--radius-xs)",
+        cursor: "pointer",
+        boxShadow: active ? "var(--shadow-s)" : "none",
+        transition: "background var(--duration-fast) var(--ease-standard)",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface VelocityExpandedModalProps {
+  apps: Application[];
+  companies: Company[];
+  weeklyTarget: number | null;
+  onSelectApplication?: (app: Application) => void;
+  onClose: () => void;
+}
+
+function VelocityExpandedModal({ apps, companies, weeklyTarget, onSelectApplication, onClose }: VelocityExpandedModalProps) {
+  const axisWidth = 30;
+
+  const appliedApps = useMemo(() => apps.filter((a) => a.dateApplied), [apps]);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const earliest = useMemo(() => {
+    const times = appliedApps
+      .map((a) => new Date(a.dateApplied).getTime())
+      .filter((t) => !Number.isNaN(t));
+    return times.length ? new Date(Math.min(...times)) : null;
+  }, [appliedApps]);
+
+  /** Default window: the past 6 months, or the first application — whichever starts later. */
+  const defaultFrom = useMemo(() => {
+    const sixMonthsAgo = subtractMonths(today, 6);
+    return earliest && earliest.getTime() > sixMonthsAgo.getTime() ? earliest : sixMonthsAgo;
+  }, [today, earliest]);
+
+  const [preset, setPreset] = useState<RangePreset>("6m");
+  const [customFrom, setCustomFrom] = useState<string | null>(null);
+  const [customTo, setCustomTo] = useState<string | null>(null);
+  const [selectedStart, setSelectedStart] = useState<number | null>(null);
+  const isCustom = customFrom != null || customTo != null;
+
+  const presetFrom = useMemo(() => {
+    if (preset === "3m") return subtractMonths(today, 3);
+    if (preset === "1y") return subtractMonths(today, 12);
+    if (preset === "all") return earliest ?? subtractMonths(today, 6);
+    return defaultFrom;
+  }, [preset, today, earliest, defaultFrom]);
+
+  const from = useMemo(
+    () => (customFrom ? new Date(`${customFrom}T00:00:00`) : presetFrom),
+    [customFrom, presetFrom]
+  );
+  const to = useMemo(() => (customTo ? new Date(`${customTo}T00:00:00`) : today), [customTo, today]);
+
+  const spanDays = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
+  const unit: BucketUnit = spanDays > 100 ? "month" : "week";
+
+  const buckets = useMemo(
+    () => bucketItemsByPeriod(appliedApps, (a) => a.dateApplied, from, to, unit),
+    [appliedApps, from, to, unit]
+  );
+  // A selection whose bar falls outside a newly-chosen range simply resolves to null here,
+  // which shows the sidebar's empty state — no need to clear the stored start.
+  const selectedBucket =
+    selectedStart != null ? (buckets.find((b) => b.start.getTime() === selectedStart) ?? null) : null;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // The goal is per-week; when bars are monthly, scale it up so the line still means something.
+  const targetPerBucket =
+    weeklyTarget != null && weeklyTarget > 0
+      ? unit === "month"
+        ? Math.round(weeklyTarget * (52 / 12))
+        : weeklyTarget
+      : null;
+  const dataMax = Math.max(0, targetPerBucket ?? 0, ...buckets.map((b) => b.items.length));
+  const axisMax = velocityAxisMax(dataMax);
+  const ticks = velocityTicks(axisMax);
+
+  const applyPreset = (p: RangePreset) => {
+    setPreset(p);
+    setCustomFrom(null);
+    setCustomTo(null);
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        background: "var(--bg-surface)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 14px 14px 24px",
+          borderBottom: "1px solid var(--border-default)",
+          flexShrink: 0,
+        }}
+      >
+        <h3 style={{ font: "var(--text-heading-m)", margin: 0, color: "var(--text-primary)" }}>Application velocity</h3>
+        <IconButton
+          icon={<span style={{ fontSize: 15, lineHeight: 1 }}>✕</span>}
+          aria-label="Close expanded chart"
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+        />
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", padding: "20px 24px", overflow: "auto" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16, flexShrink: 0 }}>
             <div
-              key={app.id}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "9px 4px",
-                borderTop: i === 0 ? "none" : "1px solid var(--border-default)",
+                display: "inline-flex",
+                gap: 2,
+                padding: 3,
+                background: "var(--bg-surface-sunken)",
+                borderRadius: "var(--radius-s)",
               }}
             >
-              <span style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }}>{app.logo}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    font: "600 13px var(--font-body)",
-                    color: "var(--text-primary)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {app.role}
-                </div>
-                <div
-                  style={{
-                    font: "var(--text-body-s)",
-                    color: "var(--text-tertiary)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {companyName(app.companyId, companies)}
-                </div>
+              {(Object.keys(PRESET_LABELS) as RangePreset[]).map((p) => (
+                <RangePresetButton key={p} active={!isCustom && preset === p} onClick={() => applyPreset(p)}>
+                  {PRESET_LABELS[p]}
+                </RangePresetButton>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+              <div style={{ width: 150 }}>
+                <Input
+                  type="date"
+                  size="sm"
+                  label="From"
+                  value={toDateInputString(from)}
+                  onChange={(v) => setCustomFrom(v || null)}
+                />
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
-                <StatusTag status={app.status} />
-                <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{app.dateApplied}</span>
+              <div style={{ width: 150 }}>
+                <Input
+                  type="date"
+                  size="sm"
+                  label="To"
+                  value={toDateInputString(to)}
+                  onChange={(v) => setCustomTo(v || null)}
+                />
               </div>
             </div>
-          ))}
+          </div>
+
+          {buckets.length === 0 ? (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                font: "13px var(--font-body)",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              No applications in this range.
+            </div>
+          ) : (
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 20 }}>
+              <div style={{ flex: 1, minHeight: 260, display: "flex", flexDirection: "column" }}>
+                <VelocityPlot
+                  ticks={ticks}
+                  axisMax={axisMax}
+                  height="100%"
+                  axisWidth={axisWidth}
+                  target={targetPerBucket}
+                  targetLabel={
+                    targetPerBucket != null ? `Target ${targetPerBucket}/${unit === "month" ? "mo" : "wk"}` : ""
+                  }
+                >
+                  {buckets.map((b) => (
+                    <ExpandedBar
+                      key={b.start.getTime()}
+                      bucket={b}
+                      axisMax={axisMax}
+                      selected={selectedStart === b.start.getTime()}
+                      onSelect={() => setSelectedStart(b.start.getTime())}
+                    />
+                  ))}
+                </VelocityPlot>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth, flexShrink: 0 }}>
+                {buckets.map((b) => (
+                  <div
+                    key={b.start.getTime()}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      textAlign: "center",
+                      font: `${b.items.length > 0 ? 500 : 400} 11px var(--font-mono)`,
+                      color: b.items.length > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {b.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </Dialog>
+
+        <div
+          style={{
+            width: 340,
+            flexShrink: 0,
+            borderLeft: "1px solid var(--border-default)",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <ExpandedSidebar
+            bucket={selectedBucket}
+            unit={unit}
+            companies={companies}
+            onSelectApplication={onSelectApplication}
+          />
+        </div>
+      </div>
     </div>
+  );
+}
+
+interface ExpandedBarProps {
+  bucket: PeriodItemBucket<Application>;
+  axisMax: number;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+/** A clickable bar: hover states signal it opens the sidebar; the selected bar keeps a ring. */
+function ExpandedBar({ bucket, axisMax, selected, onSelect }: ExpandedBarProps) {
+  const [hover, setHover] = useState(false);
+  const count = bucket.items.length;
+  const pct = count / axisMax;
+
+  if (count === 0) {
+    return (
+      <div style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 36,
+            alignSelf: "flex-end",
+            height: `${pct * 100}%`,
+            minHeight: 1,
+            background: "var(--ink-100)",
+            borderRadius: "8px 8px 3px 3px",
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ flex: 1, position: "relative", display: "flex", justifyContent: "center", height: "100%" }}>
+      <span
+        style={{
+          position: "absolute",
+          bottom: `calc(${pct * 100}% + 5px)`,
+          font: "11px var(--font-mono)",
+          fontWeight: selected ? 700 : 400,
+          color: selected || hover ? "var(--blue-900)" : "var(--blue-700)",
+        }}
+      >
+        {count}
+      </span>
+      <button
+        type="button"
+        onClick={onSelect}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        aria-label={`${count} application${count === 1 ? "" : "s"} — ${bucket.label}`}
+        aria-pressed={selected}
+        style={{
+          width: "100%",
+          maxWidth: 36,
+          alignSelf: "flex-end",
+          height: `${pct * 100}%`,
+          minHeight: 3,
+          padding: 0,
+          border: "none",
+          cursor: "pointer",
+          background: selected ? "var(--blue-700)" : hover ? "var(--blue-600)" : "var(--blue-500)",
+          boxShadow: selected
+            ? "0 0 0 3px var(--blue-300)"
+            : hover
+              ? "0 0 0 3px var(--blue-100)"
+              : "none",
+          borderRadius: "8px 8px 3px 3px",
+          transition:
+            "background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard)",
+        }}
+      />
+    </div>
+  );
+}
+
+interface ExpandedSidebarProps {
+  bucket: PeriodItemBucket<Application> | null;
+  unit: BucketUnit;
+  companies: Company[];
+  onSelectApplication?: (app: Application) => void;
+}
+
+function ExpandedSidebar({ bucket, unit, companies, onSelectApplication }: ExpandedSidebarProps) {
+  const periodNoun = unit === "month" ? "month" : "week";
+
+  if (!bucket) {
+    return (
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
+        <p style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", maxWidth: 220, lineHeight: 1.5 }}>
+          Select a bar to see the applications from that {periodNoun}.
+        </p>
+      </div>
+    );
+  }
+
+  const sortedApps = [...bucket.items].sort(
+    (a, b) => new Date(a.dateApplied).getTime() - new Date(b.dateApplied).getTime()
+  );
+  const periodLabel =
+    unit === "week"
+      ? weekRangeLabel(bucket.start)
+      : bucket.start.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  return (
+    <>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border-default)", flexShrink: 0 }}>
+        <div style={{ font: "700 15px var(--font-display)", letterSpacing: "-0.01em", color: "var(--text-primary)" }}>
+          {periodLabel}
+        </div>
+        <div style={{ font: "var(--text-caption)", color: "var(--text-secondary)", marginTop: 3 }}>
+          {sortedApps.length} application{sortedApps.length === 1 ? "" : "s"}
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
+        {sortedApps.length === 0 ? (
+          <p style={{ font: "13px var(--font-body)", color: "var(--text-tertiary)", textAlign: "center", padding: "24px 12px" }}>
+            No applications this {periodNoun}.
+          </p>
+        ) : (
+          sortedApps.map((app) => (
+            <SidebarAppRow
+              key={app.id}
+              app={app}
+              company={companyName(app.companyId, companies)}
+              onSelect={onSelectApplication ? () => onSelectApplication(app) : undefined}
+            />
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function SidebarAppRow({ app, company, onSelect }: { app: Application; company: string; onSelect?: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={!onSelect}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        width: "100%",
+        padding: "8px",
+        border: "none",
+        borderRadius: "var(--radius-s)",
+        background: hover && onSelect ? "var(--bg-surface-hover)" : "transparent",
+        cursor: onSelect ? "pointer" : "default",
+        textAlign: "left",
+        transition: "background var(--duration-fast) var(--ease-standard)",
+      }}
+    >
+      <span style={{ fontSize: 17, flexShrink: 0, lineHeight: 1 }}>{app.logo}</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span
+          style={{
+            display: "block",
+            font: "600 13px var(--font-body)",
+            color: "var(--text-primary)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {app.role}
+        </span>
+        <span
+          style={{
+            display: "block",
+            font: "var(--text-body-s)",
+            color: "var(--text-tertiary)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {company}
+        </span>
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+        <StatusTag status={app.status} />
+        <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{app.dateApplied}</span>
+      </span>
+    </button>
   );
 }
 
@@ -624,9 +1051,10 @@ interface DashboardViewProps {
   companies: Company[];
   goals: Goals;
   networkingEvents: NetworkingEvent[];
+  onSelectApplication?: (app: Application) => void;
 }
 
-export function DashboardView({ apps, companies, goals, networkingEvents }: DashboardViewProps) {
+export function DashboardView({ apps, companies, goals, networkingEvents, onSelectApplication }: DashboardViewProps) {
   const submittedApps = apps.filter((a) => a.status !== "todo");
   const tailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "tailored"));
   const untailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "untailored"));
@@ -637,12 +1065,6 @@ export function DashboardView({ apps, companies, goals, networkingEvents }: Dash
   const avgResponseDays = responseDaysList.length
     ? Math.round(responseDaysList.reduce((sum, d) => sum + d, 0) / responseDaysList.length)
     : null;
-
-  const velocityBuckets = bucketItemsByCalendarWeek(
-    apps.filter((a) => a.dateApplied),
-    (a) => a.dateApplied,
-    VELOCITY_WEEKS
-  );
 
   const responseRate = getResponseRate(apps);
   const interviewRatio = getInterviewRatio(apps);
@@ -663,7 +1085,12 @@ export function DashboardView({ apps, companies, goals, networkingEvents }: Dash
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 20 }}>
-        <VelocityChart buckets={velocityBuckets} companies={companies} weeklyTarget={goals.applicationsPerWeekTarget} />
+        <VelocityChart
+          apps={apps}
+          companies={companies}
+          weeklyTarget={goals.applicationsPerWeekTarget}
+          onSelectApplication={onSelectApplication}
+        />
         <ChannelBreakdown channelBreakdown={channelBreakdown} />
       </div>
 

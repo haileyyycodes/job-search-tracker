@@ -34,8 +34,9 @@ interface TrackerUIContextValue {
 
   networkingDialogOpen: boolean;
   networkingDialogContactId: number | null;
+  networkingDialogApplicationId: number | null;
   networkingDialogEvent: NetworkingEvent | null;
-  openLogNetworkingEvent: (initialContactId?: number) => void;
+  openLogNetworkingEvent: (initialContactId?: number, initialApplicationId?: number) => void;
   openEditNetworkingEvent: (event: NetworkingEvent) => void;
   closeLogNetworkingEvent: () => void;
 }
@@ -57,6 +58,7 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
   const [deleteCompanyTarget, setDeleteCompanyTarget] = useState<Company | null>(null);
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false);
   const [networkingDialogContactId, setNetworkingDialogContactId] = useState<number | null>(null);
+  const [networkingDialogApplicationId, setNetworkingDialogApplicationId] = useState<number | null>(null);
   const [networkingDialogEvent, setNetworkingDialogEvent] = useState<NetworkingEvent | null>(null);
   const [networkingDialogOpen, setNetworkingDialogOpen] = useState(false);
 
@@ -91,20 +93,24 @@ export function TrackerUIProvider({ children }: { children: ReactNode }) {
 
     networkingDialogOpen,
     networkingDialogContactId,
+    networkingDialogApplicationId,
     networkingDialogEvent,
-    openLogNetworkingEvent: (initialContactId) => {
+    openLogNetworkingEvent: (initialContactId, initialApplicationId) => {
       setNetworkingDialogEvent(null);
       setNetworkingDialogContactId(initialContactId ?? null);
+      setNetworkingDialogApplicationId(initialApplicationId ?? null);
       setNetworkingDialogOpen(true);
     },
     openEditNetworkingEvent: (event) => {
       setNetworkingDialogContactId(null);
+      setNetworkingDialogApplicationId(null);
       setNetworkingDialogEvent(event);
       setNetworkingDialogOpen(true);
     },
     closeLogNetworkingEvent: () => {
       setNetworkingDialogOpen(false);
       setNetworkingDialogEvent(null);
+      setNetworkingDialogApplicationId(null);
     },
   };
 
