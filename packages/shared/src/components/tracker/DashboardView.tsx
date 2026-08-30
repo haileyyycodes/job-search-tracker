@@ -400,7 +400,7 @@ function VelocityPlot({
             <span
               style={{
                 position: "absolute",
-                right: 0,
+                left: 0,
                 bottom: 2,
                 padding: "1px 5px",
                 borderRadius: "var(--radius-pill)",
@@ -445,59 +445,61 @@ function VelocityChart({ apps, companies, weeklyTarget, onSelectApplication }: V
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <h2 style={sectionHeadingStyle}>Application velocity</h2>
-        <IconButton
-          icon={<ExpandGlyph />}
-          aria-label="Expand application velocity chart"
-          variant="ghost"
-          size="sm"
-          onClick={() => setExpanded(true)}
-        />
-      </div>
+      <h2 style={{ ...sectionHeadingStyle, marginBottom: 6 }}>Application velocity</h2>
       <div style={{ flex: 1, display: "grid" }}>
         <Card padding="md">
-          <VelocityPlot
-            ticks={ticks}
-            axisMax={axisMax}
-            height={chartHeight}
-            axisWidth={axisWidth}
-            target={target}
-            targetLabel={target != null ? `Target ${target}/wk` : ""}
-          >
-            {buckets.map((b, i) => {
-              const count = b.items.length;
-              return (
-                <div key={i} style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
-                  <div
-                    style={{
-                      width: "100%",
-                      maxWidth: 38,
-                      alignSelf: "flex-end",
-                      height: `${(count / axisMax) * 100}%`,
-                      minHeight: count > 0 ? 3 : 1,
-                      background: count > 0 ? "var(--blue-500)" : "var(--ink-100)",
-                      borderRadius: "8px 8px 3px 3px",
-                    }}
-                  />
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", top: -2, right: -2, zIndex: 1 }}>
+              <IconButton
+                icon={<ExpandGlyph />}
+                aria-label="Expand application velocity chart"
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpanded(true)}
+              />
+            </div>
+            <VelocityPlot
+              ticks={ticks}
+              axisMax={axisMax}
+              height={chartHeight}
+              axisWidth={axisWidth}
+              target={target}
+              targetLabel={target != null ? `Target ${target}/wk` : ""}
+            >
+              {buckets.map((b, i) => {
+                const count = b.items.length;
+                return (
+                  <div key={i} style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        maxWidth: 38,
+                        alignSelf: "flex-end",
+                        height: `${(count / axisMax) * 100}%`,
+                        minHeight: count > 0 ? 3 : 1,
+                        background: count > 0 ? "var(--blue-500)" : "var(--ink-100)",
+                        borderRadius: "8px 8px 3px 3px",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </VelocityPlot>
+            <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
+              {buckets.map((b, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    textAlign: "center",
+                    font: `${b.items.length > 0 ? 500 : 400} 12px var(--font-mono)`,
+                    color: b.items.length > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
+                  }}
+                >
+                  {b.label}
                 </div>
-              );
-            })}
-          </VelocityPlot>
-          <div style={{ display: "flex", gap: 10, marginTop: 10, paddingLeft: axisWidth }}>
-            {buckets.map((b, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  textAlign: "center",
-                  font: `${b.items.length > 0 ? 500 : 400} 12px var(--font-mono)`,
-                  color: b.items.length > 0 ? "var(--text-primary)" : "var(--text-tertiary)",
-                }}
-              >
-                {b.label}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </Card>
       </div>
