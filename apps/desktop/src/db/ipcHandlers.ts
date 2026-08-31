@@ -79,6 +79,7 @@ interface ApplicationRow {
   resume_type: string;
   resume_text: string | null;
   cover_letter_submitted: number;
+  cover_letter_text: string | null;
   notes: string;
   status: string;
   logo: string;
@@ -250,6 +251,7 @@ function mapApplication(
     resumeType: row.resume_type as DsApplication["resumeType"],
     resumeText: row.resume_text ?? undefined,
     coverLetterSubmitted: !!row.cover_letter_submitted,
+    coverLetterText: row.cover_letter_text ?? undefined,
     notes: row.notes,
     status: row.status as ApplicationStatus,
     logo: row.logo,
@@ -329,8 +331,8 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         .prepare(
           `INSERT INTO applications
             (company_id, role, date_applied, link, job_description, referral, referred_by_contact_id, resume_type,
-             resume_text, cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             resume_text, cover_letter_submitted, cover_letter_text, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           app.companyId,
@@ -343,6 +345,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
           app.resumeType,
           app.resumeText ?? null,
           bool(app.coverLetterSubmitted),
+          app.coverLetterText ?? null,
           app.notes,
           app.status,
           app.logo,
@@ -361,7 +364,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     async editApplication(app: DsApplication) {
       db.prepare(
         `UPDATE applications SET company_id = ?, role = ?, date_applied = ?, link = ?, job_description = ?, referral = ?,
-          referred_by_contact_id = ?, resume_type = ?, resume_text = ?, cover_letter_submitted = ?, notes = ?, status = ?, logo = ?,
+          referred_by_contact_id = ?, resume_type = ?, resume_text = ?, cover_letter_submitted = ?, cover_letter_text = ?, notes = ?, status = ?, logo = ?,
           salary_min = ?, salary_max = ?, work_arrangement = ?, city = ?, state = ?, feedback_text = ?, feedback_date = ?
          WHERE id = ?`
       ).run(
@@ -375,6 +378,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         app.resumeType,
         app.resumeText ?? null,
         bool(app.coverLetterSubmitted),
+        app.coverLetterText ?? null,
         app.notes,
         app.status,
         app.logo,

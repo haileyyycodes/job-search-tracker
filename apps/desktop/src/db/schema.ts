@@ -97,6 +97,11 @@ function migrate(db: Database.Database): void {
   if (hasTable(db, "resume_files")) {
     db.exec("DROP TABLE resume_files;");
   }
+
+  // Pasted cover-letter text (added later).
+  if (!hasColumn(db, "applications", "cover_letter_text")) {
+    db.exec("ALTER TABLE applications ADD COLUMN cover_letter_text TEXT;");
+  }
 }
 
 function hasTable(db: Database.Database, table: string): boolean {

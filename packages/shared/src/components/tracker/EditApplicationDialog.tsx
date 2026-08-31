@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Dialog, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
+import { MAX_RICH_TEXT_CHARS } from "@/lib/richText";
 import { ApplicationFormFields, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
@@ -40,6 +41,7 @@ export function EditApplicationDialog({
     resumeType: app.resumeType,
     resumeText: app.resumeText ?? "",
     coverLetterSubmitted: app.coverLetterSubmitted,
+    coverLetterText: app.coverLetterText ?? "",
     notes: app.notes,
     salaryMin: app.salaryMin != null ? String(app.salaryMin) : "",
     salaryMax: app.salaryMax != null ? String(app.salaryMax) : "",
@@ -61,12 +63,13 @@ export function EditApplicationDialog({
       role: form.role.trim(),
       dateApplied,
       link: form.link.trim(),
-      jobDescription: form.description.trim(),
+      jobDescription: form.description.trim().slice(0, MAX_RICH_TEXT_CHARS),
       referral: form.referral,
       referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
       resumeType: form.resumeType as Application["resumeType"],
-      resumeText: form.resumeText.trim() || undefined,
+      resumeText: form.resumeText.trim().slice(0, MAX_RICH_TEXT_CHARS) || undefined,
       coverLetterSubmitted: form.coverLetterSubmitted,
+      coverLetterText: form.coverLetterText.trim().slice(0, MAX_RICH_TEXT_CHARS) || undefined,
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
       salaryMax: form.salaryMax.trim() ? Number(form.salaryMax) : undefined,

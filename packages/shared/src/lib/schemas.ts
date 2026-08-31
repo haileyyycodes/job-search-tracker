@@ -75,6 +75,7 @@ export const applicationSchema: z.ZodType<Application> = z.object({
   resumeType: resumeTypeSchema,
   resumeText: z.string().optional(),
   coverLetterSubmitted: z.boolean(),
+  coverLetterText: z.string().optional(),
   notes: z.string(),
   status: applicationStatusSchema,
   logo: z.string(),

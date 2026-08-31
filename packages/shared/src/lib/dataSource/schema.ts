@@ -54,6 +54,7 @@ CREATE TABLE applications (
   resume_type TEXT NOT NULL,
   resume_text TEXT,
   cover_letter_submitted INTEGER NOT NULL,
+  cover_letter_text TEXT,
   notes TEXT NOT NULL,
   status TEXT NOT NULL,
   logo TEXT NOT NULL,

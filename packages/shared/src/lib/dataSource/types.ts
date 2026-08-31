@@ -78,6 +78,7 @@ export interface DsApplication {
   resumeType: ResumeType;
   resumeText?: string;
   coverLetterSubmitted: boolean;
+  coverLetterText?: string;
   notes: string;
   status: ApplicationStatus;
   logo: string;

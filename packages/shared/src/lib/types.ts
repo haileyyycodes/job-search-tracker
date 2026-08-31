@@ -83,6 +83,8 @@ export interface Application {
   /** Free-text copy of the resume sent for this application, pasted by the user. */
   resumeText?: string;
   coverLetterSubmitted: boolean;
+  /** Free-text copy of the cover letter sent for this application, pasted by the user. */
+  coverLetterText?: string;
   notes: string;
   status: ApplicationStatus;
   logo: string;

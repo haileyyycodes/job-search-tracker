@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { ClipboardEvent, Dispatch, ReactNode, SetStateAction } from "react";
 import { Input, Select, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
 import { resumeTypeOptions } from "@/lib/data";
+import { htmlToMarkdown, MAX_RICH_TEXT_CHARS } from "@/lib/richText";
 import { ContactPicker } from "./ContactPicker";
 import { CompanyPicker } from "./CompanyPicker";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
@@ -29,6 +30,8 @@ export interface ApplicationFormValues {
   /** Free-text copy of the resume sent for this application, pasted by the user. */
   resumeText: string;
   coverLetterSubmitted: boolean;
+  /** Free-text copy of the cover letter sent for this application. */
+  coverLetterText: string;
   notes: string;
   salaryMin: string;
   salaryMax: string;
@@ -48,6 +51,7 @@ export const emptyApplicationForm: ApplicationFormValues = {
   resumeType: "",
   resumeText: "",
   coverLetterSubmitted: false,
+  coverLetterText: "",
   notes: "",
   salaryMin: "",
   salaryMax: "",
@@ -140,6 +144,23 @@ export function ApplicationFormFields({
 }: ApplicationFormFieldsProps) {
   const stacked = useStacked();
 
+  /** On a rich (HTML) paste, drop Markdown in at the cursor instead of raw markup;
+   * a plain-text paste falls through to the textarea's default behavior. */
+  const handleRichPaste =
+    (field: "description" | "resumeText" | "coverLetterText") => (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      const html = e.clipboardData.getData("text/html");
+      if (!html.trim()) return;
+      e.preventDefault();
+      const el = e.currentTarget;
+      const md = htmlToMarkdown(html);
+      // Keep block Markdown parseable: separate it from any text it lands next to.
+      const before = el.value.slice(0, el.selectionStart);
+      const prefix = before === "" || before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+      el.setRangeText(prefix + md, el.selectionStart, el.selectionEnd, "end");
+      const next = el.value.slice(0, MAX_RICH_TEXT_CHARS);
+      setForm((f) => ({ ...f, [field]: next }));
+    };
+
   const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
   const max = form.salaryMax.trim() ? Number(form.salaryMax) : undefined;
   const maxWithoutMin = max != null && min == null;
@@ -180,13 +201,14 @@ export function ApplicationFormFields({
             Job description
           </label>
           <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
-            Paste the posting here so you can reference it while you fill in the details.
+            Paste the posting here to reference it — formatting is kept as Markdown.
           </span>
         </div>
         <textarea
           placeholder="Paste the job description…"
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          onPaste={handleRichPaste("description")}
           style={{
             flex: 1,
             width: "100%",
@@ -320,8 +342,12 @@ export function ApplicationFormFields({
             rows={5}
             value={form.resumeText}
             onChange={(e) => setForm((f) => ({ ...f, resumeText: e.target.value }))}
+            onPaste={handleRichPaste("resumeText")}
             style={textareaStyle}
           />
+          <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", display: "block", marginTop: 4 }}>
+            Formatting is kept as Markdown.
+          </span>
         </div>
 
         <Switch
@@ -329,6 +355,21 @@ export function ApplicationFormFields({
           checked={form.coverLetterSubmitted}
           onChange={(checked) => setForm((f) => ({ ...f, coverLetterSubmitted: checked }))}
         />
+
+        <div>
+          <label style={fieldLabelStyle}>Cover letter</label>
+          <textarea
+            placeholder="Paste the cover letter you sent for this application…"
+            rows={5}
+            value={form.coverLetterText}
+            onChange={(e) => setForm((f) => ({ ...f, coverLetterText: e.target.value }))}
+            onPaste={handleRichPaste("coverLetterText")}
+            style={textareaStyle}
+          />
+          <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", display: "block", marginTop: 4 }}>
+            Formatting is kept as Markdown.
+          </span>
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Switch

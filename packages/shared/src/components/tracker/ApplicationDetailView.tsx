@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, Card, IconButton, StatusTag, statusDotColor, TextLink } from "@/components/ds";
 import { groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
@@ -13,6 +13,7 @@ import { formatResponseTime } from "@/lib/responseTime";
 import { getDaysSinceActivity } from "@/lib/funnel";
 import { todayFormatted } from "@/lib/date";
 import { isValidUrl } from "@/lib/validation";
+import { markdownToSafeHtml } from "@/lib/richText";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type {
   Application,
@@ -47,10 +48,24 @@ function Field({ label, value }: FieldProps) {
   );
 }
 
-/** Collapsed height for a long job description before "Expand" is offered. */
-const JOB_DESC_COLLAPSED_MAX = 220;
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div
+      style={{
+        font: "var(--text-caption)",
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: "var(--text-tertiary)",
+        margin: "20px 0 12px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
-function Caret({ up }: { up?: boolean }) {
+function ExternalLinkIcon() {
   return (
     <svg
       viewBox="0 0 16 16"
@@ -58,86 +73,147 @@ function Caret({ up }: { up?: boolean }) {
       height="12"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      style={{ marginLeft: 5, verticalAlign: "-1px" }}
     >
-      <path d={up ? "M4 10l4-4 4 4" : "M4 6l4 4 4-4"} />
+      <path d="M6.5 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-3" />
+      <path d="M10 2h4v4M13.5 2.5 7 9" />
     </svg>
   );
 }
 
-/** Long free-text card (job description, resume): clamps to a bounded height with
- * a fade, and offers a bottom-left expand/collapse toggle only when it overflows. */
-function CollapsibleTextCard({ title, text }: { title: string; text: string }) {
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [overflows, setOverflows] = useState(false);
+/** One row in the plain "Links & materials" list: an external link (href), an
+ * in-app opener (onOpen), or a muted placeholder when there's nothing yet. */
+function MaterialLink({ label, href, onOpen }: { label: string; href?: string; onOpen?: () => void }) {
+  return (
+    <div style={{ font: "var(--text-body-s)" }}>
+      {href ? (
+        <TextLink href={href} external>
+          {label}
+          <ExternalLinkIcon />
+        </TextLink>
+      ) : onOpen ? (
+        <TextLink onClick={onOpen}>{label}</TextLink>
+      ) : (
+        <TextLink disabled>{label} — not added</TextLink>
+      )}
+    </div>
+  );
+}
+
+/** Styles for the sanitized Markdown-rendered body, scoped to `.rich-text`. */
+const RICH_TEXT_CSS = `
+.rich-text { line-height: 1.55; }
+.rich-text > :first-child { margin-top: 0; }
+.rich-text > :last-child { margin-bottom: 0; }
+.rich-text h1, .rich-text h2, .rich-text h3, .rich-text h4 {
+  font-family: var(--font-display); color: var(--text-primary); margin: 16px 0 8px; line-height: 1.3;
+}
+.rich-text h1 { font-size: 17px; }
+.rich-text h2 { font-size: 15px; }
+.rich-text h3, .rich-text h4 { font-size: 13px; }
+.rich-text p { margin: 0 0 10px; }
+.rich-text ul, .rich-text ol { margin: 0 0 10px; padding-left: 22px; }
+.rich-text li { margin: 2px 0; }
+.rich-text strong { color: var(--text-primary); }
+.rich-text a { color: var(--accent-primary); text-decoration: underline; }
+.rich-text a:hover { color: var(--blue-700); }
+.rich-text code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; background: var(--bg-surface-sunken); padding: 1px 4px; border-radius: 4px; }
+.rich-text pre { background: var(--bg-surface-sunken); padding: 10px 12px; border-radius: var(--radius-s); overflow-x: auto; }
+.rich-text pre code { background: none; padding: 0; }
+.rich-text blockquote { margin: 0 0 10px; padding-left: 12px; border-left: 3px solid var(--border-default); color: var(--text-tertiary); }
+.rich-text hr { border: none; border-top: 1px solid var(--border-default); margin: 14px 0; }
+`;
+
+const FLYOUT_CSS = `
+@keyframes rt-flyout-scrim { from { opacity: 0 } to { opacity: 1 } }
+@keyframes rt-flyout-panel { from { transform: translateX(100%) } to { transform: translateX(0) } }
+`;
+
+/** Right-side flyout showing a stored Markdown field (job description, resume,
+ * cover letter), rendered to sanitized HTML client-side (plain-text fallback on
+ * first paint). Closes on scrim click or Escape. */
+function RichTextFlyout({ title, text, onClose }: { title: string; text: string; onClose: () => void }) {
+  const [html, setHtml] = useState<string | null>(null);
 
   useEffect(() => {
-    const el = bodyRef.current;
-    if (!el) return;
-    setOverflows(el.scrollHeight > JOB_DESC_COLLAPSED_MAX + 8);
+    const render = () => setHtml(markdownToSafeHtml(text));
+    render();
   }, [text]);
 
-  const clamped = overflows && !expanded;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
-    <Card padding="md">
-      <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
-        {title}
-      </div>
-      <div style={{ position: "relative" }}>
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        justifyContent: "flex-end",
+        background: "oklch(20% 0.02 250 / 0.35)",
+        animation: "rt-flyout-scrim var(--duration-fast) var(--ease-out)",
+      }}
+    >
+      <style>{FLYOUT_CSS}</style>
+      <style>{RICH_TEXT_CSS}</style>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 520,
+          maxWidth: "92vw",
+          height: "100%",
+          background: "var(--bg-surface)",
+          boxShadow: "var(--shadow-l)",
+          display: "flex",
+          flexDirection: "column",
+          animation: "rt-flyout-panel var(--duration-base) var(--ease-out)",
+        }}
+      >
         <div
-          ref={bodyRef}
           style={{
-            font: "var(--text-body-s)",
-            color: "var(--text-secondary)",
-            whiteSpace: "pre-wrap",
-            maxHeight: clamped ? JOB_DESC_COLLAPSED_MAX : undefined,
-            overflow: clamped ? "hidden" : undefined,
-          }}
-        >
-          {text}
-        </div>
-        {clamped && (
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 56,
-              background: "linear-gradient(to bottom, transparent, var(--bg-surface))",
-            }}
-          />
-        )}
-      </div>
-      {overflows && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          style={{
-            marginTop: 12,
-            display: "inline-flex",
+            padding: "18px 20px",
+            borderBottom: "1px solid var(--border-default)",
+            display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: 6,
-            background: "none",
-            border: "none",
-            padding: 0,
-            font: "var(--text-body-s)",
-            fontWeight: 600,
-            color: "var(--accent-primary)",
-            cursor: "pointer",
+            flexShrink: 0,
           }}
         >
-          <Caret up={expanded} />
-          {expanded ? "Collapse" : "Expand"}
-        </button>
-      )}
-    </Card>
+          <h3 style={{ font: "var(--text-heading-m)", margin: 0, color: "var(--text-primary)" }}>{title}</h3>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: "none", border: "none", fontSize: 16, color: "var(--text-tertiary)", cursor: "pointer" }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 20 }}>
+          {html != null ? (
+            <div
+              className="rich-text"
+              style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          ) : (
+            <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
+              {text}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -200,6 +276,9 @@ export function ApplicationDetailView({
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [jobDescOpen, setJobDescOpen] = useState(false);
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
 
   if (!app) return null;
 
@@ -296,25 +375,41 @@ export function ApplicationDetailView({
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: "2 1 0%", minWidth: 0 }}>
         <Card padding="md">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 16,
+                paddingBottom: 18,
+                borderBottom: "1px solid var(--border-default)",
+              }}
+            >
               <Field label="Date applied" value={app.dateApplied} />
               <Field label="Response time" value={formatResponseTime(app)} />
+            </div>
+
+            <SectionLabel>Role details</SectionLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <Field label="Location" value={formatLocation(app) || undefined} />
               <Field
-                label="Application link"
+                label="Salary band"
                 value={
-                  app.link ? (
-                    isValidUrl(app.link) ? (
-                      <TextLink href={app.link} external>
-                        View posting
-                      </TextLink>
-                    ) : (
-                      app.link
-                    )
-                  ) : (
-                    "—"
-                  )
+                  formatSalaryRange(app.salaryMin, app.salaryMax) ? (
+                    (() => {
+                      const match = getSalaryMatch(app, goals);
+                      const color = salaryMatchColor(match);
+                      const label = salaryMatchLabel(match);
+                      return (
+                        <span style={{ color }}>
+                          {formatSalaryRange(app.salaryMin, app.salaryMax)}
+                          {label ? ` — ${label}` : ""}
+                        </span>
+                      );
+                    })()
+                  ) : undefined
                 }
               />
+              <Field label="Resume type" value={resumeTypeLabels[app.resumeType]} />
               <Field
                 label="Referral"
                 value={
@@ -335,30 +430,24 @@ export function ApplicationDetailView({
                   )
                 }
               />
-              <Field label="Resume type" value={resumeTypeLabels[app.resumeType]} />
-              <Field label="Cover letter submitted" value={app.coverLetterSubmitted ? "Yes" : "No"} />
-              <Field label="Location" value={formatLocation(app) || undefined} />
-              <Field
-                label="Salary band"
-                value={
-                  formatSalaryRange(app.salaryMin, app.salaryMax) ? (
-                    (() => {
-                      const match = getSalaryMatch(app, goals);
-                      const color = salaryMatchColor(match);
-                      const label = salaryMatchLabel(match);
-                      return (
-                        <span style={{ color }}>
-                          {formatSalaryRange(app.salaryMin, app.salaryMax)}
-                          {label ? ` — ${label}` : ""}
-                        </span>
-                      );
-                    })()
-                  ) : undefined
-                }
+            </div>
+
+            <SectionLabel>Links &amp; materials</SectionLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <MaterialLink label="Job posting" href={app.link && isValidUrl(app.link) ? app.link : undefined} />
+              <MaterialLink
+                label="Job description"
+                onOpen={app.jobDescription ? () => setJobDescOpen(true) : undefined}
+              />
+              <MaterialLink label="Resume" onOpen={app.resumeText ? () => setResumeOpen(true) : undefined} />
+              <MaterialLink
+                label="Cover letter"
+                onOpen={app.coverLetterText ? () => setCoverLetterOpen(true) : undefined}
               />
             </div>
+
             {app.notes && (
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-default)" }}>
+              <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid var(--border-default)" }}>
                 <Field label="Notes" value={app.notes} />
               </div>
             )}
@@ -383,8 +472,6 @@ export function ApplicationDetailView({
               )}
             </Card>
           )}
-          {app.jobDescription && <CollapsibleTextCard title="Job description" text={app.jobDescription} />}
-          {app.resumeText && <CollapsibleTextCard title="Resume" text={app.resumeText} />}
           <Card padding="md">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>
@@ -707,6 +794,15 @@ export function ApplicationDetailView({
           setFeedbackDialogOpen(false);
         }}
       />
+    )}
+    {jobDescOpen && app.jobDescription && (
+      <RichTextFlyout title="Job description" text={app.jobDescription} onClose={() => setJobDescOpen(false)} />
+    )}
+    {resumeOpen && app.resumeText && (
+      <RichTextFlyout title="Resume" text={app.resumeText} onClose={() => setResumeOpen(false)} />
+    )}
+    {coverLetterOpen && app.coverLetterText && (
+      <RichTextFlyout title="Cover letter" text={app.coverLetterText} onClose={() => setCoverLetterOpen(false)} />
     )}
     </>
   );
