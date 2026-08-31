@@ -40,7 +40,6 @@ export function EditApplicationDialog({
     referredByContactId: app.referredByContactId != null ? String(app.referredByContactId) : "",
     resumeType: app.resumeType,
     resumeText: app.resumeText ?? "",
-    coverLetterSubmitted: app.coverLetterSubmitted,
     coverLetterText: app.coverLetterText ?? "",
     notes: app.notes,
     salaryMin: app.salaryMin != null ? String(app.salaryMin) : "",
@@ -57,6 +56,8 @@ export function EditApplicationDialog({
     if (!isApplicationFormValid(form, requireDateApplied)) return;
 
     const dateApplied = form.dateApplied ? formatDateInput(form.dateApplied) : "";
+    // "Cover letter submitted" is derived from whether a cover letter was written.
+    const coverLetterText = form.coverLetterText.trim().slice(0, MAX_RICH_TEXT_CHARS);
     onSave({
       ...app,
       companyId: Number(form.companyId),
@@ -68,8 +69,8 @@ export function EditApplicationDialog({
       referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
       resumeType: form.resumeType as Application["resumeType"],
       resumeText: form.resumeText.trim().slice(0, MAX_RICH_TEXT_CHARS) || undefined,
-      coverLetterSubmitted: form.coverLetterSubmitted,
-      coverLetterText: form.coverLetterText.trim().slice(0, MAX_RICH_TEXT_CHARS) || undefined,
+      coverLetterText: coverLetterText || undefined,
+      coverLetterSubmitted: coverLetterText.length > 0,
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
       salaryMax: form.salaryMax.trim() ? Number(form.salaryMax) : undefined,
