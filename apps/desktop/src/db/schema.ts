@@ -89,20 +89,13 @@ function migrate(db: Database.Database): void {
     `);
   }
 
-  // Resume file storage (added later). Any DB from before this never gets the
-  // table otherwise, and useTrackerData's boot-time load fails the first time it
-  // reads an application's resume metadata.
-  if (!hasTable(db, "resume_files")) {
-    db.exec(`
-      CREATE TABLE resume_files (
-        application_id INTEGER PRIMARY KEY REFERENCES applications(id) ON DELETE CASCADE,
-        name TEXT NOT NULL,
-        mime_type TEXT NOT NULL,
-        size INTEGER NOT NULL,
-        content BLOB NOT NULL,
-        uploaded_at TEXT NOT NULL
-      );
-    `);
+  // Pasted resume text (added later). Replaces an earlier file-upload attempt —
+  // drop that table if a DB still has it.
+  if (!hasColumn(db, "applications", "resume_text")) {
+    db.exec("ALTER TABLE applications ADD COLUMN resume_text TEXT;");
+  }
+  if (hasTable(db, "resume_files")) {
+    db.exec("DROP TABLE resume_files;");
   }
 }
 

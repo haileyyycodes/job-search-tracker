@@ -51,6 +51,7 @@ export interface Seed {
     referral: boolean;
     referredByContactId?: string;
     resumeType: ResumeType;
+    resumeText?: string;
     coverLetterSubmitted: boolean;
     notes: string;
     status: ApplicationStatus;

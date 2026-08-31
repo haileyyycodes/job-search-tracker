@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { ChangeEvent, Dispatch, ReactNode, SetStateAction } from "react";
-import { Button, Input, Select, Switch } from "@/components/ds";
+import { useEffect, useState } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
+import { Input, Select, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
 import { resumeTypeOptions } from "@/lib/data";
-import { formatFileSize } from "@/lib/resumeFile";
-import { validateResumeFile } from "@/lib/resumeUpload";
-import { RESUME_UPLOAD_ENABLED } from "@/lib/featureFlags";
 import { ContactPicker } from "./ContactPicker";
 import { CompanyPicker } from "./CompanyPicker";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
-import type { Company, Contact, ResumeFile, ResumeType, WorkArrangement } from "@/lib/types";
+import type { Company, Contact, ResumeType, WorkArrangement } from "@/lib/types";
 
 const workArrangementOptions: SelectOption[] = [
   { value: "onsite", label: "Onsite" },
@@ -29,13 +26,8 @@ export interface ApplicationFormValues {
   referral: boolean;
   referredByContactId: string;
   resumeType: ResumeType | "";
-  /** The attached resume file, validated and base64-encoded, ready to persist via
-   * `setResumeFile`. `null` when nothing is attached. Populated with metadata only
-   * (`data: ""`) when editing an application that already has a stored file and
-   * the user hasn't picked a new one. */
-  resumeFile: ResumeFile | null;
-  /** Client-side validation message for the last rejected pick, if any. */
-  resumeFileError: string;
+  /** Free-text copy of the resume sent for this application, pasted by the user. */
+  resumeText: string;
   coverLetterSubmitted: boolean;
   notes: string;
   salaryMin: string;
@@ -54,8 +46,7 @@ export const emptyApplicationForm: ApplicationFormValues = {
   referral: false,
   referredByContactId: "",
   resumeType: "",
-  resumeFile: null,
-  resumeFileError: "",
+  resumeText: "",
   coverLetterSubmitted: false,
   notes: "",
   salaryMin: "",
@@ -131,18 +122,6 @@ function useStacked(): boolean {
   return stacked;
 }
 
-/** Resume-file storage is desktop-only (real persistence). Read deferred to a
- * post-mount effect to avoid an SSR/hydration mismatch — server and first client
- * render assume the web demo, then this upgrades if we're in Electron. */
-function useIsDesktop(): boolean {
-  const [desktop, setDesktop] = useState(false);
-  useEffect(() => {
-    const detect = () => setDesktop(typeof window !== "undefined" && !!window.electronAPI);
-    detect();
-  }, []);
-  return desktop;
-}
-
 /**
  * Field set shared between AddApplicationDialog and EditApplicationDialog. Renders the
  * dialog's whole body: a left reference panel for the job description (with live word
@@ -159,24 +138,7 @@ export function ApplicationFormFields({
   onCreateCompany,
   leadingField,
 }: ApplicationFormFieldsProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const stacked = useStacked();
-  const isDesktop = useIsDesktop();
-  // Feature-flagged for now: the control still renders (disabled) everywhere, but
-  // upload/storage only works in the desktop build once the flag is on.
-  const resumeUploadAvailable = RESUME_UPLOAD_ENABLED && isDesktop;
-
-  const handleResumePick = async (e: ChangeEvent<HTMLInputElement>) => {
-    const picked = e.target.files?.[0];
-    e.target.value = ""; // allow re-picking the same file after an error
-    if (!picked) return;
-    const result = await validateResumeFile(picked);
-    if (result.ok) {
-      setForm((f) => ({ ...f, resumeFile: result.file, resumeFileError: "" }));
-    } else {
-      setForm((f) => ({ ...f, resumeFile: null, resumeFileError: result.error }));
-    }
-  };
 
   const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
   const max = form.salaryMax.trim() ? Number(form.salaryMax) : undefined;
@@ -342,80 +304,23 @@ export function ApplicationFormFields({
           />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div style={{ minWidth: 0 }}>
-            <label style={fieldLabelStyle}>Resume</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleResumePick}
-              style={{
-                position: "absolute",
-                width: 1,
-                height: 1,
-                padding: 0,
-                margin: -1,
-                overflow: "hidden",
-                clip: "rect(0 0 0 0)",
-                whiteSpace: "nowrap",
-                border: 0,
-              }}
-            />
-            <Button
-              variant="secondary"
-              size="md"
-              disabled={!resumeUploadAvailable}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {form.resumeFile ? "Replace file" : "Choose file"}
-            </Button>
-            <span
-              style={{
-                font: "var(--text-caption)",
-                color: form.resumeFileError ? "var(--red-600)" : "var(--text-tertiary)",
-                display: "block",
-                marginTop: 6,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {!RESUME_UPLOAD_ENABLED
-                ? "Resume upload isn’t available yet."
-                : !isDesktop
-                  ? "Resume upload is only available in the desktop app."
-                  : form.resumeFileError
-                    ? form.resumeFileError
-                    : form.resumeFile
-                      ? `${form.resumeFile.name} · ${formatFileSize(form.resumeFile.size)}`
-                      : "PDF or Word (.pdf, .doc, .docx), up to 2 MB."}
-            </span>
-            {resumeUploadAvailable && form.resumeFile && (
-              <button
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, resumeFile: null, resumeFileError: "" }))}
-                style={{
-                  marginTop: 4,
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  font: "var(--text-caption)",
-                  color: "var(--accent-primary)",
-                  cursor: "pointer",
-                }}
-              >
-                Remove
-              </button>
-            )}
-          </div>
-          <Select
-            label="Resume version"
-            value={form.resumeType}
-            options={resumeTypeOptions}
-            onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
-            placeholder="Choose one"
-            error={submitted && !form.resumeType ? "Required" : undefined}
+        <Select
+          label="Resume version"
+          value={form.resumeType}
+          options={resumeTypeOptions}
+          onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
+          placeholder="Choose one"
+          error={submitted && !form.resumeType ? "Required" : undefined}
+        />
+
+        <div>
+          <label style={fieldLabelStyle}>Resume</label>
+          <textarea
+            placeholder="Paste the resume text you sent for this application…"
+            rows={5}
+            value={form.resumeText}
+            onChange={(e) => setForm((f) => ({ ...f, resumeText: e.target.value }))}
+            style={textareaStyle}
           />
         </div>
 

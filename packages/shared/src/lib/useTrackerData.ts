@@ -27,7 +27,6 @@ import type {
   Interview,
   InterviewPrepQuestion,
   NetworkingEvent,
-  ResumeFile,
   UserProfile,
 } from "./types";
 
@@ -341,15 +340,6 @@ const saveFeedback = (appId: number, feedback: Feedback): Promise<void> => {
   return withRollback(() => dataSource.saveFeedback(appId, feedback));
 };
 
-/** Desktop-only. Fetches the stored resume bytes on demand (not part of app state). */
-const getResumeFile = (appId: number): Promise<ResumeFile | null> => dataSource.getResumeFile(appId);
-
-const setResumeFile = (appId: number, file: ResumeFile | null): Promise<void> => {
-  const meta = file ? { name: file.name, mimeType: file.mimeType, size: file.size } : undefined;
-  setState((prev) => ({ ...prev, apps: prev.apps.map((a) => (a.id === appId ? { ...a, resumeFile: meta } : a)) }));
-  return withRollback(() => dataSource.setResumeFile(appId, file));
-};
-
 const deleteInterview = (appId: number, interviewId: number): Promise<void> => {
   setState((prev) => ({
     ...prev,
@@ -536,8 +526,6 @@ const actions = {
   logFollowUp,
   editApplication,
   saveFeedback,
-  getResumeFile,
-  setResumeFile,
   deleteInterview,
   deleteFollowUp,
   deleteApplication,

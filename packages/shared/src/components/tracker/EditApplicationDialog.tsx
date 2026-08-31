@@ -7,13 +7,12 @@ import { ApplicationFormFields, isApplicationFormValid } from "./ApplicationForm
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
-import type { Application, Company, Contact, ResumeFile } from "@/lib/types";
+import type { Application, Company, Contact } from "@/lib/types";
 
 interface EditApplicationDialogProps {
   app: Application;
   onClose: () => void;
   onSave: (updated: Application) => void;
-  onSetResumeFile: (applicationId: number, file: ResumeFile | null) => Promise<void>;
   contacts: Contact[];
   onCreateContact: (contact: NewContact) => Promise<Contact>;
   companies: Company[];
@@ -25,7 +24,6 @@ export function EditApplicationDialog({
   app,
   onClose,
   onSave,
-  onSetResumeFile,
   contacts,
   onCreateContact,
   companies,
@@ -40,9 +38,7 @@ export function EditApplicationDialog({
     referral: app.referral,
     referredByContactId: app.referredByContactId != null ? String(app.referredByContactId) : "",
     resumeType: app.resumeType,
-    // Metadata only — no bytes until the user picks a new file.
-    resumeFile: app.resumeFile ? { ...app.resumeFile, data: "" } : null,
-    resumeFileError: "",
+    resumeText: app.resumeText ?? "",
     coverLetterSubmitted: app.coverLetterSubmitted,
     notes: app.notes,
     salaryMin: app.salaryMin != null ? String(app.salaryMin) : "",
@@ -54,7 +50,7 @@ export function EditApplicationDialog({
   const [submitted, setSubmitted] = useState(false);
   const requireDateApplied = app.status !== "todo";
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setSubmitted(true);
     if (!isApplicationFormValid(form, requireDateApplied)) return;
 
@@ -69,6 +65,7 @@ export function EditApplicationDialog({
       referral: form.referral,
       referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
       resumeType: form.resumeType as Application["resumeType"],
+      resumeText: form.resumeText.trim() || undefined,
       coverLetterSubmitted: form.coverLetterSubmitted,
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
@@ -78,18 +75,6 @@ export function EditApplicationDialog({
       state: form.state.trim() || undefined,
       logo: companyName(Number(form.companyId), companies).charAt(0).toUpperCase() || app.logo,
     });
-
-    try {
-      if (form.resumeFile?.data) {
-        // A new file was picked this session.
-        await onSetResumeFile(app.id, form.resumeFile);
-      } else if (form.resumeFile === null && app.resumeFile) {
-        // The existing file was removed.
-        await onSetResumeFile(app.id, null);
-      }
-    } catch {
-      // Scalar edits saved; only the file attachment failed.
-    }
   };
 
   return (

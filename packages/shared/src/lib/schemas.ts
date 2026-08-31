@@ -73,7 +73,7 @@ export const applicationSchema: z.ZodType<Application> = z.object({
   referral: z.boolean(),
   referredByContactId: z.number().optional(),
   resumeType: resumeTypeSchema,
-  resumeFile: z.object({ name: z.string(), mimeType: z.string(), size: z.number() }).optional(),
+  resumeText: z.string().optional(),
   coverLetterSubmitted: z.boolean(),
   notes: z.string(),
   status: applicationStatusSchema,

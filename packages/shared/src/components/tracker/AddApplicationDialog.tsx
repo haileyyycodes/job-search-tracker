@@ -7,13 +7,12 @@ import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } f
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
 import type { NewApplication, NewCompany, NewContact } from "@/lib/dataSource/types";
-import type { Application, Company, Contact, ResumeFile } from "@/lib/types";
+import type { Application, Company, Contact } from "@/lib/types";
 
 interface AddApplicationDialogProps {
   open: boolean;
   onClose: () => void;
   onAdd: (app: NewApplication) => Promise<Application>;
-  onSetResumeFile: (applicationId: number, file: ResumeFile | null) => Promise<void>;
   contacts: Contact[];
   onCreateContact: (contact: NewContact) => Promise<Contact>;
   companies: Company[];
@@ -29,7 +28,6 @@ export function AddApplicationDialog({
   open,
   onClose,
   onAdd,
-  onSetResumeFile,
   contacts,
   onCreateContact,
   companies,
@@ -61,6 +59,7 @@ export function AddApplicationDialog({
       referral: form.referral,
       referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
       resumeType: form.resumeType as NewApplication["resumeType"],
+      resumeText: form.resumeText.trim() || undefined,
       coverLetterSubmitted: form.coverLetterSubmitted,
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
@@ -74,14 +73,7 @@ export function AddApplicationDialog({
         status === "todo" ? [{ status: "todo", at: todayFormatted() }] : [{ status: "applied", at: dateApplied }],
     };
 
-    const created = await onAdd(newApp);
-    if (form.resumeFile) {
-      try {
-        await onSetResumeFile(created.id, form.resumeFile);
-      } catch {
-        // The application saved; only the file attachment failed. Don't block the close.
-      }
-    }
+    await onAdd(newApp);
     resetAndClose();
   };
 

@@ -1,7 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-/** Must match the channel names ipcHandlers.ts registers exactly. */
-const ALLOWED_CHANNELS = new Set([
+/** Must match the channel names ipcHandlers.ts registers exactly
+ * (enforced by ipcChannels.test.ts). */
+export const ALLOWED_CHANNELS = new Set([
   "applications:list",
   "applications:create",
   "applications:edit",

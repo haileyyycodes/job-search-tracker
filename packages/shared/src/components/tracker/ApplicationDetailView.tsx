@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, Card, IconButton, StatusTag, statusDotColor, TextLink } from "@/components/ds";
 import { groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
@@ -13,9 +13,6 @@ import { formatResponseTime } from "@/lib/responseTime";
 import { getDaysSinceActivity } from "@/lib/funnel";
 import { todayFormatted } from "@/lib/date";
 import { isValidUrl } from "@/lib/validation";
-import { formatFileSize } from "@/lib/resumeFile";
-import { downloadResumeFile } from "@/lib/resumeUpload";
-import { RESUME_UPLOAD_ENABLED } from "@/lib/featureFlags";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type {
   Application,
@@ -27,7 +24,6 @@ import type {
   Goals,
   Interview,
   NetworkingEvent,
-  ResumeFile,
 } from "@/lib/types";
 
 const rejectionStatuses: ApplicationStatus[] = ["rejected_no_interview", "rejected_after_interview"];
@@ -51,61 +47,97 @@ function Field({ label, value }: FieldProps) {
   );
 }
 
-/** "Resume" detail field: shows the stored file's name + size and a Download link
- * that fetches the bytes on demand. Renders "—" when nothing is attached. */
-function ResumeField({
-  app,
-  onGetResumeFile,
-}: {
-  app: Application;
-  onGetResumeFile: (applicationId: number) => Promise<ResumeFile | null>;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+/** Collapsed height for a long job description before "Expand" is offered. */
+const JOB_DESC_COLLAPSED_MAX = 220;
 
-  if (!RESUME_UPLOAD_ENABLED || !app.resumeFile) return <Field label="Resume" value={undefined} />;
+function Caret({ up }: { up?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      width="12"
+      height="12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={up ? "M4 10l4-4 4 4" : "M4 6l4 4 4-4"} />
+    </svg>
+  );
+}
 
-  const download = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const file = await onGetResumeFile(app.id);
-      if (file) downloadResumeFile(file, file.data);
-      else setError("File not found.");
-    } catch {
-      setError("Couldn't download the file.");
-    } finally {
-      setBusy(false);
-    }
-  };
+/** Long free-text card (job description, resume): clamps to a bounded height with
+ * a fade, and offers a bottom-left expand/collapse toggle only when it overflows. */
+function CollapsibleTextCard({ title, text }: { title: string; text: string }) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    setOverflows(el.scrollHeight > JOB_DESC_COLLAPSED_MAX + 8);
+  }, [text]);
+
+  const clamped = overflows && !expanded;
 
   return (
-    <div>
-      <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginBottom: 2 }}>Resume</div>
-      <div style={{ font: "var(--text-body-s)", fontWeight: 600, color: "var(--text-primary)" }}>
-        {app.resumeFile.name} · {formatFileSize(app.resumeFile.size)}
+    <Card padding="md">
+      <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
+        {title}
       </div>
-      <button
-        type="button"
-        onClick={download}
-        disabled={busy}
-        style={{
-          marginTop: 2,
-          background: "none",
-          border: "none",
-          padding: 0,
-          font: "var(--text-caption)",
-          fontWeight: 600,
-          color: "var(--accent-primary)",
-          cursor: busy ? "default" : "pointer",
-        }}
-      >
-        {busy ? "Downloading…" : "Download"}
-      </button>
-      {error && (
-        <div style={{ font: "var(--text-caption)", color: "var(--red-600)", marginTop: 2 }}>{error}</div>
+      <div style={{ position: "relative" }}>
+        <div
+          ref={bodyRef}
+          style={{
+            font: "var(--text-body-s)",
+            color: "var(--text-secondary)",
+            whiteSpace: "pre-wrap",
+            maxHeight: clamped ? JOB_DESC_COLLAPSED_MAX : undefined,
+            overflow: clamped ? "hidden" : undefined,
+          }}
+        >
+          {text}
+        </div>
+        {clamped && (
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 56,
+              background: "linear-gradient(to bottom, transparent, var(--bg-surface))",
+            }}
+          />
+        )}
+      </div>
+      {overflows && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            marginTop: 12,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "none",
+            border: "none",
+            padding: 0,
+            font: "var(--text-body-s)",
+            fontWeight: 600,
+            color: "var(--accent-primary)",
+            cursor: "pointer",
+          }}
+        >
+          <Caret up={expanded} />
+          {expanded ? "Collapse" : "Expand"}
+        </button>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -127,8 +159,6 @@ interface ApplicationDetailViewProps {
   onEditInterview: (appId: number, interviewId: number, updates: Omit<Interview, "id">) => void;
   onLogFollowUp: (appId: number, followUp: Omit<FollowUp, "id">) => void;
   onEditApplication: (updated: Application) => void;
-  onSetResumeFile: (applicationId: number, file: ResumeFile | null) => Promise<void>;
-  onGetResumeFile: (applicationId: number) => Promise<ResumeFile | null>;
   onRequestDelete: (app: Application) => void;
   onDeleteInterview: (appId: number, interviewId: number) => void;
   onDeleteFollowUp: (appId: number, followUpId: number) => void;
@@ -156,8 +186,6 @@ export function ApplicationDetailView({
   onEditInterview,
   onLogFollowUp,
   onEditApplication,
-  onSetResumeFile,
-  onGetResumeFile,
   onRequestDelete,
   onDeleteInterview,
   onDeleteFollowUp,
@@ -307,7 +335,6 @@ export function ApplicationDetailView({
                   )
                 }
               />
-              <ResumeField app={app} onGetResumeFile={onGetResumeFile} />
               <Field label="Resume type" value={resumeTypeLabels[app.resumeType]} />
               <Field label="Cover letter submitted" value={app.coverLetterSubmitted ? "Yes" : "No"} />
               <Field label="Location" value={formatLocation(app) || undefined} />
@@ -356,16 +383,8 @@ export function ApplicationDetailView({
               )}
             </Card>
           )}
-          {app.jobDescription && (
-            <Card padding="md">
-              <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)", marginBottom: 14 }}>
-                Job description
-              </div>
-              <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
-                {app.jobDescription}
-              </div>
-            </Card>
-          )}
+          {app.jobDescription && <CollapsibleTextCard title="Job description" text={app.jobDescription} />}
+          {app.resumeText && <CollapsibleTextCard title="Resume" text={app.resumeText} />}
           <Card padding="md">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ font: "700 15px var(--font-display)", color: "var(--text-primary)" }}>
@@ -677,7 +696,6 @@ export function ApplicationDetailView({
           onEditApplication(updated);
           setEditDialogOpen(false);
         }}
-        onSetResumeFile={onSetResumeFile}
       />
     )}
     {feedbackDialogOpen && (

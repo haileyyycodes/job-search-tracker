@@ -23,7 +23,6 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-  type ResumeFile,
 } from "./types";
 
 function isForeignKeyError(err: unknown): boolean {
@@ -90,6 +89,7 @@ interface ApplicationRow {
   referral: number;
   referred_by_contact_id: number | null;
   resume_type: string;
+  resume_text: string | null;
   cover_letter_submitted: number;
   notes: string;
   status: string;
@@ -260,6 +260,7 @@ function mapApplication(
     referral: !!row.referral,
     referredByContactId: row.referred_by_contact_id ?? undefined,
     resumeType: row.resume_type as DsApplication["resumeType"],
+    resumeText: row.resume_text ?? undefined,
     coverLetterSubmitted: !!row.cover_letter_submitted,
     notes: row.notes,
     status: row.status as ApplicationStatus,
@@ -347,9 +348,9 @@ export class WasmDataSource implements DataSource {
       db.run(
         `INSERT INTO applications
           (company_id, role, date_applied, link, job_description, referral, referred_by_contact_id, resume_type,
-           cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state,
+           resume_text, cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state,
            feedback_text, feedback_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           companyIdMap.get(a.companyId)!,
           a.role,
@@ -359,6 +360,7 @@ export class WasmDataSource implements DataSource {
           bool(a.referral),
           a.referredByContactId !== undefined ? contactIdMap.get(a.referredByContactId)! : null,
           a.resumeType,
+          a.resumeText ?? null,
           bool(a.coverLetterSubmitted),
           a.notes,
           a.status,
@@ -522,8 +524,8 @@ export class WasmDataSource implements DataSource {
     db.run(
       `INSERT INTO applications
         (company_id, role, date_applied, link, job_description, referral, referred_by_contact_id, resume_type,
-         cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         resume_text, cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         app.companyId,
         app.role,
@@ -533,6 +535,7 @@ export class WasmDataSource implements DataSource {
         bool(app.referral),
         app.referredByContactId ?? null,
         app.resumeType,
+        app.resumeText ?? null,
         bool(app.coverLetterSubmitted),
         app.notes,
         app.status,
@@ -556,7 +559,7 @@ export class WasmDataSource implements DataSource {
     const db = await this.ready;
     db.run(
       `UPDATE applications SET company_id = ?, role = ?, date_applied = ?, link = ?, job_description = ?, referral = ?,
-        referred_by_contact_id = ?, resume_type = ?, cover_letter_submitted = ?, notes = ?, status = ?, logo = ?,
+        referred_by_contact_id = ?, resume_type = ?, resume_text = ?, cover_letter_submitted = ?, notes = ?, status = ?, logo = ?,
         salary_min = ?, salary_max = ?, work_arrangement = ?, city = ?, state = ?, feedback_text = ?, feedback_date = ?
        WHERE id = ?`,
       [
@@ -568,6 +571,7 @@ export class WasmDataSource implements DataSource {
         bool(app.referral),
         app.referredByContactId ?? null,
         app.resumeType,
+        app.resumeText ?? null,
         bool(app.coverLetterSubmitted),
         app.notes,
         app.status,
@@ -598,17 +602,6 @@ export class WasmDataSource implements DataSource {
   async saveFeedback(appId: number, feedback: Feedback): Promise<void> {
     const db = await this.ready;
     db.run("UPDATE applications SET feedback_text = ?, feedback_date = ? WHERE id = ?", [feedback.text, feedback.date, appId]);
-  }
-
-  // Resume-file storage is a desktop-only feature (real, persistent SQLite). The
-  // in-browser demo has no persistence, so it just reports "nothing attached"
-  // and refuses writes; the UI disables the upload control here anyway.
-  async getResumeFile(): Promise<ResumeFile | null> {
-    return null;
-  }
-
-  async setResumeFile(): Promise<void> {
-    throw new Error("Resume upload is only available in the desktop app.");
   }
 
   // ---- interviews ----

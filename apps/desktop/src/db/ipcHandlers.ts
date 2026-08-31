@@ -22,9 +22,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-  type ResumeFile,
 } from "../../../../packages/shared/src/lib/dataSource/types";
-import { assertValidResumeBytes } from "../../../../packages/shared/src/lib/resumeFile";
 
 /**
  * SQLite enforces FK actions (including RESTRICT) via internal triggers when
@@ -79,6 +77,7 @@ interface ApplicationRow {
   referral: number;
   referred_by_contact_id: number | null;
   resume_type: string;
+  resume_text: string | null;
   cover_letter_submitted: number;
   notes: string;
   status: string;
@@ -113,14 +112,6 @@ interface StatusHistoryRow {
   application_id: number;
   status: string;
   at: string;
-}
-interface ResumeFileMetaRow {
-  name: string;
-  mime_type: string;
-  size: number;
-}
-interface ResumeFileContentRow extends ResumeFileMetaRow {
-  content: Buffer;
 }
 interface NetworkingEventRow {
   id: number;
@@ -257,6 +248,7 @@ function mapApplication(
     referral: !!row.referral,
     referredByContactId: row.referred_by_contact_id ?? undefined,
     resumeType: row.resume_type as DsApplication["resumeType"],
+    resumeText: row.resume_text ?? undefined,
     coverLetterSubmitted: !!row.cover_letter_submitted,
     notes: row.notes,
     status: row.status as ApplicationStatus,
@@ -293,12 +285,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     const statusHistory = db
       .prepare<[number], StatusHistoryRow>("SELECT * FROM status_history WHERE application_id = ? ORDER BY id")
       .all(row.id);
-    const app = mapApplication(row, interviews, followUps, statusHistory);
-    const resume = db
-      .prepare<[number], ResumeFileMetaRow>("SELECT name, mime_type, size FROM resume_files WHERE application_id = ?")
-      .get(row.id);
-    if (resume) app.resumeFile = { name: resume.name, mimeType: resume.mime_type, size: resume.size };
-    return app;
+    return mapApplication(row, interviews, followUps, statusHistory);
   }
 
   function composeCompany(row: CompanyRow): DsCompany {
@@ -342,8 +329,8 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         .prepare(
           `INSERT INTO applications
             (company_id, role, date_applied, link, job_description, referral, referred_by_contact_id, resume_type,
-             cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             resume_text, cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           app.companyId,
@@ -354,6 +341,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
           bool(app.referral),
           app.referredByContactId ?? null,
           app.resumeType,
+          app.resumeText ?? null,
           bool(app.coverLetterSubmitted),
           app.notes,
           app.status,
@@ -373,7 +361,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     async editApplication(app: DsApplication) {
       db.prepare(
         `UPDATE applications SET company_id = ?, role = ?, date_applied = ?, link = ?, job_description = ?, referral = ?,
-          referred_by_contact_id = ?, resume_type = ?, cover_letter_submitted = ?, notes = ?, status = ?, logo = ?,
+          referred_by_contact_id = ?, resume_type = ?, resume_text = ?, cover_letter_submitted = ?, notes = ?, status = ?, logo = ?,
           salary_min = ?, salary_max = ?, work_arrangement = ?, city = ?, state = ?, feedback_text = ?, feedback_date = ?
          WHERE id = ?`
       ).run(
@@ -385,6 +373,7 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         bool(app.referral),
         app.referredByContactId ?? null,
         app.resumeType,
+        app.resumeText ?? null,
         bool(app.coverLetterSubmitted),
         app.notes,
         app.status,
@@ -415,40 +404,6 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         feedback.date,
         appId
       );
-    },
-
-    async getResumeFile(applicationId: number): Promise<ResumeFile | null> {
-      requireRow<ApplicationRow>("SELECT id FROM applications WHERE id = ?", applicationId, "Application");
-      const row = db
-        .prepare<[number], ResumeFileContentRow>(
-          "SELECT name, mime_type, size, content FROM resume_files WHERE application_id = ?"
-        )
-        .get(applicationId);
-      if (!row) return null;
-      return {
-        name: row.name,
-        mimeType: row.mime_type,
-        size: row.size,
-        data: row.content.toString("base64"),
-      };
-    },
-
-    async setResumeFile(applicationId: number, file: ResumeFile | null): Promise<void> {
-      requireRow<ApplicationRow>("SELECT id FROM applications WHERE id = ?", applicationId, "Application");
-      if (file === null) {
-        db.prepare("DELETE FROM resume_files WHERE application_id = ?").run(applicationId);
-        return;
-      }
-      // Never trust the caller's metadata — revalidate the bytes.
-      const content = Buffer.from(file.data, "base64");
-      assertValidResumeBytes(content);
-      db.prepare(
-        `INSERT INTO resume_files (application_id, name, mime_type, size, content, uploaded_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT(application_id) DO UPDATE SET
-           name = excluded.name, mime_type = excluded.mime_type, size = excluded.size,
-           content = excluded.content, uploaded_at = excluded.uploaded_at`
-      ).run(applicationId, file.name, file.mimeType, content.length, content, new Date().toISOString());
     },
 
     // ---- interviews ----

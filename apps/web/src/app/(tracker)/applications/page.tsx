@@ -45,8 +45,6 @@ function ApplicationsPageContent() {
         onEditInterview={data.editInterview}
         onLogFollowUp={data.logFollowUp}
         onEditApplication={data.editApplication}
-        onSetResumeFile={data.setResumeFile}
-        onGetResumeFile={data.getResumeFile}
         onRequestDelete={ui.requestDeleteApplication}
         onDeleteInterview={data.deleteInterview}
         onDeleteFollowUp={data.deleteFollowUp}

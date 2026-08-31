@@ -52,21 +52,6 @@ export type WorkArrangement = "onsite" | "remote" | "hybrid";
 
 export type ResumeType = "untailored" | "tailored";
 
-/** Lightweight descriptor of an attached resume file — never carries the bytes.
- * Returned inline on `Application` so lists/detail can show "name (size)" without
- * loading file content. */
-export interface ResumeFileMeta {
-  name: string;
-  mimeType: string;
-  size: number;
-}
-
-/** A resume file with its bytes, base64-encoded for the JSON/IPC boundary.
- * Fetched on demand (download), never as part of `getApplications`. */
-export interface ResumeFile extends ResumeFileMeta {
-  data: string;
-}
-
 export type CompanyStatus = "researching" | "watching" | "applied" | "not_pursuing";
 
 export interface CompanyLocation {
@@ -95,9 +80,8 @@ export interface Application {
   referral: boolean;
   referredByContactId?: number;
   resumeType: ResumeType;
-  /** Metadata for the attached resume file, if any. The bytes live in a separate
-   * store and are fetched on demand — desktop build only. */
-  resumeFile?: ResumeFileMeta;
+  /** Free-text copy of the resume sent for this application, pasted by the user. */
+  resumeText?: string;
   coverLetterSubmitted: boolean;
   notes: string;
   status: ApplicationStatus;
