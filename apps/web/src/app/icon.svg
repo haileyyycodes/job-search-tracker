@@ -1,0 +1,10 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#FFC61A" stroke="#FFC61A" stroke-width="3" stroke-linejoin="round" fill-rule="evenodd">
+    <path transform="rotate(-6 50 50)" d="M43 53 L50 4 L57 53 Z M47.5 49 L50 16 L52.5 49 Z" />
+    <path transform="rotate(52 50 50)" d="M44 53 L50 20 L56 53 Z M48 49 L50 30 L52 49 Z" />
+    <path transform="rotate(116 50 50)" d="M43 53 L50 9 L57 53 Z M47.5 49 L50 20 L52.5 49 Z" />
+    <path transform="rotate(178 50 50)" d="M43 53 L50 12 L57 53 Z M47.5 49 L50 22 L52.5 49 Z" />
+    <path transform="rotate(232 50 50)" d="M43 53 L50 6 L57 53 Z M47.5 49 L50 17 L52.5 49 Z" />
+    <path transform="rotate(298 50 50)" d="M44 53 L50 22 L56 53 Z M48 49 L50 32 L52 49 Z" />
+  </g>
+</svg>
