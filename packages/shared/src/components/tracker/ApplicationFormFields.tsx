@@ -106,6 +106,7 @@ export function ApplicationFormFields({
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}>
       <CompanyPicker
         label="Company"
+        required
         companies={companies}
         value={form.companyId}
         onChange={(id) => setForm((f) => ({ ...f, companyId: id }))}
@@ -114,6 +115,7 @@ export function ApplicationFormFields({
       />
       <Input
         label="Job title"
+        required
         placeholder="e.g. Product Designer"
         value={form.role}
         onChange={(v) => setForm((f) => ({ ...f, role: v }))}
@@ -121,6 +123,7 @@ export function ApplicationFormFields({
       />
       <Input
         label={requireDateApplied ? "Date applied" : "Date applied (optional)"}
+        required={requireDateApplied}
         type="date"
         value={form.dateApplied}
         onChange={(v) => setForm((f) => ({ ...f, dateApplied: v }))}
@@ -202,6 +205,7 @@ export function ApplicationFormFields({
       </div>
       <Select
         label="Resume type"
+        required
         value={form.resumeType}
         options={resumeTypeOptions}
         onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
@@ -210,6 +214,7 @@ export function ApplicationFormFields({
       />
       <Select
         label="Cover letter submitted?"
+        required
         value={form.coverLetterSubmitted}
         options={coverLetterOptions}
         onChange={(v) => setForm((f) => ({ ...f, coverLetterSubmitted: v as "yes" | "no" }))}

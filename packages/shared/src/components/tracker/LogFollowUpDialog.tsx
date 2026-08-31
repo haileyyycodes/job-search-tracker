@@ -57,6 +57,7 @@ export function LogFollowUpDialog({
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <ContactPicker
           label="Contacted person"
+          required
           contacts={contacts}
           companies={companies}
           value={contactId}

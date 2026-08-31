@@ -63,6 +63,7 @@ export function CompanyFormFields({ form, setForm, submitted }: CompanyFormField
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", overflowX: "hidden" }}>
       <Input
         label="Company name"
+        required
         placeholder="e.g. Northwind Co."
         value={form.name}
         onChange={(v) => setForm((f) => ({ ...f, name: v }))}

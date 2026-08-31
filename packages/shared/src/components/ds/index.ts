@@ -5,6 +5,7 @@ export type { CardPadding } from "./Card";
 export { StatusTag, statusDotColor } from "./StatusTag";
 export { Input } from "./Input";
 export type { InputSize } from "./Input";
+export { FieldLabel } from "./FieldLabel";
 export { Select } from "./Select";
 export type { SelectOption } from "./Select";
 export { MultiSelect } from "./MultiSelect";

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
+import { FieldLabel } from "./FieldLabel";
 import { MenuItem } from "./MenuItem";
 
 export interface SelectOption {
@@ -11,6 +12,7 @@ export interface SelectOption {
 
 interface SelectProps {
   label?: string;
+  required?: boolean;
   value?: string;
   options?: SelectOption[];
   onChange?: (value: string) => void;
@@ -18,7 +20,7 @@ interface SelectProps {
   error?: string;
 }
 
-export function Select({ label, value, options = [], onChange, placeholder = "Select…", error }: SelectProps) {
+export function Select({ label, required = false, value, options = [], onChange, placeholder = "Select…", error }: SelectProps) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const sel = options.find((o) => o.value === value);
@@ -36,7 +38,7 @@ export function Select({ label, value, options = [], onChange, placeholder = "Se
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%", minWidth: 0 }}>
-      {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
+      {label && <FieldLabel required={required}>{label}</FieldLabel>}
       <button
         ref={anchorRef}
         type="button"
