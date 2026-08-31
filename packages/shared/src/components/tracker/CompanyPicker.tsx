@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DropdownSurface, isInsideDropdownSurface, MenuItem } from "@/components/ds";
+import { DropdownSurface, FieldLabel, isInsideDropdownSurface, MenuItem } from "@/components/ds";
 import type { NewCompany } from "@/lib/dataSource/types";
 import type { Company } from "@/lib/types";
 
 interface CompanyPickerProps {
   label?: string;
+  required?: boolean;
   companies: Company[];
   value: string;
   onChange: (companyId: string) => void;
@@ -18,6 +19,7 @@ interface CompanyPickerProps {
 /** Typeahead search over existing companies, with inline "+ New company" quick-create (name only, non-target). */
 export function CompanyPicker({
   label,
+  required = false,
   companies,
   value,
   onChange,
@@ -67,7 +69,7 @@ export function CompanyPicker({
       ref={containerRef}
       style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%", minWidth: 0 }}
     >
-      {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
+      {label && <FieldLabel required={required}>{label}</FieldLabel>}
       <div
         ref={anchorRef}
         onClick={() => setOpen(true)}

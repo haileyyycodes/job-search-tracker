@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DropdownSurface, isInsideDropdownSurface, MenuItem } from "@/components/ds";
+import { DropdownSurface, FieldLabel, isInsideDropdownSurface, MenuItem } from "@/components/ds";
 import { companyName } from "@/lib/companies";
 import type { NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact } from "@/lib/types";
 
 interface ContactMultiPickerProps {
   label?: string;
+  required?: boolean;
   contacts: Contact[];
   companies: Company[];
   value: string[];
@@ -20,6 +21,7 @@ interface ContactMultiPickerProps {
 /** Multi-select typeahead over existing contacts (chips), with inline "+ New contact" quick-create. */
 export function ContactMultiPicker({
   label,
+  required = false,
   contacts,
   companies,
   value,
@@ -79,7 +81,7 @@ export function ContactMultiPicker({
       ref={containerRef}
       style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%", minWidth: 0 }}
     >
-      {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
+      {label && <FieldLabel required={required}>{label}</FieldLabel>}
       <div
         ref={anchorRef}
         onClick={() => setOpen(true)}

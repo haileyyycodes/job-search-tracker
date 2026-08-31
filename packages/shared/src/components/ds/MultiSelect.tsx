@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
+import { FieldLabel } from "./FieldLabel";
 import { MenuItem } from "./MenuItem";
 
 interface MultiSelectProps {
   label?: string;
+  required?: boolean;
   values: string[];
   options: string[];
   onChange: (values: string[]) => void;
@@ -14,7 +16,7 @@ interface MultiSelectProps {
 }
 
 /** Creatable tag multi-select: pick from `options`, or type a new value and add it to the pool via `onCreateOption`. */
-export function MultiSelect({ label, values, options, onChange, onCreateOption, placeholder = "Add…" }: MultiSelectProps) {
+export function MultiSelect({ label, required = false, values, options, onChange, onCreateOption, placeholder = "Add…" }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +52,7 @@ export function MultiSelect({ label, values, options, onChange, onCreateOption, 
       ref={containerRef}
       style={{ display: "flex", flexDirection: "column", gap: 6, position: "relative", width: "100%", minWidth: 0 }}
     >
-      {label && <label style={{ font: "var(--text-label)", color: "var(--text-secondary)" }}>{label}</label>}
+      {label && <FieldLabel required={required}>{label}</FieldLabel>}
       {values.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {values.map((v) => (

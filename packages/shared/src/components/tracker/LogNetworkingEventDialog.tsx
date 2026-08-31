@@ -86,6 +86,7 @@ export function LogNetworkingEventDialog({
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <ContactMultiPicker
           label="Who did you meet with?"
+          required
           contacts={contacts}
           companies={companies}
           value={contactIds}
