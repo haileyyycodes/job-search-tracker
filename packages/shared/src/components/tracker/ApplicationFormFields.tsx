@@ -29,8 +29,8 @@ export interface ApplicationFormValues {
   resumeType: ResumeType | "";
   /** Free-text copy of the resume sent for this application, pasted by the user. */
   resumeText: string;
-  coverLetterSubmitted: boolean;
-  /** Free-text copy of the cover letter sent for this application. */
+  /** Free-text copy of the cover letter. `coverLetterSubmitted` on the saved
+   * application is derived from whether this is non-empty. */
   coverLetterText: string;
   notes: string;
   salaryMin: string;
@@ -50,7 +50,6 @@ export const emptyApplicationForm: ApplicationFormValues = {
   referredByContactId: "",
   resumeType: "",
   resumeText: "",
-  coverLetterSubmitted: false,
   coverLetterText: "",
   notes: "",
   salaryMin: "",
@@ -349,12 +348,6 @@ export function ApplicationFormFields({
             Formatting is kept as Markdown.
           </span>
         </div>
-
-        <Switch
-          label="Cover letter submitted"
-          checked={form.coverLetterSubmitted}
-          onChange={(checked) => setForm((f) => ({ ...f, coverLetterSubmitted: checked }))}
-        />
 
         <div>
           <label style={fieldLabelStyle}>Cover letter</label>
