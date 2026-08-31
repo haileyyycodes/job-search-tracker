@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { ClipboardEvent, Dispatch, ReactNode, SetStateAction } from "react";
 import { Input, Select, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
@@ -110,25 +109,32 @@ const textareaStyle = {
   boxSizing: "border-box",
 } as const;
 
-/** Two-column: below this the description panel stacks above the form. */
-const STACK_BELOW = 900;
-
-function useStacked(): boolean {
-  const [stacked, setStacked] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${STACK_BELOW}px)`);
-    const sync = () => setStacked(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-  return stacked;
+/** A titled group of related fields, giving a long form some hierarchy. The
+ * heading matches the detail view's section labels for cross-screen consistency. */
+function FormSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <h3
+        style={{
+          font: "var(--text-caption)",
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+          margin: 0,
+        }}
+      >
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
 }
 
 /**
- * Field set shared between AddApplicationDialog and EditApplicationDialog. Renders the
- * dialog's whole body: a left reference panel for the job description (with live word
- * count) beside a scrollable column of application details.
+ * Field set shared between AddApplicationDialog and EditApplicationDialog — a
+ * single scrollable column of application details, including the pasted
+ * job-description / resume / cover-letter Markdown fields.
  */
 export function ApplicationFormFields({
   form,
@@ -141,8 +147,6 @@ export function ApplicationFormFields({
   onCreateCompany,
   leadingField,
 }: ApplicationFormFieldsProps) {
-  const stacked = useStacked();
-
   /** On a rich (HTML) paste, drop Markdown in at the cursor instead of raw markup;
    * a plain-text paste falls through to the textarea's default behavior. */
   const handleRichPaste =
@@ -165,223 +169,173 @@ export function ApplicationFormFields({
   const maxWithoutMin = max != null && min == null;
   const minAboveMax = min != null && max != null && min > max;
 
-  const words = form.description.trim() ? form.description.trim().split(/\s+/).length : 0;
-  const wordCountLabel = words === 1 ? "1 word" : `${words} words`;
   const showLocation = form.workArrangement === "onsite" || form.workArrangement === "hybrid";
 
   return (
-    <div
-      style={{
-        flex: 1,
-        minHeight: 0,
-        display: "flex",
-        flexDirection: stacked ? "column" : "row",
-        overflow: "hidden",
-      }}
-    >
-      {/* Job description reference panel */}
+    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", boxSizing: "border-box" }}>
       <div
         style={{
+          maxWidth: 720,
+          margin: "0 auto",
+          padding: 24,
           display: "flex",
           flexDirection: "column",
-          gap: 12,
-          flex: stacked ? "0 0 auto" : "0 0 42%",
-          minWidth: stacked ? undefined : 340,
-          maxWidth: stacked ? undefined : 560,
-          padding: 24,
-          background: "var(--bg-surface-sunken)",
-          borderRight: stacked ? "none" : "1px solid var(--border-default)",
-          borderBottom: stacked ? "1px solid var(--border-default)" : "none",
-          boxSizing: "border-box",
+          gap: 28,
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <label style={{ font: "var(--text-label)", color: "var(--text-secondary)", letterSpacing: "0.02em" }}>
-            Job description
-          </label>
-          <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>
-            Paste the posting here to reference it — formatting is kept as Markdown.
-          </span>
-        </div>
-        <textarea
-          placeholder="Paste the job description…"
-          value={form.description}
-          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          onPaste={handleRichPaste("description")}
-          style={{
-            flex: 1,
-            width: "100%",
-            minHeight: stacked ? 140 : 120,
-            padding: 14,
-            border: "1.5px solid var(--border-default)",
-            borderRadius: "var(--radius-s)",
-            font: "var(--text-body-s)",
-            color: "var(--text-primary)",
-            background: "var(--bg-surface)",
-            resize: "none",
-            boxSizing: "border-box",
-          }}
-        />
-        <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", alignSelf: "flex-end" }}>
-          {wordCountLabel}
-        </span>
-      </div>
+        {leadingField}
 
-      {/* Application details */}
-      <div style={{ flex: 1, minWidth: stacked ? undefined : 360, overflowY: "auto", boxSizing: "border-box" }}>
-        <div
-          style={{
-            maxWidth: 720,
-            margin: "0 auto",
-            padding: 24,
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
-          {leadingField}
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <CompanyPicker
-            label="Company"
-            companies={companies}
-            value={form.companyId}
-            onChange={(id) => setForm((f) => ({ ...f, companyId: id }))}
-            onCreateCompany={onCreateCompany}
-            error={submitted && !form.companyId ? "Required" : undefined}
-          />
-          <Input
-            label="Job title"
-            placeholder="e.g. Product Designer"
-            value={form.role}
-            onChange={(v) => setForm((f) => ({ ...f, role: v }))}
-            error={submitted && !form.role.trim() ? "Required" : undefined}
-          />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <Input
-            label={requireDateApplied ? "Date applied" : "Date applied (optional)"}
-            type="date"
-            value={form.dateApplied}
-            onChange={(v) => setForm((f) => ({ ...f, dateApplied: v }))}
-            error={submitted && requireDateApplied && !form.dateApplied ? "Required" : undefined}
-            hint={!requireDateApplied ? "Leave blank until you actually apply" : undefined}
-          />
-          <Input
-            label="Application link"
-            placeholder="https://…"
-            hint="Optional"
-            value={form.link}
-            onChange={(v) => setForm((f) => ({ ...f, link: v }))}
-            error={submitted && form.link.trim() && !isValidUrl(form.link.trim()) ? "Enter a valid URL" : undefined}
-          />
-        </div>
-
-        <Select
-          label="Work arrangement"
-          value={form.workArrangement}
-          options={workArrangementOptions}
-          onChange={(v) => setForm((f) => ({ ...f, workArrangement: v as WorkArrangement }))}
-          placeholder="Not specified"
-        />
-        {showLocation && (
+        <FormSection title="Job info">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <Input
-              label="City"
-              placeholder="e.g. Detroit"
-              hint="Optional"
-              value={form.city}
-              onChange={(v) => setForm((f) => ({ ...f, city: v }))}
+            <CompanyPicker
+              label="Company"
+              companies={companies}
+              value={form.companyId}
+              onChange={(id) => setForm((f) => ({ ...f, companyId: id }))}
+              onCreateCompany={onCreateCompany}
+              error={submitted && !form.companyId ? "Required" : undefined}
             />
             <Input
-              label="State"
-              placeholder="e.g. MI"
-              hint="Optional"
-              value={form.state}
-              onChange={(v) => setForm((f) => ({ ...f, state: v }))}
+              label="Job title"
+              placeholder="e.g. Product Designer"
+              value={form.role}
+              onChange={(v) => setForm((f) => ({ ...f, role: v }))}
+              error={submitted && !form.role.trim() ? "Required" : undefined}
             />
           </div>
-        )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <Input
-            label="Salary band — minimum"
-            type="number"
-            placeholder="e.g. 100000"
-            hint="Optional"
-            value={form.salaryMin}
-            onChange={(v) => setForm((f) => ({ ...f, salaryMin: v }))}
-            error={submitted && minAboveMax ? "Must be ≤ maximum" : undefined}
-          />
-          <Input
-            label="Salary band — maximum"
-            type="number"
-            placeholder="e.g. 140000"
-            hint="Optional"
-            value={form.salaryMax}
-            onChange={(v) => setForm((f) => ({ ...f, salaryMax: v }))}
-            error={submitted && maxWithoutMin ? "Enter a minimum first" : undefined}
-          />
-        </div>
-
-        <Select
-          label="Resume version"
-          value={form.resumeType}
-          options={resumeTypeOptions}
-          onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
-          placeholder="Choose one"
-          error={submitted && !form.resumeType ? "Required" : undefined}
-        />
-
-        <div>
-          <label style={fieldLabelStyle}>Resume</label>
-          <textarea
-            placeholder="Paste the resume text you sent for this application…"
-            rows={5}
-            value={form.resumeText}
-            onChange={(e) => setForm((f) => ({ ...f, resumeText: e.target.value }))}
-            onPaste={handleRichPaste("resumeText")}
-            style={textareaStyle}
-          />
-          <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", display: "block", marginTop: 4 }}>
-            Formatting is kept as Markdown.
-          </span>
-        </div>
-
-        <div>
-          <label style={fieldLabelStyle}>Cover letter</label>
-          <textarea
-            placeholder="Paste the cover letter you sent for this application…"
-            rows={5}
-            value={form.coverLetterText}
-            onChange={(e) => setForm((f) => ({ ...f, coverLetterText: e.target.value }))}
-            onPaste={handleRichPaste("coverLetterText")}
-            style={textareaStyle}
-          />
-          <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", display: "block", marginTop: 4 }}>
-            Formatting is kept as Markdown.
-          </span>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Switch
-            label="I had a referral"
-            checked={form.referral}
-            onChange={(checked) => setForm((f) => ({ ...f, referral: checked }))}
-          />
-          {form.referral && (
-            <ContactPicker
-              label="Referred by"
-              contacts={contacts}
-              companies={companies}
-              value={form.referredByContactId}
-              onChange={(id) => setForm((f) => ({ ...f, referredByContactId: id }))}
-              onCreateContact={onCreateContact}
-              defaultCompanyId={form.companyId || undefined}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <Input
+              label={requireDateApplied ? "Date applied" : "Date applied (optional)"}
+              type="date"
+              value={form.dateApplied}
+              onChange={(v) => setForm((f) => ({ ...f, dateApplied: v }))}
+              error={submitted && requireDateApplied && !form.dateApplied ? "Required" : undefined}
+              hint={!requireDateApplied ? "Leave blank until you actually apply" : undefined}
             />
+            <Input
+              label="Application link"
+              placeholder="https://…"
+              hint="Optional"
+              value={form.link}
+              onChange={(v) => setForm((f) => ({ ...f, link: v }))}
+              error={submitted && form.link.trim() && !isValidUrl(form.link.trim()) ? "Enter a valid URL" : undefined}
+            />
+          </div>
+
+          <Select
+            label="Work arrangement"
+            value={form.workArrangement}
+            options={workArrangementOptions}
+            onChange={(v) => setForm((f) => ({ ...f, workArrangement: v as WorkArrangement }))}
+            placeholder="Not specified"
+          />
+          {showLocation && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <Input
+                label="City"
+                placeholder="e.g. Detroit"
+                hint="Optional"
+                value={form.city}
+                onChange={(v) => setForm((f) => ({ ...f, city: v }))}
+              />
+              <Input
+                label="State"
+                placeholder="e.g. MI"
+                hint="Optional"
+                value={form.state}
+                onChange={(v) => setForm((f) => ({ ...f, state: v }))}
+              />
+            </div>
           )}
-        </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <Input
+              label="Salary band — minimum"
+              type="number"
+              placeholder="e.g. 100000"
+              hint="Optional"
+              value={form.salaryMin}
+              onChange={(v) => setForm((f) => ({ ...f, salaryMin: v }))}
+              error={submitted && minAboveMax ? "Must be ≤ maximum" : undefined}
+            />
+            <Input
+              label="Salary band — maximum"
+              type="number"
+              placeholder="e.g. 140000"
+              hint="Optional"
+              value={form.salaryMax}
+              onChange={(v) => setForm((f) => ({ ...f, salaryMax: v }))}
+              error={submitted && maxWithoutMin ? "Enter a minimum first" : undefined}
+            />
+          </div>
+
+          <div>
+            <label style={fieldLabelStyle}>Job description</label>
+            <textarea
+              placeholder="Paste the job description…"
+              rows={5}
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              onPaste={handleRichPaste("description")}
+              style={textareaStyle}
+            />
+          </div>
+        </FormSection>
+
+        <FormSection title="Application material">
+          <Select
+            label="Resume version"
+            value={form.resumeType}
+            options={resumeTypeOptions}
+            onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
+            placeholder="Choose one"
+            error={submitted && !form.resumeType ? "Required" : undefined}
+          />
+
+          <div>
+            <label style={fieldLabelStyle}>Resume</label>
+            <textarea
+              placeholder="Paste the resume text you sent for this application…"
+              rows={5}
+              value={form.resumeText}
+              onChange={(e) => setForm((f) => ({ ...f, resumeText: e.target.value }))}
+              onPaste={handleRichPaste("resumeText")}
+              style={textareaStyle}
+            />
+          </div>
+
+          <div>
+            <label style={fieldLabelStyle}>Cover letter</label>
+            <textarea
+              placeholder="Paste the cover letter you sent for this application…"
+              rows={5}
+              value={form.coverLetterText}
+              onChange={(e) => setForm((f) => ({ ...f, coverLetterText: e.target.value }))}
+              onPaste={handleRichPaste("coverLetterText")}
+              style={textareaStyle}
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Switch
+              label="I had a referral"
+              checked={form.referral}
+              onChange={(checked) => setForm((f) => ({ ...f, referral: checked }))}
+            />
+            {form.referral && (
+              <ContactPicker
+                label="Referred by"
+                contacts={contacts}
+                companies={companies}
+                value={form.referredByContactId}
+                onChange={(id) => setForm((f) => ({ ...f, referredByContactId: id }))}
+                onCreateContact={onCreateContact}
+                defaultCompanyId={form.companyId || undefined}
+              />
+            )}
+          </div>
+        </FormSection>
 
         <div>
           <label style={fieldLabelStyle}>Notes</label>
@@ -392,7 +346,6 @@ export function ApplicationFormFields({
             onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
             style={textareaStyle}
           />
-        </div>
         </div>
       </div>
     </div>
