@@ -189,6 +189,7 @@ export function ApplicationFormFields({
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <CompanyPicker
               label="Company"
+              required
               companies={companies}
               value={form.companyId}
               onChange={(id) => setForm((f) => ({ ...f, companyId: id }))}
@@ -197,6 +198,7 @@ export function ApplicationFormFields({
             />
             <Input
               label="Job title"
+              required
               placeholder="e.g. Product Designer"
               value={form.role}
               onChange={(v) => setForm((f) => ({ ...f, role: v }))}
@@ -207,6 +209,7 @@ export function ApplicationFormFields({
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <Input
               label={requireDateApplied ? "Date applied" : "Date applied (optional)"}
+              required={requireDateApplied}
               type="date"
               value={form.dateApplied}
               onChange={(v) => setForm((f) => ({ ...f, dateApplied: v }))}
@@ -286,6 +289,7 @@ export function ApplicationFormFields({
         <FormSection title="Application material">
           <Select
             label="Resume version"
+            required
             value={form.resumeType}
             options={resumeTypeOptions}
             onChange={(v) => setForm((f) => ({ ...f, resumeType: v as ResumeType }))}
