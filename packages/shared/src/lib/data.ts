@@ -1288,6 +1288,10 @@ export const networkingEventTypes: string[] = [
   "Phone call",
   "In-person meetup",
   "Conference/event",
+  "LinkedIn message",
+  "Instagram DM",
+  "Twitter/X DM",
+  "Email",
   "Other",
 ];
 
