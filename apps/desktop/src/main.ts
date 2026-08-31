@@ -83,9 +83,14 @@ async function createWindow(): Promise<void> {
 
   const { port } = await startStaticServer();
 
+  // macOS takes the Dock/window icon from the .app bundle (forge.config.ts's
+  // packagerConfig.icon); this only matters for Linux/Windows and dev runs.
+  const iconPath = path.join(__dirname, "../assets/icon.png");
+
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    ...(process.platform !== "darwin" && fs.existsSync(iconPath) ? { icon: iconPath } : {}),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       // Pinned rather than left to Electron's (currently matching) defaults.
