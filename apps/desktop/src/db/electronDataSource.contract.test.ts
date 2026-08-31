@@ -53,6 +53,8 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     first.exec("DROP TABLE elevator_pitch_versions;");
     first.exec("DROP TABLE interview_prep_questions;");
     first.exec("DROP TABLE user_profile;");
+    first.exec("ALTER TABLE applications DROP COLUMN resume_text;");
+    first.exec("ALTER TABLE applications DROP COLUMN cover_letter_text;");
     first.close();
 
     const second = openDatabase(dbPath);
@@ -63,6 +65,25 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     // exactly what breaks useTrackerData's boot-time Promise.all for pre-existing DBs.
     expect(await secondDs.getInterviewPrepQuestions()).toEqual([]);
     expect(await secondDs.getElevatorPitchVersions()).toEqual([]);
+    // resume_text / cover_letter_text are re-added too — no "no such column"
+    const app = await secondDs.createApplication({
+      companyId: company.id,
+      role: "Engineer",
+      dateApplied: "Jan 1, 2026",
+      link: "",
+      jobDescription: "",
+      referral: false,
+      resumeType: "tailored",
+      coverLetterSubmitted: false,
+      notes: "",
+      status: "applied",
+      logo: "A",
+      statusHistory: [],
+    });
+    await secondDs.editApplication({ ...app, resumeText: "Jane Doe — Engineer", coverLetterText: "Dear team," });
+    const migrated = (await secondDs.getApplications())[0];
+    expect(migrated.resumeText).toBe("Jane Doe — Engineer");
+    expect(migrated.coverLetterText).toBe("Dear team,");
     second.close();
   });
 });

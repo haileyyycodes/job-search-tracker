@@ -89,7 +89,9 @@ interface ApplicationRow {
   referral: number;
   referred_by_contact_id: number | null;
   resume_type: string;
+  resume_text: string | null;
   cover_letter_submitted: number;
+  cover_letter_text: string | null;
   notes: string;
   status: string;
   logo: string;
@@ -259,7 +261,9 @@ function mapApplication(
     referral: !!row.referral,
     referredByContactId: row.referred_by_contact_id ?? undefined,
     resumeType: row.resume_type as DsApplication["resumeType"],
+    resumeText: row.resume_text ?? undefined,
     coverLetterSubmitted: !!row.cover_letter_submitted,
+    coverLetterText: row.cover_letter_text ?? undefined,
     notes: row.notes,
     status: row.status as ApplicationStatus,
     logo: row.logo,
@@ -346,9 +350,9 @@ export class WasmDataSource implements DataSource {
       db.run(
         `INSERT INTO applications
           (company_id, role, date_applied, link, job_description, referral, referred_by_contact_id, resume_type,
-           cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state,
+           resume_text, cover_letter_submitted, cover_letter_text, notes, status, logo, salary_min, salary_max, work_arrangement, city, state,
            feedback_text, feedback_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           companyIdMap.get(a.companyId)!,
           a.role,
@@ -358,7 +362,9 @@ export class WasmDataSource implements DataSource {
           bool(a.referral),
           a.referredByContactId !== undefined ? contactIdMap.get(a.referredByContactId)! : null,
           a.resumeType,
+          a.resumeText ?? null,
           bool(a.coverLetterSubmitted),
+          a.coverLetterText ?? null,
           a.notes,
           a.status,
           a.logo,
@@ -521,8 +527,8 @@ export class WasmDataSource implements DataSource {
     db.run(
       `INSERT INTO applications
         (company_id, role, date_applied, link, job_description, referral, referred_by_contact_id, resume_type,
-         cover_letter_submitted, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         resume_text, cover_letter_submitted, cover_letter_text, notes, status, logo, salary_min, salary_max, work_arrangement, city, state)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         app.companyId,
         app.role,
@@ -532,7 +538,9 @@ export class WasmDataSource implements DataSource {
         bool(app.referral),
         app.referredByContactId ?? null,
         app.resumeType,
+        app.resumeText ?? null,
         bool(app.coverLetterSubmitted),
+        app.coverLetterText ?? null,
         app.notes,
         app.status,
         app.logo,
@@ -555,7 +563,7 @@ export class WasmDataSource implements DataSource {
     const db = await this.ready;
     db.run(
       `UPDATE applications SET company_id = ?, role = ?, date_applied = ?, link = ?, job_description = ?, referral = ?,
-        referred_by_contact_id = ?, resume_type = ?, cover_letter_submitted = ?, notes = ?, status = ?, logo = ?,
+        referred_by_contact_id = ?, resume_type = ?, resume_text = ?, cover_letter_submitted = ?, cover_letter_text = ?, notes = ?, status = ?, logo = ?,
         salary_min = ?, salary_max = ?, work_arrangement = ?, city = ?, state = ?, feedback_text = ?, feedback_date = ?
        WHERE id = ?`,
       [
@@ -567,7 +575,9 @@ export class WasmDataSource implements DataSource {
         bool(app.referral),
         app.referredByContactId ?? null,
         app.resumeType,
+        app.resumeText ?? null,
         bool(app.coverLetterSubmitted),
+        app.coverLetterText ?? null,
         app.notes,
         app.status,
         app.logo,

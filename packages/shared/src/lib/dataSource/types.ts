@@ -76,7 +76,9 @@ export interface DsApplication {
   referral: boolean;
   referredByContactId?: number;
   resumeType: ResumeType;
+  resumeText?: string;
   coverLetterSubmitted: boolean;
+  coverLetterText?: string;
   notes: string;
   status: ApplicationStatus;
   logo: string;

@@ -21,6 +21,24 @@ const STATIC_EXPORT_DIR = app.isPackaged
   ? path.join(process.resourcesPath, "app.asar", "web-export")
   : path.join(__dirname, "../../web/out");
 
+// Mirrors apps/web/next.config.ts's CSP (which only applies to the Vercel-hosted
+// build — the static export Electron loads gets no headers from Next). No
+// dev-only 'unsafe-eval'; 'wasm-unsafe-eval' stays because the export still
+// bundles sql.js. Keeps rendered rich-text (pasted job descriptions / resumes)
+// from reaching out or executing.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
 // Root-relative asset paths (/_next/...) that Next's static export emits don't
 // resolve correctly under file://, and client-side routing needs a real origin
 // to navigate against — so this serves the export over a local HTTP server
@@ -33,7 +51,11 @@ function startStaticServer(): Promise<{ server: Server; port: number }> {
     );
   }
   const server = http.createServer((req, res) => {
-    void serveHandler(req, res, { public: STATIC_EXPORT_DIR, cleanUrls: true });
+    void serveHandler(req, res, {
+      public: STATIC_EXPORT_DIR,
+      cleanUrls: true,
+      headers: [{ source: "**", headers: [{ key: "Content-Security-Policy", value: CSP }] }],
+    });
   });
   return new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -66,6 +88,11 @@ async function createWindow(): Promise<void> {
     height: 800,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      // Pinned rather than left to Electron's (currently matching) defaults.
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      webSecurity: true,
     },
   });
 

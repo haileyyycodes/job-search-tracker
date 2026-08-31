@@ -51,7 +51,9 @@ export interface Seed {
     referral: boolean;
     referredByContactId?: string;
     resumeType: ResumeType;
+    resumeText?: string;
     coverLetterSubmitted: boolean;
+    coverLetterText?: string;
     notes: string;
     status: ApplicationStatus;
     logo: string;
@@ -181,6 +183,188 @@ const APP_NOTES = [
   "", "Referral from a former teammate.", "Found via job board.", "Reached out to a recruiter on LinkedIn.",
   "Dream role — design systems adjacent.", "Comp is a stretch but worth a shot.", "",
   "Warm intro through a meetup contact.", "Applied cold; tailored the portfolio.", "",
+];
+
+/** Pasted job postings, stored as Markdown (see richText.ts). Rotated across
+ * applied+ applications; some are left empty so the "—" state is represented. */
+const JOB_DESCRIPTIONS: string[] = [
+  `## About the role
+
+We're hiring a **Senior Product Designer** to own our design system end to end and partner closely with engineering on the component library.
+
+### What you'll do
+
+- Drive the roadmap for our design system and its documentation
+- Pair with engineers to ship accessible, well-tested components
+- Run critiques and raise the craft bar across the product org
+
+### What we're looking for
+
+- 5+ years designing for complex web products
+- Deep experience with **Figma** libraries and tokens
+- A track record of shipping systems, not just screens
+
+Apply at [example.com/careers](https://example.com/careers).`,
+
+  `## Frontend Platform Engineer
+
+Join the team that builds the tooling every product engineer relies on — the component library, build pipeline, and rendering performance work.
+
+### Responsibilities
+
+- Own core packages in our TypeScript monorepo
+- Improve build and CI times; keep the platform fast
+- Mentor product engineers and review platform-facing PRs
+
+### Requirements
+
+- Strong **React** and **TypeScript**; comfortable in a large codebase
+- Experience with bundlers, module federation, or SSR
+- Bias toward measurement — you profile before you optimize
+
+> Remote-first, with quarterly on-sites.`,
+
+  `## Full-Stack Engineer (Growth)
+
+Ship experiments across the funnel: onboarding, activation, and referrals. You'll own features from database to pixel.
+
+### You will
+
+1. Design and run A/B tests with the growth PM
+2. Build APIs and UI for new activation flows
+3. Instrument everything and act on the data
+
+### Nice to have
+
+- Background in **Node**, **Postgres**, and a modern frontend framework
+- Comfort with analytics tooling and event modeling
+
+Comp: **$130k–$160k** + equity. [See the full posting](https://example.com/jobs/growth).`,
+
+  `## Applied AI Engineer
+
+We're putting LLM features into the core product and need someone who can move from prototype to production.
+
+### The work
+
+- Build retrieval and evaluation pipelines
+- Turn notebooks into reliable, observable services
+- Partner with design on the UX of AI features
+
+### Looking for
+
+- Solid software engineering fundamentals first, ML second
+- Hands-on with an LLM API and a vector store
+- Healthy skepticism about model output
+
+_This role is hybrid — 2 days/week in the Detroit office._`,
+];
+
+/** A job-seeker keeps one core resume with light per-application tailoring;
+ * these three variants stand in for that. Stored as Markdown. */
+const RESUME_TEXTS: string[] = [
+  `## Jordan Lee
+
+**Senior Product Designer** · Detroit, MI · [jordanlee.example](https://jordanlee.example)
+
+### Experience
+
+- **Northwind Co.** — Product Designer, 2021–present
+  - Led the design system; cut UI defects ~40% in two quarters
+  - Shipped the onboarding redesign that lifted activation 12%
+- **Lumen Studio** — Product Designer, 2018–2021
+  - Owned the editor surface end to end
+
+### Skills
+
+Figma, design systems, prototyping, accessibility, front-of-the-frontend
+
+### Education
+
+BFA, Graphic Design — University of Michigan`,
+
+  `## Sam Rivera
+
+**Frontend Platform Engineer** · Remote
+
+### Experience
+
+- **Anchor Systems** — Senior Frontend Engineer, 2020–present
+  - Maintain the React component library used by 40+ engineers
+  - Cut CI times **32%** by parallelizing the build
+- **Brightloom** — Frontend Engineer, 2017–2020
+
+### Tech
+
+**TypeScript**, React, Vite, Node, Playwright, GitHub Actions
+
+> Open-source: maintainer of a small state-management library.`,
+
+  `## Alex Okafor
+
+**Full-Stack Engineer** · Austin, TX
+
+### Experience
+
+- **Beacon Analytics** — Full-Stack Engineer, 2019–present
+  - Built the experimentation platform (Node, Postgres, React)
+  - Ran 60+ A/B tests; owned the analytics event schema
+- **Quill & Co.** — Software Engineer, 2016–2019
+
+### Skills
+
+Node, Postgres, React, TypeScript, feature flags, data modeling
+
+Portfolio: [alexokafor.example](https://alexokafor.example)`,
+];
+
+/** Cover letters, stored as Markdown. Attached only where `coverLetterSubmitted`
+ * is true — so the "—" state is still represented on the rest. */
+const COVER_LETTERS: string[] = [
+  `Dear Hiring Team,
+
+I'm applying for the **{role}** role because it sits right at the intersection of design and engineering where I do my best work.
+
+At my last company I:
+
+- Owned a design system used by the whole product org
+- Cut UI defects ~40% by tightening the component contract
+- Partnered daily with engineers on accessibility and performance
+
+I'd love to bring that same systems mindset to your team. Thank you for your consideration.
+
+Best,
+Jordan`,
+
+  `Hello,
+
+I was excited to see the **{role}** opening — the emphasis on platform work and developer experience is exactly what I've been focused on.
+
+A few things I'd bring:
+
+1. Deep **React** and **TypeScript** experience in a large monorepo
+2. A track record of making builds and CI measurably faster
+3. A habit of mentoring and unblocking other engineers
+
+More detail is in my resume and portfolio. I'd welcome the chance to talk.
+
+Regards,
+Sam`,
+
+  `Hi there,
+
+I'm writing to apply for the **{role}** position. I've spent the last few years shipping full-stack features end to end — database, API, and UI — with a strong bias toward measurement.
+
+Highlights:
+
+- Built and ran an experimentation platform (60+ A/B tests)
+- Owned the analytics event schema and the growth roadmap with the PM
+- Comfortable moving fast without leaving a mess
+
+Thanks for reading — I'd love to learn more about the team.
+
+Best,
+Alex`,
 ];
 const IV_TYPES: InterviewType[] = [
   "Recruiter Screen", "Technical Screen", "Technical Interview", "Behavioral", "Hiring Manager", "Panel", "Other",
@@ -326,17 +510,33 @@ function buildSeedRecords(): SeedRecords {
       }
     }
 
+    const role = ROLES[i % ROLES.length];
+    const coverLetterSubmitted = i % 2 === 0;
+
     const app: Seed["applications"][number] = {
       id: `a${i + 1}`,
       companyId,
-      role: ROLES[i % ROLES.length],
+      role,
       dateApplied: isTodo ? "" : seedDate(appliedDay),
       link: i % 2 === 0 ? `https://example.com/jobs/a${i + 1}` : "",
-      jobDescription: i % 5 === 0 ? "Own the design-system and front-end platform work end to end; partner closely with design." : "",
+      // Most applied+ apps carry the posting; a quarter don't, and todos rarely do.
+      jobDescription: isTodo
+        ? i % 7 === 0
+          ? JOB_DESCRIPTIONS[todoIndex % JOB_DESCRIPTIONS.length]
+          : ""
+        : i % 4 === 3
+          ? ""
+          : JOB_DESCRIPTIONS[appliedIndex % JOB_DESCRIPTIONS.length],
       referral,
       ...(referral && contactId ? { referredByContactId: contactId } : {}),
       resumeType: i % 5 < 2 ? "tailored" : "untailored",
-      coverLetterSubmitted: i % 2 === 0,
+      // Tailored applications have a pasted resume to go with them.
+      ...(i % 5 < 2 ? { resumeText: RESUME_TEXTS[i % RESUME_TEXTS.length] } : {}),
+      coverLetterSubmitted,
+      // Where a cover letter was submitted, keep its pasted text too.
+      ...(coverLetterSubmitted
+        ? { coverLetterText: COVER_LETTERS[i % COVER_LETTERS.length].replace("{role}", role) }
+        : {}),
       notes: APP_NOTES[i % APP_NOTES.length],
       status: p.status,
       logo: (COMPANY_NAMES[companyIdx] ?? "?").charAt(0).toUpperCase(),
