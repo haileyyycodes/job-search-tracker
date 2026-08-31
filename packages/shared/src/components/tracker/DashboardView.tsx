@@ -839,18 +839,7 @@ function ExpandedBar({ bucket, axisMax, selected, onSelect }: ExpandedBarProps) 
   }
 
   return (
-    <div style={{ flex: 1, position: "relative", display: "flex", justifyContent: "center", height: "100%" }}>
-      <span
-        style={{
-          position: "absolute",
-          bottom: `calc(${pct * 100}% + 5px)`,
-          font: "11px var(--font-mono)",
-          fontWeight: selected ? 700 : 400,
-          color: selected || hover ? "var(--blue-900)" : "var(--blue-700)",
-        }}
-      >
-        {count}
-      </span>
+    <div style={{ flex: 1, display: "flex", justifyContent: "center", height: "100%" }}>
       <button
         type="button"
         onClick={onSelect}
