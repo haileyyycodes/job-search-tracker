@@ -24,8 +24,8 @@ describe("defaultSeed coverage", () => {
   const { applications, companies, contacts, networkingEvents, elevatorPitchVersions } = defaultSeed;
   const interviews = applications.flatMap((a) => a.interviews);
 
-  it("has 50 applications", () => {
-    expect(applications).toHaveLength(50);
+  it("has 60 applications (50 generated + 10 recent)", () => {
+    expect(applications).toHaveLength(60);
   });
 
   it("covers every application status at least 5 times", () => {
