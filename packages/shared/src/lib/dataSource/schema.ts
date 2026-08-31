@@ -91,6 +91,18 @@ CREATE TABLE status_history (
   at TEXT NOT NULL
 );
 
+-- One resume file per application (bytes as an opaque BLOB). Kept out of the
+-- applications row so SELECT * / getApplications never drags file content;
+-- callers fetch bytes on demand. Desktop build only.
+CREATE TABLE resume_files (
+  application_id INTEGER PRIMARY KEY REFERENCES applications(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  content BLOB NOT NULL,
+  uploaded_at TEXT NOT NULL
+);
+
 CREATE TABLE networking_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   type TEXT NOT NULL,

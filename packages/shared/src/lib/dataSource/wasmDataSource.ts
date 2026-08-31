@@ -23,6 +23,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type ResumeFile,
 } from "./types";
 
 function isForeignKeyError(err: unknown): boolean {
@@ -597,6 +598,17 @@ export class WasmDataSource implements DataSource {
   async saveFeedback(appId: number, feedback: Feedback): Promise<void> {
     const db = await this.ready;
     db.run("UPDATE applications SET feedback_text = ?, feedback_date = ? WHERE id = ?", [feedback.text, feedback.date, appId]);
+  }
+
+  // Resume-file storage is a desktop-only feature (real, persistent SQLite). The
+  // in-browser demo has no persistence, so it just reports "nothing attached"
+  // and refuses writes; the UI disables the upload control here anyway.
+  async getResumeFile(): Promise<ResumeFile | null> {
+    return null;
+  }
+
+  async setResumeFile(): Promise<void> {
+    throw new Error("Resume upload is only available in the desktop app.");
   }
 
   // ---- interviews ----

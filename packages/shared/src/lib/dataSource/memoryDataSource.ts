@@ -1,4 +1,5 @@
 import type { ApplicationStatus, Feedback } from "@/lib/types";
+import { assertValidResumeBytes, base64ToBytes } from "@/lib/resumeFile";
 import {
   RestrictedDeleteError,
   type DataSource,
@@ -20,10 +21,11 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type ResumeFile,
 } from "./types";
 import { defaultSeed, type Seed } from "./seed";
 
-type StoredApplication = Omit<DsApplication, "interviews" | "followUps" | "statusHistory">;
+type StoredApplication = Omit<DsApplication, "interviews" | "followUps" | "statusHistory" | "resumeFile">;
 type StoredStatusHistoryEntry = { id: number; applicationId: number; status: ApplicationStatus; at: string };
 type StoredInterview = DsInterview & { applicationId: number };
 type StoredFollowUp = DsFollowUp & { applicationId: number };
@@ -116,6 +118,8 @@ export class MemoryDataSource implements DataSource {
   private interviewCategories: string[] = [];
   private interviewPrepQuestions = new Table<StoredInterviewPrepQuestion>();
   private elevatorPitchVersions = new Table<StoredElevatorPitchVersion>();
+  /** application id -> attached resume file (bytes included). */
+  private resumeFiles = new Map<number, ResumeFile>();
 
   constructor(seed: Seed = defaultSeed) {
     this.loadSeed(seed);
@@ -124,8 +128,10 @@ export class MemoryDataSource implements DataSource {
   // ---- composition helpers ----
 
   private composeApplication(row: StoredApplication): DsApplication {
+    const resume = this.resumeFiles.get(row.id);
     return {
       ...row,
+      resumeFile: resume ? { name: resume.name, mimeType: resume.mimeType, size: resume.size } : undefined,
       statusHistory: this.statusHistory
         .listWhere((s) => s.applicationId === row.id)
         .map((s) => ({ status: s.status, at: s.at })),
@@ -183,7 +189,7 @@ export class MemoryDataSource implements DataSource {
     this.requireApplication(app.id);
     this.requireCompany(app.companyId);
     if (app.referredByContactId !== undefined) this.requireContact(app.referredByContactId);
-    const scalars = omit(omit(omit(app, "statusHistory"), "interviews"), "followUps");
+    const scalars = omit(omit(omit(omit(app, "statusHistory"), "interviews"), "followUps"), "resumeFile");
     this.applications.put(scalars as StoredApplication);
   }
 
@@ -201,12 +207,31 @@ export class MemoryDataSource implements DataSource {
     for (const ev of this.networkingEvents.listWhere((e) => e.applicationId === id)) {
       this.networkingEvents.update(ev.id, { applicationId: undefined }, "NetworkingEvent");
     }
+    this.resumeFiles.delete(id);
     this.applications.delete(id);
   }
 
   async saveFeedback(appId: number, feedback: Feedback): Promise<void> {
     this.requireApplication(appId);
     this.applications.update(appId, { feedback }, "Application");
+  }
+
+  async getResumeFile(applicationId: number): Promise<ResumeFile | null> {
+    this.requireApplication(applicationId);
+    const file = this.resumeFiles.get(applicationId);
+    return file ? { ...file } : null;
+  }
+
+  async setResumeFile(applicationId: number, file: ResumeFile | null): Promise<void> {
+    this.requireApplication(applicationId);
+    if (file === null) {
+      this.resumeFiles.delete(applicationId);
+      return;
+    }
+    // Revalidate the bytes rather than trusting the caller's metadata.
+    const bytes = base64ToBytes(file.data);
+    assertValidResumeBytes(bytes);
+    this.resumeFiles.set(applicationId, { ...file, size: bytes.length });
   }
 
   // ---- interviews ----

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { runDataSourceContractTests } from "./contract";
+import { runDataSourceContractTests, runResumeFileContractTests } from "./contract";
 import { MemoryDataSource } from "./memoryDataSource";
 import { defaultSeed, emptySeed } from "./seed";
 
 runDataSourceContractTests(() => new MemoryDataSource(emptySeed));
+runResumeFileContractTests(() => new MemoryDataSource(emptySeed));
 
 describe("MemoryDataSource seed loading", () => {
   it("loads defaultSeed with remapped numeric ids and preserved relationships", async () => {

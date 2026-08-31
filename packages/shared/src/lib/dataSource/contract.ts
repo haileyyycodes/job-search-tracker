@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { bytesToBase64 } from "@/lib/resumeFile";
 import { RestrictedDeleteError, type DataSource } from "./types";
 
 /**
@@ -463,6 +464,98 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       const [fetched] = await ds.getElevatorPitchVersions();
       expect(fetched.id).toBe(created.id);
       expect(fetched.sourceQuestionId).toBeUndefined();
+    });
+  });
+}
+
+const PDF_BYTES = new TextEncoder().encode("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
+const pdfBase64 = () => bytesToBase64(PDF_BYTES);
+
+/**
+ * Resume-file storage contract. Split out because only backends that actually
+ * persist files run it — the in-browser WasmDataSource is a stateless demo and
+ * stubs these methods out.
+ */
+export function runResumeFileContractTests(makeDataSource: () => DataSource) {
+  describe("resume files", () => {
+    async function makeApp(ds: DataSource) {
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      return ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [],
+      });
+    }
+    const pdf = (name: string) => ({
+      name,
+      mimeType: "application/pdf",
+      size: PDF_BYTES.length,
+      data: pdfBase64(),
+    });
+
+    it("attaches a file: metadata appears on getApplications, bytes come back from getResumeFile", async () => {
+      const ds = makeDataSource();
+      const app = await makeApp(ds);
+      expect(app.resumeFile).toBeUndefined();
+
+      await ds.setResumeFile(app.id, pdf("resume.pdf"));
+
+      const [fetched] = await ds.getApplications();
+      expect(fetched.resumeFile).toEqual({ name: "resume.pdf", mimeType: "application/pdf", size: PDF_BYTES.length });
+      const file = await ds.getResumeFile(app.id);
+      expect(file).toEqual({ name: "resume.pdf", mimeType: "application/pdf", size: PDF_BYTES.length, data: pdfBase64() });
+    });
+
+    it("replaces an existing file in place", async () => {
+      const ds = makeDataSource();
+      const app = await makeApp(ds);
+      await ds.setResumeFile(app.id, pdf("a.pdf"));
+      await ds.setResumeFile(app.id, pdf("b.pdf"));
+      expect((await ds.getApplications())[0].resumeFile?.name).toBe("b.pdf");
+    });
+
+    it("removes a file when set to null", async () => {
+      const ds = makeDataSource();
+      const app = await makeApp(ds);
+      await ds.setResumeFile(app.id, pdf("a.pdf"));
+      await ds.setResumeFile(app.id, null);
+      expect(await ds.getResumeFile(app.id)).toBeNull();
+      expect((await ds.getApplications())[0].resumeFile).toBeUndefined();
+    });
+
+    it("rejects bytes that aren't a real PDF or Word document", async () => {
+      const ds = makeDataSource();
+      const app = await makeApp(ds);
+      const fake = bytesToBase64(new TextEncoder().encode("<html>not a pdf</html>"));
+      await expect(
+        ds.setResumeFile(app.id, { name: "x.pdf", mimeType: "application/pdf", size: 22, data: fake })
+      ).rejects.toThrow();
+      expect(await ds.getResumeFile(app.id)).toBeNull();
+    });
+
+    it("deleting an application drops its resume file but leaves others intact", async () => {
+      const ds = makeDataSource();
+      const a = await makeApp(ds);
+      const b = await makeApp(ds);
+      await ds.setResumeFile(a.id, pdf("a.pdf"));
+      await ds.setResumeFile(b.id, pdf("b.pdf"));
+
+      await ds.deleteApplication(a.id);
+
+      const apps = await ds.getApplications();
+      expect(apps).toHaveLength(1);
+      expect(apps[0].id).toBe(b.id);
+      expect(apps[0].resumeFile?.name).toBe("b.pdf");
+      expect((await ds.getResumeFile(b.id))?.data).toBe(pdfBase64());
     });
   });
 }

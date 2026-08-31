@@ -20,6 +20,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type ResumeFile,
 } from "./types";
 
 /** The typed surface preload.ts exposes via contextBridge — one method per IPC channel. */
@@ -77,6 +78,12 @@ export class ElectronDataSource implements DataSource {
   }
   saveFeedback(appId: number, feedback: Feedback) {
     return this.invoke<void>("applications:saveFeedback", appId, feedback);
+  }
+  getResumeFile(applicationId: number) {
+    return this.invoke<ResumeFile | null>("resumeFiles:get", applicationId);
+  }
+  setResumeFile(applicationId: number, file: ResumeFile | null) {
+    return this.invoke<void>("resumeFiles:set", applicationId, file);
   }
 
   logInterview(appId: number, interview: NewInterview) {

@@ -13,6 +13,9 @@ import { formatResponseTime } from "@/lib/responseTime";
 import { getDaysSinceActivity } from "@/lib/funnel";
 import { todayFormatted } from "@/lib/date";
 import { isValidUrl } from "@/lib/validation";
+import { formatFileSize } from "@/lib/resumeFile";
+import { downloadResumeFile } from "@/lib/resumeUpload";
+import { RESUME_UPLOAD_ENABLED } from "@/lib/featureFlags";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
 import type {
   Application,
@@ -24,6 +27,7 @@ import type {
   Goals,
   Interview,
   NetworkingEvent,
+  ResumeFile,
 } from "@/lib/types";
 
 const rejectionStatuses: ApplicationStatus[] = ["rejected_no_interview", "rejected_after_interview"];
@@ -47,6 +51,64 @@ function Field({ label, value }: FieldProps) {
   );
 }
 
+/** "Resume" detail field: shows the stored file's name + size and a Download link
+ * that fetches the bytes on demand. Renders "—" when nothing is attached. */
+function ResumeField({
+  app,
+  onGetResumeFile,
+}: {
+  app: Application;
+  onGetResumeFile: (applicationId: number) => Promise<ResumeFile | null>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!RESUME_UPLOAD_ENABLED || !app.resumeFile) return <Field label="Resume" value={undefined} />;
+
+  const download = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const file = await onGetResumeFile(app.id);
+      if (file) downloadResumeFile(file, file.data);
+      else setError("File not found.");
+    } catch {
+      setError("Couldn't download the file.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div>
+      <div style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginBottom: 2 }}>Resume</div>
+      <div style={{ font: "var(--text-body-s)", fontWeight: 600, color: "var(--text-primary)" }}>
+        {app.resumeFile.name} · {formatFileSize(app.resumeFile.size)}
+      </div>
+      <button
+        type="button"
+        onClick={download}
+        disabled={busy}
+        style={{
+          marginTop: 2,
+          background: "none",
+          border: "none",
+          padding: 0,
+          font: "var(--text-caption)",
+          fontWeight: 600,
+          color: "var(--accent-primary)",
+          cursor: busy ? "default" : "pointer",
+        }}
+      >
+        {busy ? "Downloading…" : "Download"}
+      </button>
+      {error && (
+        <div style={{ font: "var(--text-caption)", color: "var(--red-600)", marginTop: 2 }}>{error}</div>
+      )}
+    </div>
+  );
+}
+
 interface ApplicationDetailViewProps {
   app: Application | null;
   contacts: Contact[];
@@ -65,6 +127,8 @@ interface ApplicationDetailViewProps {
   onEditInterview: (appId: number, interviewId: number, updates: Omit<Interview, "id">) => void;
   onLogFollowUp: (appId: number, followUp: Omit<FollowUp, "id">) => void;
   onEditApplication: (updated: Application) => void;
+  onSetResumeFile: (applicationId: number, file: ResumeFile | null) => Promise<void>;
+  onGetResumeFile: (applicationId: number) => Promise<ResumeFile | null>;
   onRequestDelete: (app: Application) => void;
   onDeleteInterview: (appId: number, interviewId: number) => void;
   onDeleteFollowUp: (appId: number, followUpId: number) => void;
@@ -92,6 +156,8 @@ export function ApplicationDetailView({
   onEditInterview,
   onLogFollowUp,
   onEditApplication,
+  onSetResumeFile,
+  onGetResumeFile,
   onRequestDelete,
   onDeleteInterview,
   onDeleteFollowUp,
@@ -241,10 +307,7 @@ export function ApplicationDetailView({
                   )
                 }
               />
-              <Field
-                label="Resume used"
-                value={`resume_${companyName(app.companyId, companies).split(" ")[0].toLowerCase()}.pdf`}
-              />
+              <ResumeField app={app} onGetResumeFile={onGetResumeFile} />
               <Field label="Resume type" value={resumeTypeLabels[app.resumeType]} />
               <Field label="Cover letter submitted" value={app.coverLetterSubmitted ? "Yes" : "No"} />
               <Field label="Location" value={formatLocation(app) || undefined} />
@@ -614,6 +677,7 @@ export function ApplicationDetailView({
           onEditApplication(updated);
           setEditDialogOpen(false);
         }}
+        onSetResumeFile={onSetResumeFile}
       />
     )}
     {feedbackDialogOpen && (

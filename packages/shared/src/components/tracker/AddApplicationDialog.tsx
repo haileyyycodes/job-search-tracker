@@ -7,12 +7,13 @@ import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } f
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
 import type { NewApplication, NewCompany, NewContact } from "@/lib/dataSource/types";
-import type { Company, Contact } from "@/lib/types";
+import type { Application, Company, Contact, ResumeFile } from "@/lib/types";
 
 interface AddApplicationDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (app: NewApplication) => void;
+  onAdd: (app: NewApplication) => Promise<Application>;
+  onSetResumeFile: (applicationId: number, file: ResumeFile | null) => Promise<void>;
   contacts: Contact[];
   onCreateContact: (contact: NewContact) => Promise<Contact>;
   companies: Company[];
@@ -28,6 +29,7 @@ export function AddApplicationDialog({
   open,
   onClose,
   onAdd,
+  onSetResumeFile,
   contacts,
   onCreateContact,
   companies,
@@ -45,7 +47,7 @@ export function AddApplicationDialog({
     onClose();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSubmitted(true);
     if (!isApplicationFormValid(form, requireDateApplied)) return;
 
@@ -59,7 +61,7 @@ export function AddApplicationDialog({
       referral: form.referral,
       referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
       resumeType: form.resumeType as NewApplication["resumeType"],
-      coverLetterSubmitted: form.coverLetterSubmitted === "yes",
+      coverLetterSubmitted: form.coverLetterSubmitted,
       notes: form.notes.trim(),
       salaryMin: form.salaryMin.trim() ? Number(form.salaryMin) : undefined,
       salaryMax: form.salaryMax.trim() ? Number(form.salaryMax) : undefined,
@@ -72,7 +74,14 @@ export function AddApplicationDialog({
         status === "todo" ? [{ status: "todo", at: todayFormatted() }] : [{ status: "applied", at: dateApplied }],
     };
 
-    onAdd(newApp);
+    const created = await onAdd(newApp);
+    if (form.resumeFile) {
+      try {
+        await onSetResumeFile(created.id, form.resumeFile);
+      } catch {
+        // The application saved; only the file attachment failed. Don't block the close.
+      }
+    }
     resetAndClose();
   };
 
@@ -80,6 +89,8 @@ export function AddApplicationDialog({
     <Dialog
       open={open}
       title="Log application"
+      fullScreen
+      disablePadding
       onClose={resetAndClose}
       footer={
         <>
@@ -92,24 +103,24 @@ export function AddApplicationDialog({
         </>
       }
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <Select
-          label="Status"
-          value={status}
-          options={initialStatusOptions}
-          onChange={(v) => setStatus(v as "todo" | "applied")}
-        />
-        <ApplicationFormFields
-          form={form}
-          setForm={setForm}
-          submitted={submitted}
-          requireDateApplied={requireDateApplied}
-          contacts={contacts}
-          onCreateContact={onCreateContact}
-          companies={companies}
-          onCreateCompany={onCreateCompany}
-        />
-      </div>
+      <ApplicationFormFields
+        form={form}
+        setForm={setForm}
+        submitted={submitted}
+        requireDateApplied={requireDateApplied}
+        contacts={contacts}
+        onCreateContact={onCreateContact}
+        companies={companies}
+        onCreateCompany={onCreateCompany}
+        leadingField={
+          <Select
+            label="Status"
+            value={status}
+            options={initialStatusOptions}
+            onChange={(v) => setStatus(v as "todo" | "applied")}
+          />
+        }
+      />
     </Dialog>
   );
 }

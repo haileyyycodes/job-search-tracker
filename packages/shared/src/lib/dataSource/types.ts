@@ -6,11 +6,15 @@ import type {
   InterviewStyle,
   InterviewType,
   RelationshipTier,
+  ResumeFile,
+  ResumeFileMeta,
   ResumeType,
   StatusHistoryEntry,
   UserProfile,
   WorkArrangement,
 } from "@/lib/types";
+
+export type { ResumeFile, ResumeFileMeta } from "@/lib/types";
 
 /**
  * Numeric-id mirrors of src/lib/types.ts, used only until Phase 2 flips the
@@ -76,6 +80,7 @@ export interface DsApplication {
   referral: boolean;
   referredByContactId?: number;
   resumeType: ResumeType;
+  resumeFile?: ResumeFileMeta;
   coverLetterSubmitted: boolean;
   notes: string;
   status: ApplicationStatus;
@@ -130,7 +135,7 @@ export interface DsElevatorPitchVersion {
 export type DsGoals = Goals;
 export type DsUserProfile = UserProfile;
 
-export type NewApplication = Omit<DsApplication, "id" | "interviews" | "followUps">;
+export type NewApplication = Omit<DsApplication, "id" | "interviews" | "followUps" | "resumeFile">;
 export type NewInterviewPrepQuestion = Omit<DsInterviewPrepQuestion, "id">;
 export type NewElevatorPitchVersion = Omit<DsElevatorPitchVersion, "id">;
 export type NewCompany = Omit<DsCompany, "id" | "locations"> & { locations?: DsCompanyLocation[] };
@@ -159,6 +164,13 @@ export interface DataSource {
   updateApplicationStatus(id: number, status: ApplicationStatus, at: string): Promise<void>;
   deleteApplication(id: number): Promise<void>;
   saveFeedback(appId: number, feedback: Feedback): Promise<void>;
+
+  /** Resume file bytes for one application, or null if none. Desktop build only —
+   * the in-browser demo returns null. */
+  getResumeFile(applicationId: number): Promise<ResumeFile | null>;
+  /** Attach/replace (`file`) or remove (`null`) an application's resume file.
+   * Desktop build only — the in-browser demo throws. */
+  setResumeFile(applicationId: number, file: ResumeFile | null): Promise<void>;
 
   logInterview(appId: number, interview: NewInterview): Promise<DsInterview>;
   editInterview(appId: number, interviewId: number, updates: NewInterview): Promise<void>;

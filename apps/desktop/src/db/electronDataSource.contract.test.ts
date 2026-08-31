@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type Database from "better-sqlite3";
-import { runDataSourceContractTests } from "../../../../packages/shared/src/lib/dataSource/contract";
+import {
+  runDataSourceContractTests,
+  runResumeFileContractTests,
+} from "../../../../packages/shared/src/lib/dataSource/contract";
 import { createSqliteDataSource } from "./ipcHandlers";
 import { openDatabase } from "./schema";
 
@@ -17,6 +20,7 @@ afterEach(() => {
 });
 
 runDataSourceContractTests(makeDataSource);
+runResumeFileContractTests(makeDataSource);
 
 describe("createSqliteDataSource against a real SQLite file", () => {
   it("starts empty on first run (no seed data) and persists across separate connections to the same file", async () => {
@@ -53,6 +57,7 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     first.exec("DROP TABLE elevator_pitch_versions;");
     first.exec("DROP TABLE interview_prep_questions;");
     first.exec("DROP TABLE user_profile;");
+    first.exec("DROP TABLE resume_files;");
     first.close();
 
     const second = openDatabase(dbPath);
@@ -63,6 +68,28 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     // exactly what breaks useTrackerData's boot-time Promise.all for pre-existing DBs.
     expect(await secondDs.getInterviewPrepQuestions()).toEqual([]);
     expect(await secondDs.getElevatorPitchVersions()).toEqual([]);
+    // resume_files is re-created too, so attaching a file doesn't hit "no such table"
+    const app = await secondDs.createApplication({
+      companyId: company.id,
+      role: "Engineer",
+      dateApplied: "Jan 1, 2026",
+      link: "",
+      jobDescription: "",
+      referral: false,
+      resumeType: "tailored",
+      coverLetterSubmitted: false,
+      notes: "",
+      status: "applied",
+      logo: "A",
+      statusHistory: [],
+    });
+    await secondDs.setResumeFile(app.id, {
+      name: "r.pdf",
+      mimeType: "application/pdf",
+      size: 10,
+      data: Buffer.from("%PDF-1.4\n\n").toString("base64"),
+    });
+    expect((await secondDs.getResumeFile(app.id))?.name).toBe("r.pdf");
     second.close();
   });
 });

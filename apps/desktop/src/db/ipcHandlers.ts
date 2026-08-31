@@ -22,7 +22,9 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type ResumeFile,
 } from "../../../../packages/shared/src/lib/dataSource/types";
+import { assertValidResumeBytes } from "../../../../packages/shared/src/lib/resumeFile";
 
 /**
  * SQLite enforces FK actions (including RESTRICT) via internal triggers when
@@ -111,6 +113,14 @@ interface StatusHistoryRow {
   application_id: number;
   status: string;
   at: string;
+}
+interface ResumeFileMetaRow {
+  name: string;
+  mime_type: string;
+  size: number;
+}
+interface ResumeFileContentRow extends ResumeFileMetaRow {
+  content: Buffer;
 }
 interface NetworkingEventRow {
   id: number;
@@ -283,7 +293,12 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     const statusHistory = db
       .prepare<[number], StatusHistoryRow>("SELECT * FROM status_history WHERE application_id = ? ORDER BY id")
       .all(row.id);
-    return mapApplication(row, interviews, followUps, statusHistory);
+    const app = mapApplication(row, interviews, followUps, statusHistory);
+    const resume = db
+      .prepare<[number], ResumeFileMetaRow>("SELECT name, mime_type, size FROM resume_files WHERE application_id = ?")
+      .get(row.id);
+    if (resume) app.resumeFile = { name: resume.name, mimeType: resume.mime_type, size: resume.size };
+    return app;
   }
 
   function composeCompany(row: CompanyRow): DsCompany {
@@ -400,6 +415,40 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
         feedback.date,
         appId
       );
+    },
+
+    async getResumeFile(applicationId: number): Promise<ResumeFile | null> {
+      requireRow<ApplicationRow>("SELECT id FROM applications WHERE id = ?", applicationId, "Application");
+      const row = db
+        .prepare<[number], ResumeFileContentRow>(
+          "SELECT name, mime_type, size, content FROM resume_files WHERE application_id = ?"
+        )
+        .get(applicationId);
+      if (!row) return null;
+      return {
+        name: row.name,
+        mimeType: row.mime_type,
+        size: row.size,
+        data: row.content.toString("base64"),
+      };
+    },
+
+    async setResumeFile(applicationId: number, file: ResumeFile | null): Promise<void> {
+      requireRow<ApplicationRow>("SELECT id FROM applications WHERE id = ?", applicationId, "Application");
+      if (file === null) {
+        db.prepare("DELETE FROM resume_files WHERE application_id = ?").run(applicationId);
+        return;
+      }
+      // Never trust the caller's metadata — revalidate the bytes.
+      const content = Buffer.from(file.data, "base64");
+      assertValidResumeBytes(content);
+      db.prepare(
+        `INSERT INTO resume_files (application_id, name, mime_type, size, content, uploaded_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(application_id) DO UPDATE SET
+           name = excluded.name, mime_type = excluded.mime_type, size = excluded.size,
+           content = excluded.content, uploaded_at = excluded.uploaded_at`
+      ).run(applicationId, file.name, file.mimeType, content.length, content, new Date().toISOString());
     },
 
     // ---- interviews ----

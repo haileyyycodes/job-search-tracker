@@ -63,6 +63,7 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
         open={ui.addOpen}
         onClose={ui.closeAddApplication}
         onAdd={data.addApplication}
+        onSetResumeFile={data.setResumeFile}
         contacts={data.contacts}
         onCreateContact={data.createContact}
         companies={data.companies}
