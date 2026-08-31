@@ -42,6 +42,10 @@ const config: ForgeConfig = {
     // "@job-tracker/desktop" contains a "/" that breaks output-path derivation, so it's
     // overridden here with a plain display name.
     name: "Job Tracker",
+    // Bundle icon — the web favicon (yellow sparkle) on a black rounded square.
+    // Extensionless: packager appends .icns on macOS, .ico on Windows. Regenerate
+    // from assets/icon.svg with assets/generate-icons.mjs.
+    icon: path.join(__dirname, "assets/icon"),
     // better-sqlite3's compiled .node binary can't live inside the asar archive (native
     // modules can't dlopen from inside it) — Electron transparently redirects reads for
     // anything matching this glob to an app.asar.unpacked sibling directory instead.
