@@ -129,9 +129,11 @@ export const emptySeed: Seed = {
 // ─────────────────────────────────────────────────────────────────────────────
 // defaultSeed data — a broad, deterministic dataset for local dev and demos.
 //
-// buildSeedRecords() generates ~50 applications with full coverage of every
+// buildSeedRecords() generates 50 applications with full coverage of every
 // application status, company status, work arrangement, resume type, interview
-// type and style, plus contacts, follow-ups, feedback, and networking events.
+// type and style, plus contacts, follow-ups, feedback, and networking events —
+// then appends RECENT_APPLICATIONS (10 more, dated to the last ~6 weeks) for a
+// live-feeling pipeline. Total: 60.
 // A hand-written literal that large is unreviewable; this keeps the intended
 // distribution explicit (STATUS_PLAN) and stays deterministic — no Math.random,
 // so a refresh always reproduces the same data. seed.test.ts asserts coverage.
@@ -160,6 +162,8 @@ const COMPANY_NAMES = [
   "Larkspur Bio", "Oakhaven Realty", "Stormline Data", "Wexford Games", "Yarrow Health",
   "Cloudbank", "Petal & Co.", "Granite Peak", "Sundial Labs", "Meadowlark Media",
   "Ridgeline Robotics", "Bluecrest Bank", "Tinderbox Games",
+  // co49..co54 — host the recent (last ~6 weeks) applications appended below.
+  "Wavelength Health", "Postmark Studio", "Cindershift", "Northbeam Robotics", "Kelp Data", "Halyard Financial",
 ];
 const INDUSTRIES = [
   "Product design / SaaS", "Data & analytics", "Healthcare", "Robotics", "Creative tools",
@@ -429,6 +433,159 @@ const NO_APP_COMPANY_STATUS: CompanyStatus[] = [
   "researching", "watching", "not_pursuing", "watching", "researching", "not_pursuing", "researching", "watching",
 ];
 
+/**
+ * Hand-written applications dated to the last ~6 weeks (Jul 20 – Aug 30, 2026,
+ * relative to the Aug 31 "today"), appended after the generated 50. They give
+ * the dashboard and lists some fresh, in-progress activity — recent applies,
+ * screens, and one live offer — instead of a pipeline that trails off in July.
+ * co49..co54 are dedicated companies; a54–a59 are repeat applies to companies
+ * already in the pipeline (co1/co5/co8/co13), each with an existing contact.
+ */
+const RECENT_APPLICATIONS: Seed["applications"] = [
+  {
+    id: "a51", companyId: "co49", role: "Senior Product Designer", dateApplied: seedDate(206),
+    link: "https://example.com/jobs/a51", jobDescription: JOB_DESCRIPTIONS[0], referral: false,
+    resumeType: "tailored", resumeText: RESUME_TEXTS[0], coverLetterSubmitted: true,
+    coverLetterText: COVER_LETTERS[0].replace("{role}", "Senior Product Designer"),
+    notes: "Dream role — design systems adjacent.", status: "applied", logo: "W",
+    salaryMin: 130000, salaryMax: 160000, workArrangement: "remote",
+    statusHistory: [{ status: "applied", at: seedDate(206) }], interviews: [], followUps: [],
+  },
+  {
+    id: "a52", companyId: "co50", role: "Design Engineer", dateApplied: seedDate(194),
+    link: "", jobDescription: JOB_DESCRIPTIONS[1], referral: false,
+    resumeType: "untailored", coverLetterSubmitted: false,
+    notes: "Found via job board.", status: "interviewing", logo: "P",
+    workArrangement: "hybrid", city: "Portland", state: "OR",
+    statusHistory: [
+      { status: "applied", at: seedDate(194) },
+      { status: "interviewing", at: seedDate(201) },
+    ],
+    interviews: [
+      { id: "ivr1", type: "Recruiter Screen", date: seedDate(200), notes: "30 min with the recruiter — role and comp overview." },
+    ],
+    followUps: [],
+  },
+  {
+    id: "a53", companyId: "co51", role: "Frontend Platform Engineer", dateApplied: seedDate(188),
+    link: "https://example.com/jobs/a53", jobDescription: JOB_DESCRIPTIONS[1], referral: false,
+    resumeType: "tailored", resumeText: RESUME_TEXTS[1], coverLetterSubmitted: true,
+    coverLetterText: COVER_LETTERS[1].replace("{role}", "Frontend Platform Engineer"),
+    notes: "Comp is a stretch but worth a shot.", status: "interviewing", logo: "C",
+    salaryMin: 140000, salaryMax: 170000, workArrangement: "remote",
+    statusHistory: [
+      { status: "applied", at: seedDate(188) },
+      { status: "interviewing", at: seedDate(197) },
+    ],
+    interviews: [
+      { id: "ivr2", type: "Recruiter Screen", date: seedDate(195), notes: "Intro call — team and interview loop." },
+      { id: "ivr3", type: "Technical Interview", date: seedDate(203), style: "Whiteboarding", categories: ["System Design"], notes: "Systems discussion with a whiteboard sketch of the architecture." },
+    ],
+    followUps: [],
+  },
+  {
+    id: "a54", companyId: "co1", role: "Staff Engineer", dateApplied: seedDate(202),
+    link: "https://example.com/jobs/a54", jobDescription: JOB_DESCRIPTIONS[3], referral: true,
+    referredByContactId: "c1", resumeType: "tailored", resumeText: RESUME_TEXTS[2],
+    coverLetterSubmitted: true, coverLetterText: COVER_LETTERS[2].replace("{role}", "Staff Engineer"),
+    notes: "Referral from a former teammate.", status: "applied", logo: "N",
+    salaryMin: 150000, salaryMax: 185000, workArrangement: "onsite", city: "Detroit", state: "MI",
+    statusHistory: [{ status: "applied", at: seedDate(202) }],
+    interviews: [],
+    followUps: [
+      { id: "fur1", date: seedDate(209), contactId: "c1", notes: "Pinged Alex to flag that I'd applied and thank them for the referral." },
+    ],
+  },
+  {
+    id: "a55", companyId: "co5", role: "Interaction Designer", dateApplied: seedDate(183),
+    link: "", jobDescription: "", referral: false,
+    resumeType: "untailored", coverLetterSubmitted: false,
+    notes: "Applied cold; tailored the portfolio.", status: "rejected_no_interview", logo: "L",
+    workArrangement: "remote",
+    statusHistory: [
+      { status: "applied", at: seedDate(183) },
+      { status: "rejected_no_interview", at: seedDate(193) },
+    ],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "a56", companyId: "co8", role: "Product Manager", dateApplied: seedDate(209),
+    link: "https://example.com/jobs/a56", jobDescription: JOB_DESCRIPTIONS[2], referral: true,
+    referredByContactId: "c16", resumeType: "tailored", resumeText: RESUME_TEXTS[0],
+    coverLetterSubmitted: true, coverLetterText: COVER_LETTERS[2].replace("{role}", "Product Manager"),
+    notes: "Warm intro through a meetup contact.", status: "applied", logo: "S",
+    salaryMin: 150000, salaryMax: 185000, workArrangement: "hybrid", city: "Boston", state: "MA",
+    statusHistory: [{ status: "applied", at: seedDate(209) }],
+    interviews: [],
+    followUps: [],
+  },
+  {
+    id: "a57", companyId: "co52", role: "UX Researcher", dateApplied: seedDate(174),
+    link: "", jobDescription: "", referral: false,
+    resumeType: "untailored", coverLetterSubmitted: true,
+    coverLetterText: COVER_LETTERS[0].replace("{role}", "UX Researcher"),
+    notes: "", status: "interviewing", logo: "N",
+    workArrangement: "onsite", city: "Ann Arbor", state: "MI",
+    statusHistory: [
+      { status: "applied", at: seedDate(174) },
+      { status: "interviewing", at: seedDate(184) },
+    ],
+    interviews: [
+      { id: "ivr4", type: "Recruiter Screen", date: seedDate(182), notes: "Screen with the research manager." },
+      { id: "ivr5", type: "Behavioral", date: seedDate(190), style: "Mixture", categories: ["Behavioral"], notes: "Values and behavioral round with two ICs." },
+    ],
+    followUps: [],
+  },
+  {
+    id: "a58", companyId: "co53", role: "Applied AI Engineer", dateApplied: seedDate(170),
+    link: "https://example.com/jobs/a58", jobDescription: JOB_DESCRIPTIONS[3], referral: false,
+    resumeType: "tailored", resumeText: RESUME_TEXTS[1], coverLetterSubmitted: true,
+    coverLetterText: COVER_LETTERS[1].replace("{role}", "Applied AI Engineer"),
+    notes: "Comp is a stretch but worth a shot.", status: "offer_extended", logo: "K",
+    salaryMin: 140000, salaryMax: 170000, workArrangement: "remote",
+    statusHistory: [
+      { status: "applied", at: seedDate(170) },
+      { status: "interviewing", at: seedDate(180) },
+      { status: "offer_extended", at: seedDate(205) },
+    ],
+    interviews: [
+      { id: "ivr6", type: "Recruiter Screen", date: seedDate(178), notes: "Recruiter intro — role scope and timeline." },
+      { id: "ivr7", type: "Technical Screen", date: seedDate(186), style: "LeetCode", categories: ["DSA/Leetcode"], notes: "Pair-programming round; went well." },
+      { id: "ivr8", type: "Panel", date: seedDate(199), style: "Mixture", questionsAsked: "Retrieval pipeline design; an evaluation-harness discussion; a few behavioral prompts.", notes: "Full panel: four back-to-back sessions." },
+    ],
+    followUps: [],
+  },
+  {
+    id: "a59", companyId: "co13", role: "UI Engineer", dateApplied: seedDate(169),
+    link: "", jobDescription: JOB_DESCRIPTIONS[0], referral: true, referredByContactId: "c5",
+    resumeType: "untailored", coverLetterSubmitted: true,
+    coverLetterText: COVER_LETTERS[0].replace("{role}", "UI Engineer"),
+    notes: "Reached out to a recruiter on LinkedIn.", status: "interviewing", logo: "B",
+    workArrangement: "remote",
+    statusHistory: [
+      { status: "applied", at: seedDate(169) },
+      { status: "interviewing", at: seedDate(179) },
+    ],
+    interviews: [
+      { id: "ivr9", type: "Recruiter Screen", date: seedDate(177), notes: "Screen with Riley — very responsive throughout." },
+    ],
+    followUps: [
+      { id: "fur2", date: seedDate(186), contactId: "c5", notes: "Thanked them for the time and asked about next steps." },
+    ],
+  },
+  {
+    id: "a60", companyId: "co54", role: "Web Engineer", dateApplied: seedDate(181),
+    link: "https://example.com/jobs/a60", jobDescription: JOB_DESCRIPTIONS[2], referral: false,
+    resumeType: "tailored", resumeText: RESUME_TEXTS[2], coverLetterSubmitted: false,
+    notes: "", status: "applied", logo: "H",
+    salaryMin: 120000, salaryMax: 145000, workArrangement: "hybrid", city: "Philadelphia", state: "PA",
+    statusHistory: [{ status: "applied", at: seedDate(181) }],
+    interviews: [],
+    followUps: [],
+  },
+];
+
 function buildSeedRecords(): SeedRecords {
   const contactByCompany = new Map<string, string>();
   for (const c of SEED_CONTACTS) if (c.companyId) contactByCompany.set(c.companyId, c.id);
@@ -442,7 +599,7 @@ function buildSeedRecords(): SeedRecords {
   let todoIndex = -1;
   let appliedIndex = -1;
 
-  const applications: Seed["applications"] = plan.map((p, i) => {
+  const generated: Seed["applications"] = plan.map((p, i) => {
     const isTodo = p.status === "todo";
     let companyIdx: number;
     if (isTodo) {
@@ -554,6 +711,9 @@ function buildSeedRecords(): SeedRecords {
     return app;
   });
 
+  // The generated pipeline plus the hand-written last-6-weeks activity.
+  const applications: Seed["applications"] = [...generated, ...RECENT_APPLICATIONS];
+
   const appsByCompany = new Map<string, Seed["applications"]>();
   for (const a of applications) {
     const list = appsByCompany.get(a.companyId) ?? [];
@@ -592,6 +752,8 @@ function buildSeedRecords(): SeedRecords {
     { id: "ne6", contactIds: ["c8"], type: "Video call", date: seedDate(122), notes: "Materials review with my career coach." },
     { id: "ne7", contactIds: ["c9"], type: "Coffee chat", date: seedDate(140), applicationId: "a41", notes: "Founder chat; early-stage but compelling." },
     { id: "ne8", contactIds: ["c10", "c12"], type: "Other", date: seedDate(154), notes: "Community AMA with a few hiring teams." },
+    { id: "ne9", contactIds: ["c1"], type: "Coffee chat", date: seedDate(200), applicationId: "a54", notes: "Caught up with Alex before applying to the Staff Engineer role." },
+    { id: "ne10", contactIds: ["c5"], type: "Video call", date: seedDate(184), applicationId: "a59", notes: "Quick call with Riley about where the UI Engineer loop stands." },
   ];
 
   const elevatorPitchVersions: Seed["elevatorPitchVersions"] = [
