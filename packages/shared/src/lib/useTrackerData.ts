@@ -142,8 +142,8 @@ function ensureLoaded(): Promise<void> {
   return loadPromise;
 }
 
-// Real boot-time selection (WasmDataSource in the browser today; ElectronDataSource once
-// Phase 5 exists). Only runs in an actual browser: Next.js's server-side prerender pass
+// Real boot-time selection (HttpDataSource locally, WasmDataSource for the deployed
+// demo — see select.ts). Only runs in an actual browser: Next.js's server-side prerender pass
 // evaluates this module in Node too (even though every consumer is "use client"), and
 // under Vitest __resetTrackerDataForTests drives DataSource selection explicitly instead —
 // both would otherwise hit WasmDataSource's browser-style wasm path, which fails under Node.

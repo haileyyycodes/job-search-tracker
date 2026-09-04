@@ -151,7 +151,7 @@ export class RestrictedDeleteError extends Error {
 
 /**
  * Persistence boundary for the tracker. Every implementation (Memory, Wasm,
- * Electron) returns the same nested shapes — composition/joins happen inside
+ * Sqlite) returns the same nested shapes — composition/joins happen inside
  * each implementation so the UI layer never changes when the backing store does.
  */
 export interface DataSource {

@@ -28,24 +28,23 @@ the app doesn't currently have (see architecture note).
 Likely a tiered resolver: try known ATS by slug → fall back to a feed → give up
 gracefully and just deep-link the careers page.
 
-### Architecture note (this is the real blocker)
+### Architecture note
 
-App is local-first: sql.js in the browser, Electron desktop, static export — **no
-server**, and the web CSP is `connect-src 'self'`, so the browser build cannot
-fetch third-party endpoints at all. Options:
-
-- **Electron main process** does the fetching (Node `fetch`, no CSP), exposes
-  results over a new IPC channel. Desktop-only feature.
-- **Add a small backend / serverless proxy.** Changes the deployment story.
-- **User-initiated only:** a "check now" button that opens the resolved careers
-  URL in a browser tab — no fetching, no storage, minimal value.
+The web CSP is `connect-src 'self'`, so the browser build cannot fetch
+third-party endpoints directly. But the local runtime already has a real
+Next.js server behind it (`apps/web/src/app/api/db`) — a new API route there
+can do the fetching with plain Node `fetch` (no CSP) and return results to the
+client, no separate desktop shell needed. This wouldn't apply to the deployed
+demo build, which stays browser-only by design (§1 of
+`docs/local-first-architecture.md`); it'd need to be a local-only feature or
+pair with a small hosted proxy if it should also work in the demo.
 
 ### Sketch if we build it
 
 - Company gains optional `atsProvider` + `atsSlug` (or `careersUrl`); a resolver
   guesses these from `website` and lets the user correct.
 - New `open_positions` table: `company_id, title, location, url, posted_at,
-  first_seen, last_seen, dismissed`. Migration across memory / wasm / electron
+  first_seen, last_seen, dismissed`. Migration across memory / wasm / sqlite
   data sources + contract tests.
 - Refresh on a cadence (daily?) or on demand; dedupe by `url`; diff against
   `first_seen` to badge "new".
@@ -72,7 +71,7 @@ fetch third-party endpoints at all. Options:
 
 **Status:** idea only
 
-Both CSPs (`apps/web/next.config.ts`, `apps/desktop/src/main.ts`) still carry
+The CSP (`apps/web/next.config.ts`) still carries
 `script-src … 'unsafe-inline'` for Next's bootstrap. That's the one gap that lets
 an injected inline handler run if sanitization ever fails. The real fix is
 nonce/hash-ing the Next bootstrap scripts and removing `'unsafe-inline'` — turns

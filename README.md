@@ -2,55 +2,29 @@
 
 Local-first job application tracker. One codebase, two runtimes:
 
-- **`apps/desktop`** — Electron app, real SQLite (`better-sqlite3`), for daily personal use
-- **`apps/web`** — Next.js app, deployed to Vercel as a portfolio demo (in-memory SQLite via `sql.js`, resets on refresh)
+- **`apps/web`** run locally — real persistent SQLite (`better-sqlite3`) behind a `/api/db` route, for daily personal use
+- **`apps/web`** deployed to Vercel as a portfolio demo — in-memory SQLite via `sql.js`, resets on refresh
 - **`packages/shared`** — the UI, business logic, and `DataSource` interface both runtimes consume unchanged
 
 See [`docs/local-first-architecture.md`](docs/local-first-architecture.md) for the full design.
 
-## Web
+## Running locally
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Your data persists to a real SQLite file at `~/.job-tracker/job-tracker.db` (override with `JOB_TRACKER_DB_PATH`) across restarts — nothing resets on refresh.
 
-## Desktop app
+`npm run build && npm start` runs the same persistent setup from a production build.
 
-**Develop** — rebuilds from current source every run (no hot reload; re-run after each change):
+### Troubleshooting: the app loads but shows no data
 
-```bash
-cd apps/desktop && npm start
-```
+If your companies, contacts, and networking events have all vanished at once, the database is fine — the app failed to load it. `openDatabase()` in [`apps/web/src/server/sqlite/schema.ts`](apps/web/src/server/sqlite/schema.ts) runs the full schema only on a brand-new file; every existing file gets `migrate()` instead, which must add any table introduced later. When a table it needs is missing, the boot-time `Promise.all` of list queries rejects as a whole and every view stays empty. `migrate()` runs on every server start and is idempotent, so restarting after pulling the fix backfills the missing tables without touching existing rows.
 
-Or from the repo root:
+## Deploying the demo
 
-```bash
-npm run start --workspace=apps/desktop
-```
-
-**Install** — builds a `.dmg`/`.app` into `apps/desktop/out/`:
-
-```bash
-cd apps/desktop && npm run make
-```
-
-Open the `.dmg`, drag `Job Tracker.app` into Applications. It's unsigned, so the first launch needs a right-click → **Open** to get past Gatekeeper.
-
-The installed app is a frozen snapshot — it does **not** auto-update. Re-run `npm run make` and reinstall to pick up new changes. Dev and installed builds share the same database (`~/Library/Application Support/Job Tracker/job-tracker.db`), so data carries over either way.
-
-### Troubleshooting: the app launches but shows no data
-
-If your companies, contacts, and networking events have all vanished at once, the database is fine — the app failed to load it. `openDatabase()` in [`apps/desktop/src/db/schema.ts`](apps/desktop/src/db/schema.ts) runs the full schema only on a brand-new file; every existing file gets `migrate()` instead, which must add any table introduced later. When a table it needs is missing, the renderer's boot-time `Promise.all` of list queries rejects as a whole and every view stays empty.
-
-The fix is to launch from current source on a branch where `migrate()` covers that table:
-
-```bash
-npm run start --workspace=apps/desktop
-```
-
-`migrate()` runs on every launch and is idempotent, so it backfills the missing tables without touching existing rows. A packaged `.app` won't have the fix until you re-run `npm run make`.
+The Vercel deployment sets `NEXT_PUBLIC_DEMO_MODE=true`, which switches the app to the in-memory `WasmDataSource` (seeded fake data, resets on every refresh) instead of the persistent SQLite backend — see [`packages/shared/src/lib/dataSource/select.ts`](packages/shared/src/lib/dataSource/select.ts).
 
 ## Commands
 

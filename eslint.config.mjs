@@ -17,10 +17,6 @@ const eslintConfig = defineConfig([
     "**/next-env.d.ts",
     // vitest coverage output:
     "coverage/**",
-    // esbuild output (apps/desktop/src -> apps/desktop/dist):
-    "apps/desktop/dist/**",
-    // plain-CJS npm-override shim (tools/extract-zip-shim), not app source:
-    "tools/**",
   ]),
 ]);
 

@@ -22,42 +22,76 @@ import {
   type NewNetworkingEvent,
 } from "./types";
 
-/** The typed surface preload.ts exposes via contextBridge — one method per IPC channel. */
-export interface ElectronApi {
-  invoke(channel: string, ...args: unknown[]): Promise<unknown>;
-}
+/** Must match Object.keys(CHANNELS) in apps/web/src/app/api/db/route.ts exactly
+ * (enforced by route.test.ts) — the two are independently maintained string
+ * lists on either side of an HTTP boundary TypeScript can't check across. */
+export const HTTP_DB_CHANNELS = new Set([
+  "applications:list",
+  "applications:create",
+  "applications:edit",
+  "applications:updateStatus",
+  "applications:delete",
+  "applications:saveFeedback",
+  "interviews:log",
+  "interviews:edit",
+  "interviews:delete",
+  "followUps:log",
+  "followUps:delete",
+  "companies:list",
+  "companies:create",
+  "companies:edit",
+  "companies:delete",
+  "companies:toggleTarget",
+  "contacts:list",
+  "contacts:create",
+  "contacts:edit",
+  "contacts:delete",
+  "networkingEvents:list",
+  "networkingEvents:add",
+  "networkingEvents:edit",
+  "networkingEvents:delete",
+  "goals:get",
+  "goals:update",
+  "userProfile:get",
+  "userProfile:update",
+  "interviewCategories:list",
+  "interviewCategories:add",
+  "interviewPrep:list",
+  "interviewPrep:add",
+  "interviewPrep:edit",
+  "interviewPrep:delete",
+  "elevatorPitch:list",
+  "elevatorPitch:add",
+  "elevatorPitch:edit",
+  "elevatorPitch:delete",
+]);
 
-declare global {
-  interface Window {
-    electronAPI?: ElectronApi;
-  }
-}
-
-/** Marker prefix ipcHandlers.ts uses so RestrictedDeleteError survives the IPC boundary
- * (Electron serializes thrown errors down to message + generic Error, losing the type). */
+/** Marker prefix the API route uses so RestrictedDeleteError survives the HTTP
+ * boundary (a fetch Response only carries a message string, losing the type). */
 const RESTRICTED_DELETE_PREFIX = "RESTRICTED_DELETE:";
 
 /**
- * Thin ipcRenderer.invoke wrapper (via the preload-exposed window.electronAPI) implementing
- * DataSource — never imports better-sqlite3 directly, so the native module never leaks into
- * the renderer bundle. All the real logic lives in apps/desktop's main-process ipcHandlers.ts.
+ * Talks to the local Next.js server's /api/db route, which runs the real
+ * SQLite-backed DataSource (apps/web/src/server/sqlite) via better-sqlite3.
+ * Used for local, persistent runs — the Vercel-deployed portfolio demo uses
+ * WasmDataSource instead (see select.ts).
  */
-export class ElectronDataSource implements DataSource {
-  private api(): ElectronApi {
-    if (!window.electronAPI) throw new Error("window.electronAPI is not available (not running inside Electron)");
-    return window.electronAPI;
-  }
-
+export class HttpDataSource implements DataSource {
   private async invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
-    try {
-      return (await this.api().invoke(channel, ...args)) as T;
-    } catch (err) {
-      if (err instanceof Error && err.message.includes(RESTRICTED_DELETE_PREFIX)) {
-        const message = err.message.slice(err.message.indexOf(RESTRICTED_DELETE_PREFIX) + RESTRICTED_DELETE_PREFIX.length);
-        throw new RestrictedDeleteError(message);
+    const response = await fetch("/api/db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel, args }),
+    });
+    const body = (await response.json()) as { result?: T; error?: string };
+    if (!response.ok) {
+      const error = body.error ?? response.statusText;
+      if (error.startsWith(RESTRICTED_DELETE_PREFIX)) {
+        throw new RestrictedDeleteError(error.slice(RESTRICTED_DELETE_PREFIX.length));
       }
-      throw err;
+      throw new Error(error);
     }
+    return body.result as T;
   }
 
   getApplications() {

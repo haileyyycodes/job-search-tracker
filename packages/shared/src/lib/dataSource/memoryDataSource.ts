@@ -98,8 +98,8 @@ function omit<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
 
 /**
  * In-memory DataSource: no persistence, real autoincrement ids, real
- * cascade/restrict delete behavior. Used for tests, and as the temporary
- * boot-time implementation until WasmDataSource/ElectronDataSource exist.
+ * cascade/restrict delete behavior. Used for tests only — the real boot-time
+ * implementations are WasmDataSource (demo) and HttpDataSource (local, persistent).
  */
 export class MemoryDataSource implements DataSource {
   private applications = new Table<StoredApplication>();

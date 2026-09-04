@@ -1,6 +1,5 @@
-import { ipcMain } from "electron";
 import type Database from "better-sqlite3";
-import type { ApplicationStatus, Feedback, RelationshipTier } from "../../../../packages/shared/src/lib/types";
+import type { ApplicationStatus, Feedback, RelationshipTier } from "@/lib/types";
 import {
   RestrictedDeleteError,
   type DataSource,
@@ -22,7 +21,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
-} from "../../../../packages/shared/src/lib/dataSource/types";
+} from "@/lib/dataSource/types";
 
 /**
  * SQLite enforces FK actions (including RESTRICT) via internal triggers when
@@ -760,78 +759,4 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
       db.prepare("DELETE FROM elevator_pitch_versions WHERE id = ?").run(id);
     },
   };
-}
-
-/**
- * Registers one ipcMain.handle per DataSource method, namespaced e.g.
- * "applications:list". RestrictedDeleteError doesn't survive the IPC
- * boundary as a distinguishable type (Electron serializes thrown errors down
- * to message + generic Error), so it's marked here and reconstructed in
- * packages/shared's ElectronDataSource on the renderer side.
- */
-export function registerIpcHandlers(db: Database.Database): void {
-  const ds = createSqliteDataSource(db);
-
-  const channels: Record<string, (...args: unknown[]) => Promise<unknown>> = {
-    "applications:list": () => ds.getApplications(),
-    "applications:create": (app) => ds.createApplication(app as NewApplication),
-    "applications:edit": (app) => ds.editApplication(app as DsApplication),
-    "applications:updateStatus": (id, status, at) => ds.updateApplicationStatus(id as number, status as ApplicationStatus, at as string),
-    "applications:delete": (id) => ds.deleteApplication(id as number),
-    "applications:saveFeedback": (appId, feedback) => ds.saveFeedback(appId as number, feedback as Feedback),
-
-    "interviews:log": (appId, interview) => ds.logInterview(appId as number, interview as NewInterview),
-    "interviews:edit": (appId, interviewId, updates) =>
-      ds.editInterview(appId as number, interviewId as number, updates as NewInterview),
-    "interviews:delete": (appId, interviewId) => ds.deleteInterview(appId as number, interviewId as number),
-
-    "followUps:log": (appId, followUp) => ds.logFollowUp(appId as number, followUp as NewFollowUp),
-    "followUps:delete": (appId, followUpId) => ds.deleteFollowUp(appId as number, followUpId as number),
-
-    "companies:list": () => ds.getCompanies(),
-    "companies:create": (company) => ds.createCompany(company as NewCompany),
-    "companies:edit": (company) => ds.editCompany(company as DsCompany),
-    "companies:delete": (id) => ds.deleteCompany(id as number),
-    "companies:toggleTarget": (id) => ds.toggleTarget(id as number),
-
-    "contacts:list": () => ds.getContacts(),
-    "contacts:create": (contact) => ds.createContact(contact as NewContact),
-    "contacts:edit": (contact) => ds.editContact(contact as DsContact),
-    "contacts:delete": (id) => ds.deleteContact(id as number),
-
-    "networkingEvents:list": () => ds.getNetworkingEvents(),
-    "networkingEvents:add": (event) => ds.addNetworkingEvent(event as NewNetworkingEvent),
-    "networkingEvents:edit": (event) => ds.editNetworkingEvent(event as DsNetworkingEvent),
-    "networkingEvents:delete": (id) => ds.deleteNetworkingEvent(id as number),
-
-    "goals:get": () => ds.getGoals(),
-    "goals:update": (goals) => ds.updateGoals(goals as DsGoals),
-
-    "userProfile:get": () => ds.getUserProfile(),
-    "userProfile:update": (profile) => ds.updateUserProfile(profile as DsUserProfile),
-
-    "interviewCategories:list": () => ds.getInterviewCategories(),
-    "interviewCategories:add": (category) => ds.addInterviewCategory(category as string),
-
-    "interviewPrep:list": () => ds.getInterviewPrepQuestions(),
-    "interviewPrep:add": (question) => ds.addInterviewPrepQuestion(question as NewInterviewPrepQuestion),
-    "interviewPrep:edit": (question) => ds.editInterviewPrepQuestion(question as DsInterviewPrepQuestion),
-    "interviewPrep:delete": (id) => ds.deleteInterviewPrepQuestion(id as number),
-
-    "elevatorPitch:list": () => ds.getElevatorPitchVersions(),
-    "elevatorPitch:add": (version) => ds.addElevatorPitchVersion(version as NewElevatorPitchVersion),
-    "elevatorPitch:edit": (version) => ds.editElevatorPitchVersion(version as DsElevatorPitchVersion),
-    "elevatorPitch:delete": (id) => ds.deleteElevatorPitchVersion(id as number),
-  };
-
-  for (const [channel, handler] of Object.entries(channels)) {
-    ipcMain.handle(channel, async (_event, ...args: unknown[]) => {
-      try {
-        return await handler(...args);
-      } catch (err) {
-        if (err instanceof RestrictedDeleteError) throw new Error(`RESTRICTED_DELETE:${err.message}`);
-        throw err;
-      }
-    });
-  }
 }

@@ -5,19 +5,22 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:electron": "BUILD_TARGET=export next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run"
   },
   "dependencies": {
     "@job-tracker/shared": "*",
+    "better-sqlite3": "^13.0.3",
     "next": "16.2.10",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

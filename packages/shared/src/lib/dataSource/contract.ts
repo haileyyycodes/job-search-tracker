@@ -3,7 +3,7 @@ import { RestrictedDeleteError, type DataSource } from "./types";
 
 /**
  * Implementation-agnostic behavior contract for DataSource. Every
- * implementation (Memory, Wasm, Electron) runs this against itself so the
+ * implementation (Memory, Wasm, Sqlite) runs this against itself so the
  * cascade/restrict/compose behavior stays identical everywhere, not just in
  * whichever implementation happened to get hand-written tests first.
  */

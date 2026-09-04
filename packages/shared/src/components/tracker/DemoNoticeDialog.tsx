@@ -14,7 +14,7 @@ function subscribe(onStoreChange: () => void) {
 }
 
 function getSnapshot(): boolean {
-  if (dismissed || window.electronAPI) return false;
+  if (dismissed || process.env.NEXT_PUBLIC_DEMO_MODE !== "true") return false;
   try {
     if (window.localStorage.getItem(STORAGE_KEY)) return false;
   } catch {
@@ -37,7 +37,7 @@ function dismiss() {
   listeners.forEach((listener) => listener());
 }
 
-/** Only rendered in the web build (never Electron, where window.electronAPI is present).
+/** Only rendered in the deployed demo build (NEXT_PUBLIC_DEMO_MODE=true), never when run locally.
  * Shows once per browser to explain that this is a portfolio demo with fake, unsaved data.
  * Uses useSyncExternalStore (rather than an effect) so the client-only "should show" check
  * doesn't cause a setState-in-effect cascade — it renders closed on the server and syncs to
@@ -62,8 +62,8 @@ export function DemoNoticeDialog() {
           see is made-up sample data, not anyone&rsquo;s real job search.
         </p>
         <p style={{ margin: 0, font: "var(--text-body-m)", color: "var(--text-primary)" }}>
-          Feel free to click around, but nothing you change here is saved. The real Job Tracker is a free
-          desktop app that stores everything locally on your own computer.
+          Feel free to click around, but nothing you change here is saved. The real Job Tracker runs
+          locally on your own computer, where it stores everything for real.
         </p>
       </div>
     </Dialog>

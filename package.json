@@ -6,17 +6,13 @@
     "apps/*",
     "packages/*"
   ],
-  "overrides": {
-    "extract-zip": "file:./tools/extract-zip-shim"
-  },
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
-    "build:electron": "npm run build:electron --workspace=apps/web",
     "start": "npm run start --workspace=apps/web",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p apps/web && tsc --noEmit -p apps/desktop",
-    "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run && npm test --workspace=apps/desktop",
+    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p apps/web",
+    "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run && npm test --workspace=apps/web",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest",
     "test:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage"
   },
@@ -34,5 +30,8 @@
     "jsdom": "^29.1.1",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true
   }
 }

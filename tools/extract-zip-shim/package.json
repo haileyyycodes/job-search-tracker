@@ -1,7 +1,0 @@
-{
-  "name": "extract-zip",
-  "version": "2.0.1",
-  "private": true,
-  "description": "Drop-in replacement for extract-zip, shelling out to the system unzip binary.",
-  "main": "index.js"
-}
