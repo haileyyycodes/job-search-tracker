@@ -1,33 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Dialog, Button } from "@/components/ds";
 
 const STORAGE_KEY = "job-tracker:demo-notice-dismissed";
 
+let dismissed = false;
+const listeners = new Set<() => void>();
+
+function subscribe(onStoreChange: () => void) {
+  listeners.add(onStoreChange);
+  return () => listeners.delete(onStoreChange);
+}
+
+function getSnapshot(): boolean {
+  if (dismissed || window.electronAPI) return false;
+  try {
+    if (window.localStorage.getItem(STORAGE_KEY)) return false;
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — fall through and show the notice
+  }
+  return true;
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+function dismiss() {
+  dismissed = true;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, "1");
+  } catch {
+    // if storage isn't available the notice will just show again next visit
+  }
+  listeners.forEach((listener) => listener());
+}
+
 /** Only rendered in the web build (never Electron, where window.electronAPI is present).
- * Shows once per browser to explain that this is a portfolio demo with fake, unsaved data. */
+ * Shows once per browser to explain that this is a portfolio demo with fake, unsaved data.
+ * Uses useSyncExternalStore (rather than an effect) so the client-only "should show" check
+ * doesn't cause a setState-in-effect cascade — it renders closed on the server and syncs to
+ * the real value right after hydration, which is exactly this hook's intended use case. */
 export function DemoNoticeDialog() {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (window.electronAPI) return;
-    try {
-      if (window.localStorage.getItem(STORAGE_KEY)) return;
-    } catch {
-      // localStorage unavailable (e.g. private browsing) — fall through and show the notice
-    }
-    setOpen(true);
-  }, []);
-
-  const dismiss = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      // if storage isn't available the notice will just show again next visit
-    }
-    setOpen(false);
-  };
+  const open = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <Dialog
