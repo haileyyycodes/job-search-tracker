@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/tracker/Sidebar";
+import { DemoNoticeDialog } from "@/components/tracker/DemoNoticeDialog";
 import { AddApplicationDialog } from "@/components/tracker/AddApplicationDialog";
 import { ConfirmDeleteApplicationDialog } from "@/components/tracker/ConfirmDeleteApplicationDialog";
 import { AddContactDialog } from "@/components/tracker/AddContactDialog";
@@ -59,6 +60,7 @@ function TrackerShell({ children }: { children: React.ReactNode }) {
     <div style={{ display: "flex", height: "100%" }}>
       <Sidebar userName={data.userProfile.name} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>{children}</div>
+      <DemoNoticeDialog />
       <AddApplicationDialog
         open={ui.addOpen}
         onClose={ui.closeAddApplication}
