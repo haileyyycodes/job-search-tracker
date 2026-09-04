@@ -20,11 +20,12 @@ out/
 # production
 /build
 
-# electron (tsc output for main/preload, Forge's package/make output; dev-data/ is a
-# leftover local db from before dev mode used the same file as the packaged app — no
-# code writes there anymore, but never let a stray db with real data get committed)
-apps/desktop/dist/
-apps/desktop/dev-data/
+# local persistent SQLite db (defaults to ~/.job-tracker, outside the repo, but
+# never let a stray one under a JOB_TRACKER_DB_PATH override get committed)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # misc
 .DS_Store

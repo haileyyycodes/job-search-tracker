@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
-import { SCHEMA_SQL } from "../../../../packages/shared/src/lib/dataSource/schema";
+import { SCHEMA_SQL } from "@/lib/dataSource/schema";
 
 export { SCHEMA_SQL };
 

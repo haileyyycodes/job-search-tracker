@@ -4,9 +4,9 @@
  * on the way in and Markdown → sanitized HTML on the way out.
  *
  * Browser-only: turndown and DOMPurify need a DOM. Imported from React components
- * only, never from `apps/desktop` (Node lib) — same containment as `resumeUpload.ts`
- * used to have. `markdownToSafeHtml` is only ever called client-side (in a render
- * effect), so no isomorphic/jsdom shim is needed.
+ * only, never from server code (e.g. `apps/web/src/server`) — same containment as
+ * `resumeUpload.ts` used to have. `markdownToSafeHtml` is only ever called
+ * client-side (in a render effect), so no isomorphic/jsdom shim is needed.
  *
  * Security: the stored value is plain Markdown, so there is no persisted markup.
  * The only place HTML exists is the render path, where `marked` output is passed

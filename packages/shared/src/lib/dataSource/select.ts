@@ -1,16 +1,20 @@
 import type { DataSource } from "./types";
 
 /**
- * Boot-time DataSource selection. WasmDataSource is dynamically imported so
- * its ~1.5MB sql.js WASM binary never ends up in the Electron bundle, which
- * doesn't need it. ElectronDataSource is dynamically imported too — it's a
- * thin wrapper (no native module inside), but keeping the import dynamic
- * avoids evaluating window.electronAPI-touching code in non-Electron builds.
+ * Boot-time DataSource selection. Two audiences, one shared codebase:
+ * NEXT_PUBLIC_DEMO_MODE is set only in the Vercel project's env vars, for the
+ * portfolio demo (fake seed data, in-memory, resets on refresh). Everywhere
+ * else — `npm run dev`, `npm start` on your own machine — it's unset, so the
+ * app talks to the local Next.js server's real SQLite-backed /api/db route
+ * instead, and your data persists across restarts.
+ *
+ * WasmDataSource is dynamically imported so its ~1.5MB sql.js WASM binary
+ * never ends up in a bundle that doesn't need it.
  */
 export async function selectDataSource(): Promise<DataSource> {
-  if (typeof window !== "undefined" && window.electronAPI) {
-    const { ElectronDataSource } = await import("./electronDataSource");
-    return new ElectronDataSource();
+  if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_DEMO_MODE !== "true") {
+    const { HttpDataSource } = await import("./httpDataSource");
+    return new HttpDataSource();
   }
   const { WasmDataSource } = await import("./wasmDataSource");
   return new WasmDataSource();

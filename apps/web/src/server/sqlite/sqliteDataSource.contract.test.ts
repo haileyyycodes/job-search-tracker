@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type Database from "better-sqlite3";
-import { runDataSourceContractTests } from "../../../../packages/shared/src/lib/dataSource/contract";
-import { createSqliteDataSource } from "./ipcHandlers";
+import { runDataSourceContractTests } from "@/lib/dataSource/contract";
+import { createSqliteDataSource } from "./sqliteDataSource";
 import { openDatabase } from "./schema";
 
 const openDbs: Database.Database[] = [];
@@ -20,7 +20,7 @@ runDataSourceContractTests(makeDataSource);
 
 describe("createSqliteDataSource against a real SQLite file", () => {
   it("starts empty on first run (no seed data) and persists across separate connections to the same file", async () => {
-    const dbPath = `${process.env.TMPDIR ?? "/tmp"}/job-tracker-electron-contract-${Date.now()}.db`;
+    const dbPath = `${process.env.TMPDIR ?? "/tmp"}/job-tracker-sqlite-contract-${Date.now()}.db`;
 
     const first = openDatabase(dbPath);
     const firstDs = createSqliteDataSource(first);
@@ -38,7 +38,7 @@ describe("createSqliteDataSource against a real SQLite file", () => {
   });
 
   it("adds tables introduced after a DB file was created, without touching existing data", async () => {
-    const dbPath = `${process.env.TMPDIR ?? "/tmp"}/job-tracker-electron-migrate-${Date.now()}.db`;
+    const dbPath = `${process.env.TMPDIR ?? "/tmp"}/job-tracker-sqlite-migrate-${Date.now()}.db`;
 
     // Simulate a DB file created before `user_profile`, `interview_prep_questions`, and
     // `elevator_pitch_versions` existed: create it, then drop the tables later schema
