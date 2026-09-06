@@ -101,9 +101,15 @@ elevator_pitch_versions(id INTEGER PK, ..., source_question_id FK)
 
 ---
 
-## 5. Async architecture: optimistic cache in `useTrackerData.ts`
+## 5. Async architecture: full load on boot, optimistic cache in `useTrackerData.ts`
 
-`DataSource` methods are `Promise`-based (required for both `fetch` to `/api/db` and `sql.js`'s WASM init). `useTrackerData.ts` keeps an in-memory cache (React state):
+`DataSource` methods are `Promise`-based (required for both `fetch` to `/api/db` and `sql.js`'s WASM init). `useTrackerData.ts` holds all tracker state in one module-level external store (`useSyncExternalStore`, not `useState`/Context — every consumer of the hook shares the same snapshot).
+
+**Boot:** `loadAll()` fires all nine `DataSource` getters in parallel via `Promise.all` (applications, companies, contacts, networking events, goals, user profile, interview categories, interview prep questions, elevator pitch versions) and stores the full result. There's no pagination or per-view fetching — every screen reads from this one in-memory snapshot loaded once at startup.
+
+**Why load everything upfront instead of per-view:** this is a single-user local tool with a personal-scale dataset (tens to low hundreds of rows), not a multi-tenant app. Fetching per-view would mean scattered loading states and cache invalidation across screens, in exchange for no real benefit at this scale — and it would work against the actual design goal, which is that every click already has the data it needs. This stops being the right call if the dataset grows far beyond personal-job-search size, or if the app ever became multi-user/multi-device; neither is a current goal (see §9).
+
+**Mutations** apply optimistically against that same store:
 
 1. Mutation called → cache updates immediately, component re-renders instantly
 2. `DataSource` call fires in the background
