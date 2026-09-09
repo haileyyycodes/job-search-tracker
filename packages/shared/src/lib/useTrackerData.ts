@@ -14,6 +14,7 @@ import type {
   NewInterview,
   NewInterviewPrepQuestion,
   NewNetworkingEvent,
+  NewStory,
 } from "./dataSource/types";
 import type {
   Application,
@@ -27,6 +28,7 @@ import type {
   Interview,
   InterviewPrepQuestion,
   NetworkingEvent,
+  Story,
   UserProfile,
 } from "./types";
 
@@ -39,6 +41,7 @@ interface TrackerState {
   companies: Company[];
   interviewCategories: string[];
   interviewPrepQuestions: InterviewPrepQuestion[];
+  stories: Story[];
   elevatorPitchVersions: ElevatorPitchVersion[];
 }
 
@@ -51,6 +54,7 @@ const emptyState: TrackerState = {
   companies: [],
   interviewCategories: [],
   interviewPrepQuestions: [],
+  stories: [],
   elevatorPitchVersions: [],
 };
 
@@ -112,6 +116,7 @@ async function loadAll(): Promise<void> {
     companies,
     interviewCategories,
     interviewPrepQuestions,
+    stories,
     elevatorPitchVersions,
   ] = await Promise.all([
     dataSource.getApplications(),
@@ -122,6 +127,7 @@ async function loadAll(): Promise<void> {
     dataSource.getCompanies(),
     dataSource.getInterviewCategories(),
     dataSource.getInterviewPrepQuestions(),
+    dataSource.getStories(),
     dataSource.getElevatorPitchVersions(),
   ]);
   setState({
@@ -133,6 +139,7 @@ async function loadAll(): Promise<void> {
     companies,
     interviewCategories,
     interviewPrepQuestions,
+    stories,
     elevatorPitchVersions,
   });
 }
@@ -479,6 +486,33 @@ const deleteInterviewPrepQuestion = (id: number): Promise<void> => {
   return withRollback(() => dataSource.deleteInterviewPrepQuestion(id));
 };
 
+const addStory = (story: NewStory): Promise<Story> => {
+  const tempId = allocTempId();
+  const optimistic: Story = { ...story, id: tempId };
+  setState((prev) => ({ ...prev, stories: [...prev.stories, optimistic] }));
+  return withRollback(async () => {
+    const created = await dataSource.addStory(story);
+    setState((prev) => ({
+      ...prev,
+      stories: prev.stories.map((s) => (s.id === tempId ? created : s)),
+    }));
+    return created;
+  });
+};
+
+const editStory = (updated: Story): Promise<void> => {
+  setState((prev) => ({
+    ...prev,
+    stories: prev.stories.map((s) => (s.id === updated.id ? updated : s)),
+  }));
+  return withRollback(() => dataSource.editStory(updated));
+};
+
+const deleteStory = (id: number): Promise<void> => {
+  setState((prev) => ({ ...prev, stories: prev.stories.filter((s) => s.id !== id) }));
+  return withRollback(() => dataSource.deleteStory(id));
+};
+
 const addElevatorPitchVersion = (version: NewElevatorPitchVersion): Promise<ElevatorPitchVersion> => {
   const tempId = allocTempId();
   const optimistic: ElevatorPitchVersion = { ...version, id: tempId };
@@ -514,6 +548,9 @@ const actions = {
   addInterviewPrepQuestion,
   editInterviewPrepQuestion,
   deleteInterviewPrepQuestion,
+  addStory,
+  editStory,
+  deleteStory,
   addElevatorPitchVersion,
   editElevatorPitchVersion,
   deleteElevatorPitchVersion,

@@ -21,7 +21,7 @@ const countBy = <T>(items: T[], key: (item: T) => string) =>
   }, {});
 
 describe("defaultSeed coverage", () => {
-  const { applications, companies, contacts, networkingEvents, elevatorPitchVersions } = defaultSeed;
+  const { applications, companies, contacts, networkingEvents, elevatorPitchVersions, stories } = defaultSeed;
   const interviews = applications.flatMap((a) => a.interviews);
 
   it("has 60 applications (50 generated + 10 recent)", () => {
@@ -126,5 +126,6 @@ describe("defaultSeed coverage", () => {
     expect(unique(applications.flatMap((a) => a.interviews).map((i) => i.id))).toBe(true);
     expect(unique(applications.flatMap((a) => a.followUps).map((f) => f.id))).toBe(true);
     expect(unique(networkingEvents.map((e) => e.id))).toBe(true);
+    expect(unique(stories.map((s) => s.id))).toBe(true);
   });
 });

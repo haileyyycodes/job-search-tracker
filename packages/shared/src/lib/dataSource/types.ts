@@ -111,6 +111,13 @@ export interface DsInterviewPrepQuestion {
   starred: boolean;
 }
 
+export interface DsStory {
+  id: number;
+  title: string;
+  content: string;
+  tags: string[];
+}
+
 export interface DsElevatorPitchVersion {
   id: number;
   name: string;
@@ -134,6 +141,7 @@ export type DsUserProfile = UserProfile;
 
 export type NewApplication = Omit<DsApplication, "id" | "interviews" | "followUps">;
 export type NewInterviewPrepQuestion = Omit<DsInterviewPrepQuestion, "id">;
+export type NewStory = Omit<DsStory, "id">;
 export type NewElevatorPitchVersion = Omit<DsElevatorPitchVersion, "id">;
 export type NewCompany = Omit<DsCompany, "id" | "locations"> & { locations?: DsCompanyLocation[] };
 export type NewContact = Omit<DsContact, "id">;
@@ -198,6 +206,11 @@ export interface DataSource {
   addInterviewPrepQuestion(question: NewInterviewPrepQuestion): Promise<DsInterviewPrepQuestion>;
   editInterviewPrepQuestion(question: DsInterviewPrepQuestion): Promise<void>;
   deleteInterviewPrepQuestion(id: number): Promise<void>;
+
+  getStories(): Promise<DsStory[]>;
+  addStory(story: NewStory): Promise<DsStory>;
+  editStory(story: DsStory): Promise<void>;
+  deleteStory(id: number): Promise<void>;
 
   getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]>;
   addElevatorPitchVersion(version: NewElevatorPitchVersion): Promise<DsElevatorPitchVersion>;

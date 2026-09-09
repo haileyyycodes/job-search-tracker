@@ -89,6 +89,20 @@ function migrate(db: Database.Database): void {
     `);
   }
 
+  // Stories (added later) — a standalone table, same story as the two above: a
+  // DB file created before this commit never gets it, and useTrackerData's
+  // boot-time Promise.all fails the first time it calls stories:list.
+  if (!hasTable(db, "stories")) {
+    db.exec(`
+      CREATE TABLE stories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        tags TEXT NOT NULL
+      );
+    `);
+  }
+
   // Pasted resume text (added later). Replaces an earlier file-upload attempt —
   // drop that table if a DB still has it.
   if (!hasColumn(db, "applications", "resume_text")) {

@@ -12,6 +12,7 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
+  type DsStory,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -21,6 +22,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type NewStory,
 } from "@/lib/dataSource/types";
 
 /**
@@ -137,6 +139,12 @@ interface InterviewPrepQuestionRow {
   answer: string;
   starred: number;
 }
+interface StoryRow {
+  id: number;
+  title: string;
+  content: string;
+  tags: string;
+}
 interface ElevatorPitchVersionRow {
   id: number;
   name: string;
@@ -209,6 +217,15 @@ function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPre
     question: row.question,
     answer: row.answer,
     starred: !!row.starred,
+  };
+}
+
+function mapStory(row: StoryRow): DsStory {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? (JSON.parse(row.tags) as string[]) : [],
   };
 }
 
@@ -688,6 +705,34 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
 
     async deleteInterviewPrepQuestion(id: number) {
       db.prepare("DELETE FROM interview_prep_questions WHERE id = ?").run(id);
+    },
+
+    // ---- stories ----
+
+    async getStories() {
+      return db.prepare<[], StoryRow>("SELECT * FROM stories ORDER BY id").all().map(mapStory);
+    },
+
+    async addStory(story: NewStory) {
+      const { lastInsertRowid } = db
+        .prepare("INSERT INTO stories (title, content, tags) VALUES (?, ?, ?)")
+        .run(story.title, story.content, JSON.stringify(story.tags));
+      return mapStory(
+        requireRow<StoryRow>("SELECT * FROM stories WHERE id = ?", Number(lastInsertRowid), "Story")
+      );
+    },
+
+    async editStory(story: DsStory) {
+      db.prepare("UPDATE stories SET title = ?, content = ?, tags = ? WHERE id = ?").run(
+        story.title,
+        story.content,
+        JSON.stringify(story.tags),
+        story.id
+      );
+    },
+
+    async deleteStory(id: number) {
+      db.prepare("DELETE FROM stories WHERE id = ?").run(id);
     },
 
     // ---- elevator pitch versions ----
