@@ -40,8 +40,10 @@ function InterviewPrepPageContent() {
       <InterviewPrepView
         questions={data.interviewPrepQuestions}
         pitchVersionCount={data.elevatorPitchVersions.length}
+        storyCount={data.stories.length}
         onSelectCategory={(slug) => router.push(`/interview-prep?category=${slug}`)}
         onSelectPitchBuilder={() => router.push("/interview-prep/pitch")}
+        onSelectStories={() => router.push("/interview-prep/stories")}
       />
     </>
   );

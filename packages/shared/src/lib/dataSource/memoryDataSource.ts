@@ -11,6 +11,7 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
+  type DsStory,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -20,6 +21,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type NewStory,
 } from "./types";
 import { defaultSeed, type Seed } from "./seed";
 
@@ -33,6 +35,7 @@ type StoredContact = DsContact;
 type StoredNetworkingEvent = Omit<DsNetworkingEvent, "contactIds">;
 type StoredNetworkingEventContact = { id: number; eventId: number; contactId: number };
 type StoredInterviewPrepQuestion = DsInterviewPrepQuestion;
+type StoredStory = DsStory;
 type StoredElevatorPitchVersion = DsElevatorPitchVersion;
 
 /** Simple in-memory table: autoincrement id, Map preserves insertion order (mirrors SQLite rowid order). */
@@ -115,6 +118,7 @@ export class MemoryDataSource implements DataSource {
   private userProfile: DsUserProfile = { name: "" };
   private interviewCategories: string[] = [];
   private interviewPrepQuestions = new Table<StoredInterviewPrepQuestion>();
+  private stories = new Table<StoredStory>();
   private elevatorPitchVersions = new Table<StoredElevatorPitchVersion>();
 
   constructor(seed: Seed = defaultSeed) {
@@ -409,6 +413,25 @@ export class MemoryDataSource implements DataSource {
     this.interviewPrepQuestions.delete(id);
   }
 
+  // ---- stories ----
+
+  async getStories(): Promise<DsStory[]> {
+    return this.stories.list();
+  }
+
+  async addStory(story: NewStory): Promise<DsStory> {
+    return this.stories.insert(story);
+  }
+
+  async editStory(story: DsStory): Promise<void> {
+    this.stories.getOrThrow(story.id, "Story");
+    this.stories.put(story);
+  }
+
+  async deleteStory(id: number): Promise<void> {
+    this.stories.delete(id);
+  }
+
   // ---- elevator pitch versions ----
 
   async getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]> {
@@ -492,6 +515,10 @@ export class MemoryDataSource implements DataSource {
       const { id: seedId, ...rest } = clone(q);
       const row = this.interviewPrepQuestions.insert(rest as Omit<StoredInterviewPrepQuestion, "id">);
       interviewPrepQuestionIdMap.set(seedId, row.id);
+    }
+
+    for (const s of seed.stories) {
+      this.stories.insert(omit(clone(s), "id") as Omit<StoredStory, "id">);
     }
 
     for (const v of seed.elevatorPitchVersions) {

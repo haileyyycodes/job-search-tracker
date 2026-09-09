@@ -51,6 +51,7 @@ describe("createSqliteDataSource against a real SQLite file", () => {
       notes: "",
     });
     first.exec("DROP TABLE elevator_pitch_versions;");
+    first.exec("DROP TABLE stories;");
     first.exec("DROP TABLE interview_prep_questions;");
     first.exec("DROP TABLE user_profile;");
     first.exec("ALTER TABLE applications DROP COLUMN resume_text;");
@@ -65,6 +66,7 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     // exactly what breaks useTrackerData's boot-time Promise.all for pre-existing DBs.
     expect(await secondDs.getInterviewPrepQuestions()).toEqual([]);
     expect(await secondDs.getElevatorPitchVersions()).toEqual([]);
+    expect(await secondDs.getStories()).toEqual([]);
     // resume_text / cover_letter_text are re-added too — no "no such column"
     const app = await secondDs.createApplication({
       companyId: company.id,

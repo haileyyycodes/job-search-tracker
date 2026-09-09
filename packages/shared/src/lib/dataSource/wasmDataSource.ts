@@ -14,6 +14,7 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
+  type DsStory,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -23,6 +24,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type NewStory,
 } from "./types";
 
 function isForeignKeyError(err: unknown): boolean {
@@ -150,6 +152,12 @@ interface InterviewPrepQuestionRow {
   answer: string;
   starred: number;
 }
+interface StoryRow {
+  id: number;
+  title: string;
+  content: string;
+  tags: string;
+}
 interface ElevatorPitchVersionRow {
   id: number;
   name: string;
@@ -222,6 +230,15 @@ function mapInterviewPrepQuestion(row: InterviewPrepQuestionRow): DsInterviewPre
     question: row.question,
     answer: row.answer,
     starred: !!row.starred,
+  };
+}
+
+function mapStory(row: StoryRow): DsStory {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? (JSON.parse(row.tags) as string[]) : [],
   };
 }
 
@@ -450,6 +467,14 @@ export class WasmDataSource implements DataSource {
         bool(q.starred),
       ]);
       interviewPrepQuestionIdMap.set(q.id, lastInsertId(db));
+    }
+
+    for (const s of seed.stories) {
+      db.run("INSERT INTO stories (title, content, tags) VALUES (?, ?, ?)", [
+        s.title,
+        s.content,
+        JSON.stringify(s.tags),
+      ]);
     }
 
     for (const v of seed.elevatorPitchVersions) {
@@ -930,6 +955,39 @@ export class WasmDataSource implements DataSource {
   async deleteInterviewPrepQuestion(id: number): Promise<void> {
     const db = await this.ready;
     db.run("DELETE FROM interview_prep_questions WHERE id = ?", [id]);
+  }
+
+  // ---- stories ----
+
+  async getStories(): Promise<DsStory[]> {
+    const db = await this.ready;
+    return all<StoryRow>(db, "SELECT * FROM stories ORDER BY id").map(mapStory);
+  }
+
+  async addStory(story: NewStory): Promise<DsStory> {
+    const db = await this.ready;
+    db.run("INSERT INTO stories (title, content, tags) VALUES (?, ?, ?)", [
+      story.title,
+      story.content,
+      JSON.stringify(story.tags),
+    ]);
+    const id = lastInsertId(db);
+    return mapStory(this.requireRow<StoryRow>(db, "SELECT * FROM stories WHERE id = ?", id, "Story"));
+  }
+
+  async editStory(story: DsStory): Promise<void> {
+    const db = await this.ready;
+    db.run("UPDATE stories SET title = ?, content = ?, tags = ? WHERE id = ?", [
+      story.title,
+      story.content,
+      JSON.stringify(story.tags),
+      story.id,
+    ]);
+  }
+
+  async deleteStory(id: number): Promise<void> {
+    const db = await this.ready;
+    db.run("DELETE FROM stories WHERE id = ?", [id]);
   }
 
   // ---- elevator pitch versions ----

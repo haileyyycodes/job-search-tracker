@@ -94,6 +94,12 @@ export interface Seed {
     answer: string;
     starred: boolean;
   }>;
+  stories: Array<{
+    id: string;
+    title: string;
+    content: string;
+    tags: string[];
+  }>;
   elevatorPitchVersions: Array<{
     id: string;
     name: string;
@@ -123,6 +129,7 @@ export const emptySeed: Seed = {
   userProfile: { name: "" },
   interviewCategories: [],
   interviewPrepQuestions: [],
+  stories: [],
   elevatorPitchVersions: [],
 };
 
@@ -896,6 +903,30 @@ const INTERVIEW_PREP_QUESTIONS: Seed["interviewPrepQuestions"] = [
     { id: "ipq52", category: "recruiter_screening", section: "Compensation & Process", question: "Do you have any questions for me about the role or company?", answer: "", starred: false },
 ];
 
+const STORIES: Seed["stories"] = [
+  {
+    id: "story1",
+    title: "Rebuilt the checkout flow, cut drop-off 22%",
+    content:
+      "Situation: Checkout abandonment was climbing and support tickets pointed at a confusing 4-step form.\nTask: I owned a rework with no dedicated designer.\nAction: Collapsed it to a single scrollable page, added inline validation and a progress summary, ran an A/B test.\nResult: Drop-off fell 22% over six weeks and the change shipped to 100% of traffic.",
+    tags: ["resume", "ownership", "product"],
+  },
+  {
+    id: "story2",
+    title: "Disagreed with a PM on scope, landed on a smaller v1",
+    content:
+      "A PM wanted a full permissions system for launch. I argued the timeline only supported three fixed roles. We whiteboarded the migration cost together, agreed on the smaller v1, and shipped on time. The full system landed a quarter later with real usage data behind it.",
+    tags: ["behavioral", "conflict", "collaboration"],
+  },
+  {
+    id: "story3",
+    title: "Introduced an AI-assisted review workflow",
+    content:
+      "Noticed the team was spending ~6 hrs/week on boilerplate PR review. Prototyped a bot that pre-flagged style and test-coverage gaps, presented it at a team retro, and rolled it out behind a flag. Adoption hit 90% in a month and freed reviewers for design-level feedback.",
+    tags: ["behavioral", "leadership", "process"],
+  },
+];
+
 /**
  * Structurally complete seed with broad coverage — every application status and
  * company status appears at least five times, alongside a full spread of
@@ -913,4 +944,5 @@ export const defaultSeed: Seed = {
   userProfile: { name: "haileyyycodes" },
   interviewCategories: ["Behavioral", "DSA/Leetcode", "System Design", "AI/ML", "Take-home/Practical", "Other"],
   interviewPrepQuestions: INTERVIEW_PREP_QUESTIONS,
+  stories: STORIES,
 };

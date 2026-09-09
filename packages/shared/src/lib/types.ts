@@ -150,6 +150,19 @@ export interface InterviewPrepQuestion {
 }
 
 /**
+ * A reusable accomplishment/experience write-up, kept as a flat library
+ * (separate from the interview-prep question bank). Used to paste into a
+ * résumé when tailoring, or as reference material during behavioral prep.
+ * `tags` is free-form (e.g. "resume", "leadership", "conflict").
+ */
+export interface Story {
+  id: number;
+  title: string;
+  content: string;
+  tags: string[];
+}
+
+/**
  * One tailored draft of your elevator pitch (e.g. "Career fair" vs. "Recruiter
  * call"). Every field below maps to one step of the pitch builder wizard;
  * `themes` and `sourceQuestionId` are the only non-scalar/optional ones.

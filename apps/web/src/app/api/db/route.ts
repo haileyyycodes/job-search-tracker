@@ -10,6 +10,7 @@ import {
   type DsGoals,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
+  type DsStory,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -19,6 +20,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type NewStory,
 } from "@/lib/dataSource/types";
 import { getDataSource } from "../../../server/sqlite/db";
 
@@ -76,6 +78,11 @@ export const CHANNELS: Record<string, (ds: DataSource, args: unknown[]) => Promi
   "interviewPrep:add": (ds, [question]) => ds.addInterviewPrepQuestion(question as NewInterviewPrepQuestion),
   "interviewPrep:edit": (ds, [question]) => ds.editInterviewPrepQuestion(question as DsInterviewPrepQuestion),
   "interviewPrep:delete": (ds, [id]) => ds.deleteInterviewPrepQuestion(id as number),
+
+  "stories:list": (ds) => ds.getStories(),
+  "stories:add": (ds, [story]) => ds.addStory(story as NewStory),
+  "stories:edit": (ds, [story]) => ds.editStory(story as DsStory),
+  "stories:delete": (ds, [id]) => ds.deleteStory(id as number),
 
   "elevatorPitch:list": (ds) => ds.getElevatorPitchVersions(),
   "elevatorPitch:add": (ds, [version]) => ds.addElevatorPitchVersion(version as NewElevatorPitchVersion),

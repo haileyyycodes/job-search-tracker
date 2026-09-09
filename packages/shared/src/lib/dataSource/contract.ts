@@ -409,6 +409,35 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
     });
   });
 
+  describe("stories", () => {
+    it("starts empty, addStory persists it, and getStories returns it", async () => {
+      const ds = makeDataSource();
+      expect(await ds.getStories()).toEqual([]);
+      const created = await ds.addStory({
+        title: "Rebuilt the checkout flow",
+        content: "Situation… Action… Result…",
+        tags: ["resume", "ownership"],
+      });
+      expect(created.id).toBeTypeOf("number");
+      expect(await ds.getStories()).toEqual([created]);
+    });
+
+    it("editStory updates title, content, and tags in place", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addStory({ title: "Draft", content: "", tags: [] });
+      await ds.editStory({ ...created, title: "Final", content: "Now with detail.", tags: ["behavioral"] });
+      const [fetched] = await ds.getStories();
+      expect(fetched).toEqual({ id: created.id, title: "Final", content: "Now with detail.", tags: ["behavioral"] });
+    });
+
+    it("deleteStory removes it", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addStory({ title: "Temp", content: "", tags: [] });
+      await ds.deleteStory(created.id);
+      expect(await ds.getStories()).toEqual([]);
+    });
+  });
+
   describe("elevator pitch versions", () => {
     function blankVersion() {
       return {

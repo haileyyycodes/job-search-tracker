@@ -11,6 +11,7 @@ import {
   type DsInterview,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
+  type DsStory,
   type DsUserProfile,
   type NewApplication,
   type NewCompany,
@@ -20,6 +21,7 @@ import {
   type NewInterview,
   type NewInterviewPrepQuestion,
   type NewNetworkingEvent,
+  type NewStory,
 } from "./types";
 
 /** Must match Object.keys(CHANNELS) in apps/web/src/app/api/db/route.ts exactly
@@ -60,6 +62,10 @@ export const HTTP_DB_CHANNELS = new Set([
   "interviewPrep:add",
   "interviewPrep:edit",
   "interviewPrep:delete",
+  "stories:list",
+  "stories:add",
+  "stories:edit",
+  "stories:delete",
   "elevatorPitch:list",
   "elevatorPitch:add",
   "elevatorPitch:edit",
@@ -204,6 +210,19 @@ export class HttpDataSource implements DataSource {
   }
   deleteInterviewPrepQuestion(id: number) {
     return this.invoke<void>("interviewPrep:delete", id);
+  }
+
+  getStories() {
+    return this.invoke<DsStory[]>("stories:list");
+  }
+  addStory(story: NewStory) {
+    return this.invoke<DsStory>("stories:add", story);
+  }
+  editStory(story: DsStory) {
+    return this.invoke<void>("stories:edit", story);
+  }
+  deleteStory(id: number) {
+    return this.invoke<void>("stories:delete", id);
   }
 
   getElevatorPitchVersions() {
