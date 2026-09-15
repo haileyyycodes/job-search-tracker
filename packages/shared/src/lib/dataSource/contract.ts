@@ -82,6 +82,51 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       ]);
     });
 
+    it("updateApplicationStatus backfills dateApplied when transitioning to applied without one set", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "todo",
+        logo: "A",
+        statusHistory: [],
+      });
+      await ds.updateApplicationStatus(app.id, "applied", "Jan 5, 2026");
+      const [updated] = await ds.getApplications();
+      expect(updated.dateApplied).toBe("Jan 5, 2026");
+    });
+
+    it("updateApplicationStatus does not overwrite an existing dateApplied", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [{ status: "applied", at: "Jan 1, 2026" }],
+      });
+      await ds.updateApplicationStatus(app.id, "interviewing", "Jan 5, 2026");
+      await ds.updateApplicationStatus(app.id, "applied", "Jan 9, 2026");
+      const [updated] = await ds.getApplications();
+      expect(updated.dateApplied).toBe("Jan 1, 2026");
+    });
+
     it("deleteApplication cascades to its interviews, followUps, and statusHistory", async () => {
       const ds = makeDataSource();
       const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
