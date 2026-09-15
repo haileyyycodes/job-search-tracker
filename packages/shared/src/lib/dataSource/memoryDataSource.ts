@@ -193,7 +193,8 @@ export class MemoryDataSource implements DataSource {
 
   async updateApplicationStatus(id: number, status: ApplicationStatus, at: string): Promise<void> {
     const row = this.requireApplication(id);
-    this.applications.update(id, { status }, "Application");
+    const dateApplied = status === "applied" && !row.dateApplied ? at : row.dateApplied;
+    this.applications.update(id, { status, dateApplied }, "Application");
     this.statusHistory.insert({ applicationId: row.id, status, at });
   }
 

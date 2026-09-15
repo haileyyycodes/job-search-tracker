@@ -256,7 +256,16 @@ const addApplication = (app: NewApplication): Promise<Application> => {
 const changeApplicationStatus = (appId: number, status: ApplicationStatus, at: string): Promise<void> => {
   setState((prev) => ({
     ...prev,
-    apps: prev.apps.map((a) => (a.id === appId ? { ...a, status, statusHistory: [...a.statusHistory, { status, at }] } : a)),
+    apps: prev.apps.map((a) =>
+      a.id === appId
+        ? {
+            ...a,
+            status,
+            dateApplied: status === "applied" && !a.dateApplied ? at : a.dateApplied,
+            statusHistory: [...a.statusHistory, { status, at }],
+          }
+        : a
+    ),
   }));
   const app = state.apps.find((a) => a.id === appId);
   const persistCompanyAdvance = app ? maybeAdvanceCompany(app.companyId, status) : null;

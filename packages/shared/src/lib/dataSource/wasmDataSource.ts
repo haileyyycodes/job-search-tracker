@@ -620,7 +620,15 @@ export class WasmDataSource implements DataSource {
 
   async updateApplicationStatus(id: number, status: ApplicationStatus, at: string): Promise<void> {
     const db = await this.ready;
-    db.run("UPDATE applications SET status = ? WHERE id = ?", [status, id]);
+    if (status === "applied") {
+      db.run("UPDATE applications SET status = ?, date_applied = COALESCE(NULLIF(date_applied, ''), ?) WHERE id = ?", [
+        status,
+        at,
+        id,
+      ]);
+    } else {
+      db.run("UPDATE applications SET status = ? WHERE id = ?", [status, id]);
+    }
     db.run("INSERT INTO status_history (application_id, status, at) VALUES (?, ?, ?)", [id, status, at]);
   }
 
