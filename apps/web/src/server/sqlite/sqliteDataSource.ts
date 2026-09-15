@@ -410,7 +410,15 @@ export function createSqliteDataSource(db: Database.Database): DataSource {
     },
 
     async updateApplicationStatus(id: number, status: ApplicationStatus, at: string) {
-      db.prepare("UPDATE applications SET status = ? WHERE id = ?").run(status, id);
+      if (status === "applied") {
+        db.prepare("UPDATE applications SET status = ?, date_applied = COALESCE(NULLIF(date_applied, ''), ?) WHERE id = ?").run(
+          status,
+          at,
+          id
+        );
+      } else {
+        db.prepare("UPDATE applications SET status = ? WHERE id = ?").run(status, id);
+      }
       db.prepare("INSERT INTO status_history (application_id, status, at) VALUES (?, ?, ?)").run(id, status, at);
     },
 
