@@ -52,6 +52,8 @@ export type WorkArrangement = "onsite" | "remote" | "hybrid";
 
 export type ResumeType = "untailored" | "tailored";
 
+export type ApplicationSource = "inbound" | "outbound";
+
 export type CompanyStatus = "researching" | "watching" | "applied" | "not_pursuing";
 
 export interface CompanyLocation {
@@ -79,6 +81,7 @@ export interface Application {
   jobDescription: string;
   referral: boolean;
   referredByContactId?: number;
+  source: ApplicationSource;
   resumeType: ResumeType;
   /** Free-text copy of the resume sent for this application, pasted by the user. */
   resumeText?: string;

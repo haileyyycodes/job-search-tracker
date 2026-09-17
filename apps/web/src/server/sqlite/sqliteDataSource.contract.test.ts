@@ -44,11 +44,29 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     // `elevator_pitch_versions` existed: create it, then drop the tables later schema
     // changes added, exactly as if they had never been there.
     const first = openDatabase(dbPath);
-    const company = await createSqliteDataSource(first).createCompany({
+    const firstDs = createSqliteDataSource(first);
+    const company = await firstDs.createCompany({
       name: "Acme",
       isTarget: false,
       status: "researching",
       notes: "",
+    });
+    // A pre-existing application from before the "source" column existed —
+    // used below to confirm migrate() backfills it to "inbound".
+    const preExistingApp = await firstDs.createApplication({
+      companyId: company.id,
+      role: "Designer",
+      dateApplied: "Jan 1, 2026",
+      link: "",
+      jobDescription: "",
+      referral: false,
+      source: "outbound",
+      resumeType: "tailored",
+      coverLetterSubmitted: false,
+      notes: "",
+      status: "applied",
+      logo: "A",
+      statusHistory: [],
     });
     first.exec("DROP TABLE elevator_pitch_versions;");
     first.exec("DROP TABLE stories;");
@@ -56,6 +74,7 @@ describe("createSqliteDataSource against a real SQLite file", () => {
     first.exec("DROP TABLE user_profile;");
     first.exec("ALTER TABLE applications DROP COLUMN resume_text;");
     first.exec("ALTER TABLE applications DROP COLUMN cover_letter_text;");
+    first.exec("ALTER TABLE applications DROP COLUMN source;");
     first.close();
 
     const second = openDatabase(dbPath);
@@ -75,6 +94,7 @@ describe("createSqliteDataSource against a real SQLite file", () => {
       link: "",
       jobDescription: "",
       referral: false,
+      source: "outbound",
       resumeType: "tailored",
       coverLetterSubmitted: false,
       notes: "",
@@ -83,9 +103,13 @@ describe("createSqliteDataSource against a real SQLite file", () => {
       statusHistory: [],
     });
     await secondDs.editApplication({ ...app, resumeText: "Jane Doe — Engineer", coverLetterText: "Dear team," });
-    const migrated = (await secondDs.getApplications())[0];
+    const applications = await secondDs.getApplications();
+    const migrated = applications.find((a) => a.id === app.id)!;
     expect(migrated.resumeText).toBe("Jane Doe — Engineer");
     expect(migrated.coverLetterText).toBe("Dear team,");
+    // The pre-existing application (created before "source" existed) is backfilled to "inbound".
+    const backfilled = applications.find((a) => a.id === preExistingApp.id)!;
+    expect(backfilled.source).toBe("inbound");
     second.close();
   });
 });

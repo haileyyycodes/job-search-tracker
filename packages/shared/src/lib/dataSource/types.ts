@@ -1,4 +1,5 @@
 import type {
+  ApplicationSource,
   ApplicationStatus,
   CompanyStatus,
   Feedback,
@@ -75,6 +76,7 @@ export interface DsApplication {
   jobDescription: string;
   referral: boolean;
   referredByContactId?: number;
+  source: ApplicationSource;
   resumeType: ResumeType;
   resumeText?: string;
   coverLetterSubmitted: boolean;

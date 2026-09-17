@@ -1,4 +1,5 @@
 import type {
+  ApplicationSource,
   ApplicationStatus,
   CompanyStatus,
   Feedback,
@@ -50,6 +51,7 @@ export interface Seed {
     jobDescription: string;
     referral: boolean;
     referredByContactId?: string;
+    source: ApplicationSource;
     resumeType: ResumeType;
     resumeText?: string;
     coverLetterSubmitted: boolean;
@@ -452,7 +454,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a51", companyId: "co49", role: "Senior Product Designer", dateApplied: seedDate(206),
     link: "https://example.com/jobs/a51", jobDescription: JOB_DESCRIPTIONS[0], referral: false,
-    resumeType: "tailored", resumeText: RESUME_TEXTS[0], coverLetterSubmitted: true,
+    source: "outbound", resumeType: "tailored", resumeText: RESUME_TEXTS[0], coverLetterSubmitted: true,
     coverLetterText: COVER_LETTERS[0].replace("{role}", "Senior Product Designer"),
     notes: "Dream role — design systems adjacent.", status: "applied", logo: "W",
     salaryMin: 130000, salaryMax: 160000, workArrangement: "remote",
@@ -461,7 +463,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a52", companyId: "co50", role: "Design Engineer", dateApplied: seedDate(194),
     link: "", jobDescription: JOB_DESCRIPTIONS[1], referral: false,
-    resumeType: "untailored", coverLetterSubmitted: false,
+    source: "outbound", resumeType: "untailored", coverLetterSubmitted: false,
     notes: "Found via job board.", status: "interviewing", logo: "P",
     workArrangement: "hybrid", city: "Portland", state: "OR",
     statusHistory: [
@@ -476,7 +478,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a53", companyId: "co51", role: "Frontend Platform Engineer", dateApplied: seedDate(188),
     link: "https://example.com/jobs/a53", jobDescription: JOB_DESCRIPTIONS[1], referral: false,
-    resumeType: "tailored", resumeText: RESUME_TEXTS[1], coverLetterSubmitted: true,
+    source: "inbound", resumeType: "tailored", resumeText: RESUME_TEXTS[1], coverLetterSubmitted: true,
     coverLetterText: COVER_LETTERS[1].replace("{role}", "Frontend Platform Engineer"),
     notes: "Comp is a stretch but worth a shot.", status: "interviewing", logo: "C",
     salaryMin: 140000, salaryMax: 170000, workArrangement: "remote",
@@ -493,7 +495,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a54", companyId: "co1", role: "Staff Engineer", dateApplied: seedDate(202),
     link: "https://example.com/jobs/a54", jobDescription: JOB_DESCRIPTIONS[3], referral: true,
-    referredByContactId: "c1", resumeType: "tailored", resumeText: RESUME_TEXTS[2],
+    referredByContactId: "c1", source: "outbound", resumeType: "tailored", resumeText: RESUME_TEXTS[2],
     coverLetterSubmitted: true, coverLetterText: COVER_LETTERS[2].replace("{role}", "Staff Engineer"),
     notes: "Referral from a former teammate.", status: "applied", logo: "N",
     salaryMin: 150000, salaryMax: 185000, workArrangement: "onsite", city: "Detroit", state: "MI",
@@ -506,7 +508,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a55", companyId: "co5", role: "Interaction Designer", dateApplied: seedDate(183),
     link: "", jobDescription: "", referral: false,
-    resumeType: "untailored", coverLetterSubmitted: false,
+    source: "outbound", resumeType: "untailored", coverLetterSubmitted: false,
     notes: "Applied cold; tailored the portfolio.", status: "rejected_no_interview", logo: "L",
     workArrangement: "remote",
     statusHistory: [
@@ -519,7 +521,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a56", companyId: "co8", role: "Product Manager", dateApplied: seedDate(209),
     link: "https://example.com/jobs/a56", jobDescription: JOB_DESCRIPTIONS[2], referral: true,
-    referredByContactId: "c16", resumeType: "tailored", resumeText: RESUME_TEXTS[0],
+    referredByContactId: "c16", source: "inbound", resumeType: "tailored", resumeText: RESUME_TEXTS[0],
     coverLetterSubmitted: true, coverLetterText: COVER_LETTERS[2].replace("{role}", "Product Manager"),
     notes: "Warm intro through a meetup contact.", status: "applied", logo: "S",
     salaryMin: 150000, salaryMax: 185000, workArrangement: "hybrid", city: "Boston", state: "MA",
@@ -530,7 +532,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a57", companyId: "co52", role: "UX Researcher", dateApplied: seedDate(174),
     link: "", jobDescription: "", referral: false,
-    resumeType: "untailored", coverLetterSubmitted: true,
+    source: "outbound", resumeType: "untailored", coverLetterSubmitted: true,
     coverLetterText: COVER_LETTERS[0].replace("{role}", "UX Researcher"),
     notes: "", status: "interviewing", logo: "N",
     workArrangement: "onsite", city: "Ann Arbor", state: "MI",
@@ -547,7 +549,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a58", companyId: "co53", role: "Applied AI Engineer", dateApplied: seedDate(170),
     link: "https://example.com/jobs/a58", jobDescription: JOB_DESCRIPTIONS[3], referral: false,
-    resumeType: "tailored", resumeText: RESUME_TEXTS[1], coverLetterSubmitted: true,
+    source: "inbound", resumeType: "tailored", resumeText: RESUME_TEXTS[1], coverLetterSubmitted: true,
     coverLetterText: COVER_LETTERS[1].replace("{role}", "Applied AI Engineer"),
     notes: "Comp is a stretch but worth a shot.", status: "offer_extended", logo: "K",
     salaryMin: 140000, salaryMax: 170000, workArrangement: "remote",
@@ -566,7 +568,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a59", companyId: "co13", role: "UI Engineer", dateApplied: seedDate(169),
     link: "", jobDescription: JOB_DESCRIPTIONS[0], referral: true, referredByContactId: "c5",
-    resumeType: "untailored", coverLetterSubmitted: true,
+    source: "outbound", resumeType: "untailored", coverLetterSubmitted: true,
     coverLetterText: COVER_LETTERS[0].replace("{role}", "UI Engineer"),
     notes: "Reached out to a recruiter on LinkedIn.", status: "interviewing", logo: "B",
     workArrangement: "remote",
@@ -584,7 +586,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
   {
     id: "a60", companyId: "co54", role: "Web Engineer", dateApplied: seedDate(181),
     link: "https://example.com/jobs/a60", jobDescription: JOB_DESCRIPTIONS[2], referral: false,
-    resumeType: "tailored", resumeText: RESUME_TEXTS[2], coverLetterSubmitted: false,
+    source: "outbound", resumeType: "tailored", resumeText: RESUME_TEXTS[2], coverLetterSubmitted: false,
     notes: "", status: "applied", logo: "H",
     salaryMin: 120000, salaryMax: 145000, workArrangement: "hybrid", city: "Philadelphia", state: "PA",
     statusHistory: [{ status: "applied", at: seedDate(181) }],
@@ -693,6 +695,7 @@ function buildSeedRecords(): SeedRecords {
           : JOB_DESCRIPTIONS[appliedIndex % JOB_DESCRIPTIONS.length],
       referral,
       ...(referral && contactId ? { referredByContactId: contactId } : {}),
+      source: i % 3 === 0 ? "inbound" : "outbound",
       resumeType: i % 5 < 2 ? "tailored" : "untailored",
       // Tailored applications have a pasted resume to go with them.
       ...(i % 5 < 2 ? { resumeText: RESUME_TEXTS[i % RESUME_TEXTS.length] } : {}),

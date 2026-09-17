@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button, Card, IconButton, StatusTag, statusDotColor, TextLink } from "@/components/ds";
-import { groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
+import { applicationSourceLabels, groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
 import { LogFollowUpDialog } from "./LogFollowUpDialog";
@@ -409,6 +409,7 @@ export function ApplicationDetailView({
                   ) : undefined
                 }
               />
+              <Field label="Source" value={applicationSourceLabels[app.source]} />
               <Field label="Resume type" value={resumeTypeLabels[app.resumeType]} />
               <Field
                 label="Referral"
