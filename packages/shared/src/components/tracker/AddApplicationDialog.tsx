@@ -61,6 +61,7 @@ export function AddApplicationDialog({
       jobDescription: form.description.trim().slice(0, MAX_RICH_TEXT_CHARS),
       referral: form.referral,
       referredByContactId: form.referral && form.referredByContactId ? Number(form.referredByContactId) : undefined,
+      source: form.source as NewApplication["source"],
       resumeType: form.resumeType as NewApplication["resumeType"],
       resumeText: form.resumeText.trim().slice(0, MAX_RICH_TEXT_CHARS) || undefined,
       coverLetterText: coverLetterText || undefined,

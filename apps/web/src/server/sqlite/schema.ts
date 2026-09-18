@@ -116,6 +116,12 @@ function migrate(db: Database.Database): void {
   if (!hasColumn(db, "applications", "cover_letter_text")) {
     db.exec("ALTER TABLE applications ADD COLUMN cover_letter_text TEXT;");
   }
+
+  // Inbound vs. outbound (added later). Backfills every pre-existing
+  // application to "inbound" via the column default.
+  if (!hasColumn(db, "applications", "source")) {
+    db.exec("ALTER TABLE applications ADD COLUMN source TEXT NOT NULL DEFAULT 'inbound';");
+  }
 }
 
 function hasTable(db: Database.Database, table: string): boolean {

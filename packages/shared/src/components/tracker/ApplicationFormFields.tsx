@@ -4,12 +4,12 @@ import type { ClipboardEvent, Dispatch, ReactNode, SetStateAction } from "react"
 import { Input, Select, Switch } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { isValidUrl } from "@/lib/validation";
-import { resumeTypeOptions } from "@/lib/data";
+import { applicationSourceOptions, resumeTypeOptions } from "@/lib/data";
 import { htmlToMarkdown, MAX_RICH_TEXT_CHARS } from "@/lib/richText";
 import { ContactPicker } from "./ContactPicker";
 import { CompanyPicker } from "./CompanyPicker";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
-import type { Company, Contact, ResumeType, WorkArrangement } from "@/lib/types";
+import type { Company, Contact, ApplicationSource, ResumeType, WorkArrangement } from "@/lib/types";
 
 const workArrangementOptions: SelectOption[] = [
   { value: "onsite", label: "Onsite" },
@@ -25,6 +25,7 @@ export interface ApplicationFormValues {
   description: string;
   referral: boolean;
   referredByContactId: string;
+  source: ApplicationSource | "";
   resumeType: ResumeType | "";
   /** Free-text copy of the resume sent for this application, pasted by the user. */
   resumeText: string;
@@ -47,6 +48,7 @@ export const emptyApplicationForm: ApplicationFormValues = {
   description: "",
   referral: false,
   referredByContactId: "",
+  source: "",
   resumeType: "",
   resumeText: "",
   coverLetterText: "",
@@ -80,6 +82,7 @@ interface ApplicationFormFieldsProps {
 export function isApplicationFormValid(form: ApplicationFormValues, requireDateApplied = true): boolean {
   if (!form.companyId || !form.role.trim()) return false;
   if (requireDateApplied && !form.dateApplied) return false;
+  if (!form.source) return false;
   if (!form.resumeType) return false;
   if (form.link.trim() && !isValidUrl(form.link.trim())) return false;
   const min = form.salaryMin.trim() ? Number(form.salaryMin) : undefined;
@@ -205,6 +208,16 @@ export function ApplicationFormFields({
               error={submitted && !form.role.trim() ? "Required" : undefined}
             />
           </div>
+
+          <Select
+            label="Application source"
+            required
+            value={form.source}
+            options={applicationSourceOptions}
+            onChange={(v) => setForm((f) => ({ ...f, source: v as ApplicationSource }))}
+            placeholder="Choose one"
+            error={submitted && !form.source ? "Required" : undefined}
+          />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <Input

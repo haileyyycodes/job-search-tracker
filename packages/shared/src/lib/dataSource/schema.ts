@@ -51,6 +51,7 @@ CREATE TABLE applications (
   job_description TEXT NOT NULL,
   referral INTEGER NOT NULL,
   referred_by_contact_id INTEGER REFERENCES contacts(id) ON DELETE SET NULL,
+  source TEXT NOT NULL DEFAULT 'inbound',
   resume_type TEXT NOT NULL,
   resume_text TEXT,
   cover_letter_submitted INTEGER NOT NULL,

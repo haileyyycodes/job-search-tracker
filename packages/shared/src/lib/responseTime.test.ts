@@ -11,6 +11,7 @@ function makeApp(statusHistory: StatusHistoryEntry[]): Application {
     link: "",
     jobDescription: "",
     referral: false,
+    source: "outbound",
     resumeType: "tailored",
     coverLetterSubmitted: false,
     notes: "",

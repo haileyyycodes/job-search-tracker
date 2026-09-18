@@ -13,6 +13,7 @@ function makeApplication(overrides: Partial<NewApplication> = {}): NewApplicatio
     link: "",
     jobDescription: "",
     referral: false,
+    source: "outbound",
     resumeType: "tailored",
     coverLetterSubmitted: false,
     notes: "",

@@ -26,6 +26,7 @@ function makeApp(overrides: Partial<Application> & { statusHistory: StatusHistor
     link: "",
     jobDescription: "",
     referral: false,
+    source: "outbound",
     resumeType: "tailored",
     coverLetterSubmitted: false,
     notes: "",

@@ -18,6 +18,7 @@ import {
   getResponseRate,
   interviewRatioTierLabel,
   reachedInterview,
+  reachedOffer,
   type ChannelBreakdownRow,
   type InterviewRatioTier,
 } from "@/lib/funnel";
@@ -1035,6 +1036,9 @@ function SplitRateBar({ a, b }: { a: number; b: number }) {
 const rateOf = (list: Application[]) =>
   list.length ? Math.round((list.filter(reachedInterview).length / list.length) * 100) : 0;
 
+const offerRateOf = (list: Application[]) =>
+  list.length ? Math.round((list.filter(reachedOffer).length / list.length) * 100) : 0;
+
 interface DashboardViewProps {
   apps: Application[];
   companies: Company[];
@@ -1049,6 +1053,8 @@ export function DashboardView({ apps, companies, goals, networkingEvents, onSele
   const untailoredRate = rateOf(submittedApps.filter((a) => a.resumeType === "untailored"));
   const withCoverLetterRate = rateOf(submittedApps.filter((a) => a.coverLetterSubmitted));
   const withoutCoverLetterRate = rateOf(submittedApps.filter((a) => !a.coverLetterSubmitted));
+  const inboundOfferRate = offerRateOf(submittedApps.filter((a) => a.source === "inbound"));
+  const outboundOfferRate = offerRateOf(submittedApps.filter((a) => a.source === "outbound"));
 
   const responseDaysList = apps.map(getResponseDays).filter((d): d is number => d != null);
   const avgResponseDays = responseDaysList.length
@@ -1097,6 +1103,12 @@ export function DashboardView({ apps, companies, goals, networkingEvents, onSele
             value={<SplitRate a={withCoverLetterRate} b={withoutCoverLetterRate} />}
             bar={<SplitRateBar a={withCoverLetterRate} b={withoutCoverLetterRate} />}
             sub="With vs. without cover letter"
+          />
+          <StatCard
+            label="Offer rate by application source"
+            value={<SplitRate a={inboundOfferRate} b={outboundOfferRate} />}
+            bar={<SplitRateBar a={inboundOfferRate} b={outboundOfferRate} />}
+            sub="Inbound vs. outbound"
           />
         </div>
       </div>
