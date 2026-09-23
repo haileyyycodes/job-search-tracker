@@ -21,7 +21,7 @@ const countBy = <T>(items: T[], key: (item: T) => string) =>
   }, {});
 
 describe("defaultSeed coverage", () => {
-  const { applications, companies, contacts, networkingEvents, elevatorPitchVersions, stories } = defaultSeed;
+  const { applications, companies, contacts, networkingEvents, stories } = defaultSeed;
   const interviews = applications.flatMap((a) => a.interviews);
 
   it("has 60 applications (50 generated + 10 recent)", () => {
@@ -86,14 +86,12 @@ describe("defaultSeed coverage", () => {
     expect(applications.filter((a) => a.referral).length).toBeGreaterThanOrEqual(5);
     expect(applications.filter((a) => a.referredByContactId).length).toBeGreaterThanOrEqual(5);
     expect(networkingEvents.length).toBeGreaterThanOrEqual(5);
-    expect(elevatorPitchVersions.length).toBeGreaterThanOrEqual(5);
   });
 
   it("keeps every foreign-key reference resolvable", () => {
     const companyIds = new Set(companies.map((c) => c.id));
     const contactIds = new Set(contacts.map((c) => c.id));
     const appIds = new Set(applications.map((a) => a.id));
-    const questionIds = new Set(defaultSeed.interviewPrepQuestions.map((q) => q.id));
 
     for (const c of contacts) {
       if (c.companyId) expect(companyIds.has(c.companyId), `contact ${c.id} -> ${c.companyId}`).toBe(true);
@@ -110,11 +108,6 @@ describe("defaultSeed coverage", () => {
     for (const e of networkingEvents) {
       for (const cid of e.contactIds) expect(contactIds.has(cid), `event ${e.id} -> ${cid}`).toBe(true);
       if (e.applicationId) expect(appIds.has(e.applicationId), `event ${e.id} -> ${e.applicationId}`).toBe(true);
-    }
-    for (const v of elevatorPitchVersions) {
-      if (v.sourceQuestionId) {
-        expect(questionIds.has(v.sourceQuestionId), `pitch ${v.id} -> ${v.sourceQuestionId}`).toBe(true);
-      }
     }
   });
 

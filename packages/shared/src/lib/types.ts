@@ -32,8 +32,11 @@ export interface Interview {
   date: string;
   style?: InterviewStyle;
   categories?: string[];
+  /** Prep questions to ask the interviewer, written before/during the interview. */
+  questionsToAsk?: string;
   questionsAsked?: string;
   notes: string;
+  contactId?: number;
 }
 
 export interface FollowUp {
@@ -157,34 +160,16 @@ export interface InterviewPrepQuestion {
  * (separate from the interview-prep question bank). Used to paste into a
  * résumé when tailoring, or as reference material during behavioral prep.
  * `tags` is free-form (e.g. "resume", "leadership", "conflict").
+ * `date`/`toDate` are display-formatted (e.g. "Jul 15, 2026"), matching every
+ * other date field in the app. `toDate` marks a story as spanning a range
+ * (a project or ongoing effort) rather than a single moment.
  */
 export interface Story {
   id: number;
   title: string;
   content: string;
   tags: string[];
+  date?: string;
+  toDate?: string;
 }
 
-/**
- * One tailored draft of your elevator pitch (e.g. "Career fair" vs. "Recruiter
- * call"). Every field below maps to one step of the pitch builder wizard;
- * `themes` and `sourceQuestionId` are the only non-scalar/optional ones.
- */
-export interface ElevatorPitchVersion {
-  id: number;
-  name: string;
-  setting: string;
-  who: string;
-  personName: string;
-  role: string;
-  identity: string;
-  situation: string;
-  action: string;
-  result: string;
-  themes: string[];
-  synthesis: string;
-  seeking: string;
-  closingQuestion: string;
-  /** InterviewPrepQuestion this version's proof point was pulled from, if any. */
-  sourceQuestionId?: number;
-}

@@ -192,6 +192,79 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       expect(remaining.id).toBe(event.id);
       expect(remaining.applicationId).toBeUndefined();
     });
+
+    it("logInterview persists a connected contact, and editInterview can change or clear it", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const interviewer = await ds.createContact({ name: "Sam", companyId: company.id, notes: "" });
+      const otherInterviewer = await ds.createContact({ name: "Jamie", companyId: company.id, notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        source: "outbound",
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [],
+      });
+
+      const interview = await ds.logInterview(app.id, {
+        type: "Recruiter Screen",
+        date: "Jan 2, 2026",
+        notes: "",
+        contactId: interviewer.id,
+      });
+      expect(interview.contactId).toBe(interviewer.id);
+
+      const { id, ...rest } = interview;
+      await ds.editInterview(app.id, id, { ...rest, contactId: otherInterviewer.id });
+      let [updated] = await ds.getApplications();
+      expect(updated.interviews[0].contactId).toBe(otherInterviewer.id);
+
+      await ds.editInterview(app.id, id, { ...rest, contactId: undefined });
+      [updated] = await ds.getApplications();
+      expect(updated.interviews[0].contactId).toBeUndefined();
+    });
+
+    it("logInterview persists questionsToAsk separately from questionsAsked, and editInterview updates it", async () => {
+      const ds = makeDataSource();
+      const company = await ds.createCompany({ name: "Acme", isTarget: false, status: "researching", notes: "" });
+      const app = await ds.createApplication({
+        companyId: company.id,
+        role: "Engineer",
+        dateApplied: "Jan 1, 2026",
+        link: "",
+        jobDescription: "",
+        referral: false,
+        source: "outbound",
+        resumeType: "tailored",
+        coverLetterSubmitted: false,
+        notes: "",
+        status: "applied",
+        logo: "A",
+        statusHistory: [],
+      });
+
+      const interview = await ds.logInterview(app.id, {
+        type: "Recruiter Screen",
+        date: "Jan 2, 2026",
+        notes: "",
+        questionsToAsk: "What does success look like in 6 months?",
+      });
+      expect(interview.questionsToAsk).toBe("What does success look like in 6 months?");
+      expect(interview.questionsAsked).toBeUndefined();
+
+      const { id, ...rest } = interview;
+      await ds.editInterview(app.id, id, { ...rest, questionsToAsk: "Updated question." });
+      const [updated] = await ds.getApplications();
+      expect(updated.interviews[0].questionsToAsk).toBe("Updated question.");
+    });
   });
 
   describe("companies", () => {
@@ -485,68 +558,28 @@ export function runDataSourceContractTests(makeDataSource: () => DataSource) {
       expect(fetched).toEqual({ id: created.id, title: "Final", content: "Now with detail.", tags: ["behavioral"] });
     });
 
+    it("persists an optional date range", async () => {
+      const ds = makeDataSource();
+      const created = await ds.addStory({
+        title: "Migrated the deploy pipeline",
+        content: "",
+        tags: [],
+        date: "Jan 5, 2026",
+        toDate: "Mar 12, 2026",
+      });
+      expect((await ds.getStories())[0]).toMatchObject({ date: "Jan 5, 2026", toDate: "Mar 12, 2026" });
+
+      await ds.editStory({ ...created, date: "Jan 5, 2026", toDate: undefined });
+      const [fetched] = await ds.getStories();
+      expect(fetched.date).toBe("Jan 5, 2026");
+      expect(fetched.toDate).toBeUndefined();
+    });
+
     it("deleteStory removes it", async () => {
       const ds = makeDataSource();
       const created = await ds.addStory({ title: "Temp", content: "", tags: [] });
       await ds.deleteStory(created.id);
       expect(await ds.getStories()).toEqual([]);
-    });
-  });
-
-  describe("elevator pitch versions", () => {
-    function blankVersion() {
-      return {
-        name: "Career fair",
-        setting: "",
-        who: "",
-        personName: "",
-        role: "",
-        identity: "",
-        situation: "",
-        action: "",
-        result: "",
-        themes: [] as string[],
-        synthesis: "",
-        seeking: "",
-        closingQuestion: "",
-      };
-    }
-
-    it("starts empty, addElevatorPitchVersion persists it, and getElevatorPitchVersions returns it", async () => {
-      const ds = makeDataSource();
-      expect(await ds.getElevatorPitchVersions()).toEqual([]);
-      const created = await ds.addElevatorPitchVersion(blankVersion());
-      expect(created.id).toBeTypeOf("number");
-      expect(await ds.getElevatorPitchVersions()).toEqual([created]);
-    });
-
-    it("editElevatorPitchVersion updates fields (including the themes array) in place", async () => {
-      const ds = makeDataSource();
-      const created = await ds.addElevatorPitchVersion(blankVersion());
-      await ds.editElevatorPitchVersion({ ...created, identity: "A builder who ships.", themes: ["Fast learner", "Collaborator"] });
-      const [fetched] = await ds.getElevatorPitchVersions();
-      expect(fetched.identity).toBe("A builder who ships.");
-      expect(fetched.themes).toEqual(["Fast learner", "Collaborator"]);
-    });
-
-    it("deleteElevatorPitchVersion removes it", async () => {
-      const ds = makeDataSource();
-      const created = await ds.addElevatorPitchVersion(blankVersion());
-      await ds.deleteElevatorPitchVersion(created.id);
-      expect(await ds.getElevatorPitchVersions()).toEqual([]);
-    });
-
-    it("persists a link to its source prep question and clears it (not the version) when that question is deleted", async () => {
-      const ds = makeDataSource();
-      const question = await ds.addInterviewPrepQuestion({ category: "behavioral", question: "Q?", answer: "", starred: false });
-      const created = await ds.addElevatorPitchVersion({ ...blankVersion(), sourceQuestionId: question.id });
-      expect(created.sourceQuestionId).toBe(question.id);
-
-      await ds.deleteInterviewPrepQuestion(question.id);
-
-      const [fetched] = await ds.getElevatorPitchVersions();
-      expect(fetched.id).toBe(created.id);
-      expect(fetched.sourceQuestionId).toBeUndefined();
     });
   });
 }

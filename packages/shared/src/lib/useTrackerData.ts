@@ -9,7 +9,6 @@ import type {
   NewApplication,
   NewCompany,
   NewContact,
-  NewElevatorPitchVersion,
   NewFollowUp,
   NewInterview,
   NewInterviewPrepQuestion,
@@ -21,7 +20,6 @@ import type {
   ApplicationStatus,
   Company,
   Contact,
-  ElevatorPitchVersion,
   Feedback,
   FollowUp,
   Goals,
@@ -42,7 +40,6 @@ interface TrackerState {
   interviewCategories: string[];
   interviewPrepQuestions: InterviewPrepQuestion[];
   stories: Story[];
-  elevatorPitchVersions: ElevatorPitchVersion[];
 }
 
 const emptyState: TrackerState = {
@@ -55,7 +52,6 @@ const emptyState: TrackerState = {
   interviewCategories: [],
   interviewPrepQuestions: [],
   stories: [],
-  elevatorPitchVersions: [],
 };
 
 // Placeholder until real boot-time selection (below) resolves and swaps this out.
@@ -117,7 +113,6 @@ async function loadAll(): Promise<void> {
     interviewCategories,
     interviewPrepQuestions,
     stories,
-    elevatorPitchVersions,
   ] = await Promise.all([
     dataSource.getApplications(),
     dataSource.getGoals(),
@@ -128,7 +123,6 @@ async function loadAll(): Promise<void> {
     dataSource.getInterviewCategories(),
     dataSource.getInterviewPrepQuestions(),
     dataSource.getStories(),
-    dataSource.getElevatorPitchVersions(),
   ]);
   setState({
     apps,
@@ -140,7 +134,6 @@ async function loadAll(): Promise<void> {
     interviewCategories,
     interviewPrepQuestions,
     stories,
-    elevatorPitchVersions,
   });
 }
 
@@ -486,11 +479,6 @@ const deleteInterviewPrepQuestion = (id: number): Promise<void> => {
   setState((prev) => ({
     ...prev,
     interviewPrepQuestions: prev.interviewPrepQuestions.filter((q) => q.id !== id),
-    // Mirrors the DataSource's ON DELETE SET NULL: a pitch version referencing this
-    // question survives, it just loses the link.
-    elevatorPitchVersions: prev.elevatorPitchVersions.map((v) =>
-      v.sourceQuestionId === id ? { ...v, sourceQuestionId: undefined } : v
-    ),
   }));
   return withRollback(() => dataSource.deleteInterviewPrepQuestion(id));
 };
@@ -522,36 +510,6 @@ const deleteStory = (id: number): Promise<void> => {
   return withRollback(() => dataSource.deleteStory(id));
 };
 
-const addElevatorPitchVersion = (version: NewElevatorPitchVersion): Promise<ElevatorPitchVersion> => {
-  const tempId = allocTempId();
-  const optimistic: ElevatorPitchVersion = { ...version, id: tempId };
-  setState((prev) => ({ ...prev, elevatorPitchVersions: [...prev.elevatorPitchVersions, optimistic] }));
-  return withRollback(async () => {
-    const created = await dataSource.addElevatorPitchVersion(version);
-    setState((prev) => ({
-      ...prev,
-      elevatorPitchVersions: prev.elevatorPitchVersions.map((v) => (v.id === tempId ? created : v)),
-    }));
-    return created;
-  });
-};
-
-const editElevatorPitchVersion = (updated: ElevatorPitchVersion): Promise<void> => {
-  setState((prev) => ({
-    ...prev,
-    elevatorPitchVersions: prev.elevatorPitchVersions.map((v) => (v.id === updated.id ? updated : v)),
-  }));
-  return withRollback(() => dataSource.editElevatorPitchVersion(updated));
-};
-
-const deleteElevatorPitchVersion = (id: number): Promise<void> => {
-  setState((prev) => ({
-    ...prev,
-    elevatorPitchVersions: prev.elevatorPitchVersions.filter((v) => v.id !== id),
-  }));
-  return withRollback(() => dataSource.deleteElevatorPitchVersion(id));
-};
-
 const actions = {
   addInterviewCategory,
   addInterviewPrepQuestion,
@@ -560,9 +518,6 @@ const actions = {
   addStory,
   editStory,
   deleteStory,
-  addElevatorPitchVersion,
-  editElevatorPitchVersion,
-  deleteElevatorPitchVersion,
   updateGoals,
   updateUserProfile,
   addApplication,

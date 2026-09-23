@@ -4,8 +4,8 @@
     {
       "name": "job-search-tracker-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "runtimeArgs": ["run", "dev", "--workspace=apps/web", "--", "-p", "3100"],
+      "port": 3100
     }
   ]
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Dialog, Button } from "@/components/ds";
+import { useRef, useState } from "react";
+import { Dialog, DiscardChangesDialog, Button } from "@/components/ds";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { ContactFormFields, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
 import type { NewCompany } from "@/lib/dataSource/types";
@@ -30,6 +31,10 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
   });
   const [submitted, setSubmitted] = useState(false);
 
+  const initialForm = useRef(form).current;
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const handleSave = () => {
     setSubmitted(true);
     if (!isContactFormValid(form)) return;
@@ -49,13 +54,14 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
   };
 
   return (
+    <>
     <Dialog
       open
       title="Edit contact"
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -72,5 +78,7 @@ export function EditContactDialog({ contact, onClose, onSave, companies, onCreat
         onCreateCompany={onCreateCompany}
       />
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

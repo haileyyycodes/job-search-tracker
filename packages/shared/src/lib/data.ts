@@ -1375,6 +1375,8 @@ export const defaultInterviewCategories: string[] = [
 ];
 
 /** Groups an application's interviews by date, preserving first-seen date order. Used to render "Interview day" headers when 2+ rounds share a date. */
+/** Groups interviews by date, most recent day first. Interviews within a day keep their
+ * original (logged) order. */
 export function groupInterviewsByDate(interviews: Interview[]): { date: string; interviews: Interview[] }[] {
   const groups: { date: string; interviews: Interview[] }[] = [];
   for (const iv of interviews) {
@@ -1382,5 +1384,5 @@ export function groupInterviewsByDate(interviews: Interview[]): { date: string; 
     if (existing) existing.interviews.push(iv);
     else groups.push({ date: iv.date, interviews: [iv] });
   }
-  return groups;
+  return groups.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }

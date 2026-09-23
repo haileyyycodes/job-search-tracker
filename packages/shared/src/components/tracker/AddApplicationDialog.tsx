@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Button, Select } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Button, Select } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
 import { MAX_RICH_TEXT_CHARS } from "@/lib/richText";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { ApplicationFormFields, emptyApplicationForm, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
@@ -46,6 +47,9 @@ export function AddApplicationDialog({
     onClose();
   };
 
+  const isDirty = status !== "applied" || JSON.stringify(form) !== JSON.stringify(emptyApplicationForm);
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, resetAndClose);
+
   const handleSave = async () => {
     setSubmitted(true);
     if (!isApplicationFormValid(form, requireDateApplied)) return;
@@ -83,15 +87,16 @@ export function AddApplicationDialog({
   };
 
   return (
+    <>
     <Dialog
       open={open}
       title="Log application"
       fullScreen
       disablePadding
-      onClose={resetAndClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={resetAndClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -119,5 +124,7 @@ export function AddApplicationDialog({
         }
       />
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

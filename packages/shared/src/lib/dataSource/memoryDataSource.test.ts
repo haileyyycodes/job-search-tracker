@@ -18,7 +18,6 @@ describe("MemoryDataSource seed loading", () => {
     expect(contacts).toHaveLength(defaultSeed.contacts.length);
     expect(applications).toHaveLength(defaultSeed.applications.length);
     expect(events).toHaveLength(defaultSeed.networkingEvents.length);
-    expect(await ds.getElevatorPitchVersions()).toHaveLength(defaultSeed.elevatorPitchVersions.length);
 
     const northwind = companies.find((c) => c.name === "Northwind Co.")!;
     expect(northwind.locations).toEqual([{ city: "Detroit", state: "MI" }]);

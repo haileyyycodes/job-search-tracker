@@ -19,7 +19,7 @@ const STALE_DAYS = 14;
 const VERY_STALE_DAYS = 45;
 
 type ViewMode = "list" | "kanban";
-type Tab = "all" | "ready_to_apply" | "awaiting_response" | "needs_followup";
+type Tab = "all" | "ready_to_apply" | "interviewing" | "awaiting_response" | "needs_followup";
 
 const statusOptions: SelectOption[] = [
   { value: "", label: "All statuses" },
@@ -66,6 +66,7 @@ interface EnrichedApp {
   isSaved: boolean;
   dateAppliedLabel: string;
   lastActivityLabel: string;
+  lastActivityTimestamp: number | null;
   daysSinceActivity: number | null;
   isStale: boolean;
   staleColor: string;
@@ -133,6 +134,7 @@ export function ApplicationsListView({
           isSaved,
           dateAppliedLabel: app.dateApplied || "—",
           lastActivityLabel: lastActivity ? (isSaved ? `on ${lastActivity}` : lastActivity) : "—",
+          lastActivityTimestamp: lastActivity ? new Date(lastActivity).getTime() : null,
           daysSinceActivity,
           isStale,
           staleColor: isStale
@@ -147,11 +149,14 @@ export function ApplicationsListView({
           referralColor: app.referral ? "var(--green-600)" : "var(--text-tertiary)",
           resumeLabel: resumeTypeLabels[app.resumeType],
         };
-      }),
+      })
+        // Most recent activity first; applications with no recorded activity sink to the bottom.
+        .sort((a, b) => (b.lastActivityTimestamp ?? -Infinity) - (a.lastActivityTimestamp ?? -Infinity)),
     [apps, companies, goals]
   );
 
   const savedApps = enriched.filter((e) => e.isSaved);
+  const interviewingApps = enriched.filter((e) => e.app.status === "interviewing");
   const offerApps = enriched.filter((e) => e.app.status === "offer_extended");
   const staleApps = enriched
     .filter((e) => e.isStale)
@@ -166,6 +171,19 @@ export function ApplicationsListView({
       rows: savedApps,
       emptyText: "Nothing saved right now.",
       renderSignal: (e) => <span style={{ color: "var(--text-tertiary)" }}>{e.lastActivityLabel}</span>,
+    },
+    {
+      key: "interviewing",
+      tabLabel: "Interviewing",
+      sub: "Currently in the interview process.",
+      signalHeading: "Interviews",
+      rows: interviewingApps,
+      emptyText: "Nothing in the interview process right now.",
+      renderSignal: (e) => (
+        <span style={{ color: "var(--text-tertiary)" }}>
+          {e.app.interviews.length} interview{e.app.interviews.length === 1 ? "" : "s"} · {e.lastActivityLabel}
+        </span>
+      ),
     },
     {
       key: "awaiting_response",

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Button, Card, IconButton, TextLink, ListRow } from "@/components/ds";
 import { EditContactDialog } from "./EditContactDialog";
+import { ConfirmDeleteNetworkingEventDialog } from "./ConfirmDeleteNetworkingEventDialog";
 import { OutreachTag } from "./OutreachTag";
 import { companyName } from "@/lib/companies";
 import { isValidUrl } from "@/lib/validation";
@@ -60,6 +61,7 @@ export function ContactDetailView({
   onOpenLogNetworkingEvent,
 }: ContactDetailViewProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deletingNetworkingEvent, setDeletingNetworkingEvent] = useState<NetworkingEvent | null>(null);
 
   if (!contact) return null;
 
@@ -273,7 +275,7 @@ export function ContactDetailView({
                         aria-label="Delete networking event"
                         icon={<span>✕</span>}
                         size="sm"
-                        onClick={() => onDeleteNetworkingEvent(e.id)}
+                        onClick={() => setDeletingNetworkingEvent(e)}
                       />
                     </div>
                   </div>
@@ -316,6 +318,16 @@ export function ContactDetailView({
           onSave={(updated) => {
             onEditContact(updated);
             setEditDialogOpen(false);
+          }}
+        />
+      )}
+      {deletingNetworkingEvent && (
+        <ConfirmDeleteNetworkingEventDialog
+          event={deletingNetworkingEvent}
+          onClose={() => setDeletingNetworkingEvent(null)}
+          onConfirm={() => {
+            onDeleteNetworkingEvent(deletingNetworkingEvent.id);
+            setDeletingNetworkingEvent(null);
           }}
         />
       )}

@@ -5,6 +5,7 @@ import { Button, Input, ListRow, Pagination, RowActionMenu, TextLink } from "@/c
 import { ListCount } from "./ListCount";
 import { StoryDialog } from "./StoryDialog";
 import { ConfirmDeleteStoryDialog } from "./ConfirmDeleteStoryDialog";
+import { richTextHtmlToPlainText } from "@/lib/richTextEditorHtml";
 import type { NewStory } from "@/lib/dataSource/types";
 import type { Story } from "@/lib/types";
 
@@ -18,6 +19,11 @@ interface StoriesViewProps {
 
 const GRID = "36px 1.5fr 1.5fr 1fr";
 const PAGE_SIZE = 10;
+
+function dateRangeLabel(story: Story): string | undefined {
+  if (!story.date) return undefined;
+  return story.toDate ? `${story.date} – ${story.toDate}` : story.date;
+}
 
 function TagChip({ label }: { label: string }) {
   return (
@@ -53,7 +59,7 @@ export function StoriesView({ stories, onBack, onAddStory, onEditStory, onDelete
     ? ordered.filter(
         (s) =>
           s.title.toLowerCase().includes(needle) ||
-          s.content.toLowerCase().includes(needle) ||
+          richTextHtmlToPlainText(s.content).replace(/\s+/g, " ").toLowerCase().includes(needle) ||
           s.tags.some((tag) => tag.toLowerCase().includes(needle))
       )
     : ordered;
@@ -66,18 +72,18 @@ export function StoriesView({ stories, onBack, onAddStory, onEditStory, onDelete
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div style={{ padding: "20px 32px 18px", borderBottom: "1px solid var(--border-default)", background: "var(--bg-page)" }}>
         <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 8 }}>
-          ← Interview prep
+          ← Story Bank
         </TextLink>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
           <div>
             <h1 style={{ margin: 0, font: "800 30px var(--font-display)", letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
-              Stories
+              Achievements
             </h1>
             <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--text-secondary)" }}>
               Reusable write-ups to pull into a tailored résumé or reference during behavioral prep.
             </p>
           </div>
-          <Button onClick={() => setAddOpen(true)}>+ Add story</Button>
+          <Button onClick={() => setAddOpen(true)}>+ Add achievement</Button>
         </div>
       </div>
 
@@ -93,7 +99,7 @@ export function StoriesView({ stories, onBack, onAddStory, onEditStory, onDelete
               }}
             />
           </div>
-          <ListCount shown={filtered.length} total={stories.length} noun="story" nounPlural="stories" />
+          <ListCount shown={filtered.length} total={stories.length} noun="achievement" />
         </div>
 
         <div
@@ -119,12 +125,17 @@ export function StoriesView({ stories, onBack, onAddStory, onEditStory, onDelete
         {visible.map((story) => (
           <ListRow key={story.id} columns={GRID} align="start" onClick={() => setEditing(story)}>
             <RowActionMenu
-              label="Story actions"
-              actions={[{ label: "Delete story", tone: "danger", onSelect: () => setDeleting(story) }]}
+              label="Achievement actions"
+              actions={[{ label: "Delete achievement", tone: "danger", onSelect: () => setDeleting(story) }]}
             />
-            <span style={{ font: "700 14px var(--font-body)", color: "var(--text-primary)" }}>
-              {story.title || "Untitled story"}
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+              <span style={{ font: "700 14px var(--font-body)", color: "var(--text-primary)" }}>
+                {story.title || "Untitled achievement"}
+              </span>
+              {dateRangeLabel(story) && (
+                <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{dateRangeLabel(story)}</span>
+              )}
+            </div>
             <span
               style={{
                 font: "var(--text-body-s)",
@@ -134,7 +145,7 @@ export function StoriesView({ stories, onBack, onAddStory, onEditStory, onDelete
                 textOverflow: "ellipsis",
               }}
             >
-              {story.content.replace(/\s+/g, " ").trim() || "—"}
+              {richTextHtmlToPlainText(story.content).replace(/\s+/g, " ").trim() || "—"}
             </span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {story.tags.length > 0 ? story.tags.map((tag) => <TagChip key={tag} label={tag} />) : <span style={{ color: "var(--text-tertiary)" }}>—</span>}
@@ -144,11 +155,11 @@ export function StoriesView({ stories, onBack, onAddStory, onEditStory, onDelete
 
         {stories.length === 0 ? (
           <div style={{ padding: "24px 4px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-            No stories yet — add one to get started.
+            No achievements yet — add one to get started.
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: "24px 4px", font: "var(--text-body-s)", color: "var(--text-tertiary)" }}>
-            No stories match.
+            No achievements match.
           </div>
         ) : null}
 

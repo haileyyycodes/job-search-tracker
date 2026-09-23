@@ -8,7 +8,6 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
-  type DsElevatorPitchVersion,
   type DsFollowUp,
   type DsGoals,
   type DsInterview,
@@ -19,7 +18,6 @@ import {
   type NewApplication,
   type NewCompany,
   type NewContact,
-  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
   type NewInterviewPrepQuestion,
@@ -113,8 +111,10 @@ interface InterviewRow {
   date: string;
   style: string | null;
   categories: string | null;
+  questions_to_ask: string | null;
   questions_asked: string | null;
   notes: string;
+  contact_id: number | null;
 }
 interface FollowUpRow {
   id: number;
@@ -158,25 +158,9 @@ interface StoryRow {
   title: string;
   content: string;
   tags: string;
+  date: string | null;
+  to_date: string | null;
 }
-interface ElevatorPitchVersionRow {
-  id: number;
-  name: string;
-  setting: string;
-  who: string;
-  person_name: string;
-  role: string;
-  identity: string;
-  situation: string;
-  action: string;
-  result: string;
-  themes: string;
-  synthesis: string;
-  seeking: string;
-  closing_question: string;
-  source_question_id: number | null;
-}
-
 // ---- row -> Ds* mappers ----
 
 function mapCompany(row: CompanyRow, locations: LocationRow[]): DsCompany {
@@ -214,8 +198,10 @@ function mapInterview(row: InterviewRow): DsInterview {
     date: row.date,
     style: (row.style as DsInterview["style"]) ?? undefined,
     categories: row.categories ? (JSON.parse(row.categories) as string[]) : undefined,
+    questionsToAsk: row.questions_to_ask ?? undefined,
     questionsAsked: row.questions_asked ?? undefined,
     notes: row.notes,
+    contactId: row.contact_id ?? undefined,
   };
 }
 
@@ -240,26 +226,8 @@ function mapStory(row: StoryRow): DsStory {
     title: row.title,
     content: row.content,
     tags: row.tags ? (JSON.parse(row.tags) as string[]) : [],
-  };
-}
-
-function mapElevatorPitchVersion(row: ElevatorPitchVersionRow): DsElevatorPitchVersion {
-  return {
-    id: row.id,
-    name: row.name,
-    setting: row.setting,
-    who: row.who,
-    personName: row.person_name,
-    role: row.role,
-    identity: row.identity,
-    situation: row.situation,
-    action: row.action,
-    result: row.result,
-    themes: row.themes ? (JSON.parse(row.themes) as string[]) : [],
-    synthesis: row.synthesis,
-    seeking: row.seeking,
-    closingQuestion: row.closing_question,
-    sourceQuestionId: row.source_question_id ?? undefined,
+    date: row.date ?? undefined,
+    toDate: row.to_date ?? undefined,
   };
 }
 
@@ -404,15 +372,17 @@ export class WasmDataSource implements DataSource {
       }
       for (const iv of a.interviews) {
         db.run(
-          "INSERT INTO interviews (application_id, type, date, style, categories, questions_asked, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO interviews (application_id, type, date, style, categories, questions_to_ask, questions_asked, notes, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             appId,
             iv.type,
             iv.date,
             iv.style ?? null,
             iv.categories ? JSON.stringify(iv.categories) : null,
+            iv.questionsToAsk ?? null,
             iv.questionsAsked ?? null,
             iv.notes,
+            iv.contactId !== undefined ? contactIdMap.get(iv.contactId)! : null,
           ]
         );
       }
@@ -460,7 +430,6 @@ export class WasmDataSource implements DataSource {
 
     db.run("UPDATE user_profile SET name = ? WHERE id = 1", [seed.userProfile.name]);
 
-    const interviewPrepQuestionIdMap = new Map<string, number>();
     for (const q of seed.interviewPrepQuestions) {
       db.run("INSERT INTO interview_prep_questions (category, section, question, answer, starred) VALUES (?, ?, ?, ?, ?)", [
         q.category,
@@ -469,39 +438,16 @@ export class WasmDataSource implements DataSource {
         q.answer,
         bool(q.starred),
       ]);
-      interviewPrepQuestionIdMap.set(q.id, lastInsertId(db));
     }
 
     for (const s of seed.stories) {
-      db.run("INSERT INTO stories (title, content, tags) VALUES (?, ?, ?)", [
+      db.run("INSERT INTO stories (title, content, tags, date, to_date) VALUES (?, ?, ?, ?, ?)", [
         s.title,
         s.content,
         JSON.stringify(s.tags),
+        s.date ?? null,
+        s.toDate ?? null,
       ]);
-    }
-
-    for (const v of seed.elevatorPitchVersions) {
-      db.run(
-        `INSERT INTO elevator_pitch_versions
-          (name, setting, who, person_name, role, identity, situation, action, result, themes, synthesis, seeking, closing_question, source_question_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          v.name,
-          v.setting,
-          v.who,
-          v.personName,
-          v.role,
-          v.identity,
-          v.situation,
-          v.action,
-          v.result,
-          JSON.stringify(v.themes),
-          v.synthesis,
-          v.seeking,
-          v.closingQuestion,
-          v.sourceQuestionId !== undefined ? interviewPrepQuestionIdMap.get(v.sourceQuestionId)! : null,
-        ]
-      );
     }
   }
 
@@ -652,15 +598,17 @@ export class WasmDataSource implements DataSource {
   async logInterview(appId: number, interview: NewInterview): Promise<DsInterview> {
     const db = await this.ready;
     db.run(
-      "INSERT INTO interviews (application_id, type, date, style, categories, questions_asked, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO interviews (application_id, type, date, style, categories, questions_to_ask, questions_asked, notes, contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         appId,
         interview.type,
         interview.date,
         interview.style ?? null,
         interview.categories ? JSON.stringify(interview.categories) : null,
+        interview.questionsToAsk ?? null,
         interview.questionsAsked ?? null,
         interview.notes,
+        interview.contactId ?? null,
       ]
     );
     const id = lastInsertId(db);
@@ -670,14 +618,16 @@ export class WasmDataSource implements DataSource {
   async editInterview(appId: number, interviewId: number, updates: NewInterview): Promise<void> {
     const db = await this.ready;
     db.run(
-      "UPDATE interviews SET type = ?, date = ?, style = ?, categories = ?, questions_asked = ?, notes = ? WHERE id = ? AND application_id = ?",
+      "UPDATE interviews SET type = ?, date = ?, style = ?, categories = ?, questions_to_ask = ?, questions_asked = ?, notes = ?, contact_id = ? WHERE id = ? AND application_id = ?",
       [
         updates.type,
         updates.date,
         updates.style ?? null,
         updates.categories ? JSON.stringify(updates.categories) : null,
+        updates.questionsToAsk ?? null,
         updates.questionsAsked ?? null,
         updates.notes,
+        updates.contactId ?? null,
         interviewId,
         appId,
       ]
@@ -979,10 +929,12 @@ export class WasmDataSource implements DataSource {
 
   async addStory(story: NewStory): Promise<DsStory> {
     const db = await this.ready;
-    db.run("INSERT INTO stories (title, content, tags) VALUES (?, ?, ?)", [
+    db.run("INSERT INTO stories (title, content, tags, date, to_date) VALUES (?, ?, ?, ?, ?)", [
       story.title,
       story.content,
       JSON.stringify(story.tags),
+      story.date ?? null,
+      story.toDate ?? null,
     ]);
     const id = lastInsertId(db);
     return mapStory(this.requireRow<StoryRow>(db, "SELECT * FROM stories WHERE id = ?", id, "Story"));
@@ -990,10 +942,12 @@ export class WasmDataSource implements DataSource {
 
   async editStory(story: DsStory): Promise<void> {
     const db = await this.ready;
-    db.run("UPDATE stories SET title = ?, content = ?, tags = ? WHERE id = ?", [
+    db.run("UPDATE stories SET title = ?, content = ?, tags = ?, date = ?, to_date = ? WHERE id = ?", [
       story.title,
       story.content,
       JSON.stringify(story.tags),
+      story.date ?? null,
+      story.toDate ?? null,
       story.id,
     ]);
   }
@@ -1001,72 +955,5 @@ export class WasmDataSource implements DataSource {
   async deleteStory(id: number): Promise<void> {
     const db = await this.ready;
     db.run("DELETE FROM stories WHERE id = ?", [id]);
-  }
-
-  // ---- elevator pitch versions ----
-
-  async getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]> {
-    const db = await this.ready;
-    return all<ElevatorPitchVersionRow>(db, "SELECT * FROM elevator_pitch_versions ORDER BY id").map(mapElevatorPitchVersion);
-  }
-
-  async addElevatorPitchVersion(version: NewElevatorPitchVersion): Promise<DsElevatorPitchVersion> {
-    const db = await this.ready;
-    db.run(
-      `INSERT INTO elevator_pitch_versions
-        (name, setting, who, person_name, role, identity, situation, action, result, themes, synthesis, seeking, closing_question, source_question_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        version.name,
-        version.setting,
-        version.who,
-        version.personName,
-        version.role,
-        version.identity,
-        version.situation,
-        version.action,
-        version.result,
-        JSON.stringify(version.themes),
-        version.synthesis,
-        version.seeking,
-        version.closingQuestion,
-        version.sourceQuestionId ?? null,
-      ]
-    );
-    const id = lastInsertId(db);
-    return mapElevatorPitchVersion(
-      this.requireRow<ElevatorPitchVersionRow>(db, "SELECT * FROM elevator_pitch_versions WHERE id = ?", id, "ElevatorPitchVersion")
-    );
-  }
-
-  async editElevatorPitchVersion(version: DsElevatorPitchVersion): Promise<void> {
-    const db = await this.ready;
-    db.run(
-      `UPDATE elevator_pitch_versions SET name = ?, setting = ?, who = ?, person_name = ?, role = ?, identity = ?,
-        situation = ?, action = ?, result = ?, themes = ?, synthesis = ?, seeking = ?, closing_question = ?, source_question_id = ?
-       WHERE id = ?`,
-      [
-        version.name,
-        version.setting,
-        version.who,
-        version.personName,
-        version.role,
-        version.identity,
-        version.situation,
-        version.action,
-        version.result,
-        JSON.stringify(version.themes),
-        version.synthesis,
-        version.seeking,
-        version.closingQuestion,
-        version.sourceQuestionId ?? null,
-        version.id,
-      ]
-    );
-  }
-
-  async deleteElevatorPitchVersion(id: number): Promise<void> {
-    const db = await this.ready;
-    db.run("DELETE FROM elevator_pitch_versions WHERE id = ?", [id]);
   }
 }

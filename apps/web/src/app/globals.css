@@ -140,3 +140,41 @@ body {
 a {
   color: inherit;
 }
+
+/* Content area of RichTextEditor (Tiptap) — the ProseMirror root that
+   contenteditable manages directly, so these rules can't be inline styles. */
+.rte-content .ProseMirror {
+  outline: none;
+  min-height: 100%;
+}
+
+.rte-content p {
+  margin: 0 0 8px;
+}
+
+.rte-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-content ul,
+.rte-content ol {
+  margin: 0 0 8px;
+  padding-left: 22px;
+}
+
+.rte-content ul:last-child,
+.rte-content ol:last-child {
+  margin-bottom: 0;
+}
+
+.rte-content li p {
+  margin: 0;
+}
+
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  height: 0;
+}
