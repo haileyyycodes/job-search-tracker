@@ -40,6 +40,14 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel
     ],
     content: value,
     immediatelyRender: false,
+    // Without an explicit selection, Tiptap can default it to the document's last node (e.g. the
+    // empty paragraph Tiptap appends after a trailing heading) rather than the first — which made
+    // the toolbar's block-type control misreport "Paragraph" for content that opens with a heading,
+    // right after mount, before the user has clicked into the editor. Doesn't call .focus(), so it
+    // won't steal focus from another field (e.g. Title) when the surrounding form/dialog opens.
+    onCreate: ({ editor: createdEditor }) => {
+      createdEditor.commands.setTextSelection(0);
+    },
     onUpdate: ({ editor: updatedEditor }) => {
       const html = updatedEditor.getHTML();
       lastKnownValue.current = html;
@@ -62,6 +70,7 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel
     if (value !== lastKnownValue.current && value !== editor.getHTML()) {
       lastKnownValue.current = value;
       editor.commands.setContent(value, { emitUpdate: false });
+      editor.commands.setTextSelection(0);
     }
   }, [value, editor]);
 
