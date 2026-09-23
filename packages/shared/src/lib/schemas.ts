@@ -43,8 +43,10 @@ const interviewSchema = z.object({
   date: z.string(),
   style: interviewStyleSchema.optional(),
   categories: z.array(z.string()).optional(),
+  questionsToAsk: z.string().optional(),
   questionsAsked: z.string().optional(),
   notes: z.string(),
+  contactId: z.number().optional(),
 });
 
 const followUpSchema = z.object({

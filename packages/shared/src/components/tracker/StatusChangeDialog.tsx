@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Select, Input, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Select, Input, Button } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { statusLabels, statusOrder } from "@/lib/data";
 import { formatDateInput, todayFormatted } from "@/lib/date";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import type { ApplicationStatus } from "@/lib/types";
 
 const statusOptions: SelectOption[] = statusOrder.map((s) => ({ value: s, label: statusLabels[s] }));
@@ -20,19 +21,23 @@ export function StatusChangeDialog({ currentStatus, onClose, onSave }: StatusCha
   const [status, setStatus] = useState<ApplicationStatus>(currentStatus);
   const [dateInput, setDateInput] = useState("");
 
+  const isDirty = status !== currentStatus || dateInput !== "";
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const handleSave = () => {
     const at = dateInput ? formatDateInput(dateInput) : todayFormatted();
     onSave(status, at);
   };
 
   return (
+    <>
     <Dialog
       open
       title="Change status"
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -51,5 +56,7 @@ export function StatusChangeDialog({ currentStatus, onClose, onSave }: StatusCha
         <Input label="Date" type="date" value={dateInput} onChange={setDateInput} hint="Defaults to today if left blank" />
       </div>
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

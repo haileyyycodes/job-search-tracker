@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Input, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Input, Button } from "@/components/ds";
 import { formatDateInput, todayFormatted } from "@/lib/date";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { ContactPicker } from "./ContactPicker";
 import type { NewContact } from "@/lib/dataSource/types";
 import type { Company, Contact, FollowUp } from "@/lib/types";
@@ -30,6 +31,9 @@ export function LogFollowUpDialog({
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
+  const isDirty = contactId !== "" || dateInput !== "" || notes !== "";
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const handleSave = () => {
     setSubmitted(true);
     if (!contactId) return;
@@ -39,13 +43,14 @@ export function LogFollowUpDialog({
   };
 
   return (
+    <>
     <Dialog
       open
       title="Log follow-up"
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -89,5 +94,7 @@ export function LogFollowUpDialog({
         </div>
       </div>
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

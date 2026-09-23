@@ -49,11 +49,10 @@ function migrate(db: Database.Database): void {
     db.exec("ALTER TABLE contacts ADD COLUMN relationship_tier TEXT;");
   }
 
-  // Interview Prep (1408d75) and Elevator Pitch Builder (16eaa53) each added a
-  // table to SCHEMA_SQL. Any DB file created before those commits never gets
-  // them otherwise, and useTrackerData's boot-time Promise.all fails the whole
-  // load — the app shows no data at all — the first time it calls
-  // interviewPrep:list / elevatorPitch:list.
+  // Interview Prep (1408d75) added a table to SCHEMA_SQL. Any DB file created
+  // before that commit never gets it otherwise, and useTrackerData's boot-time
+  // Promise.all fails the whole load — the app shows no data at all — the
+  // first time it calls interviewPrep:list.
   if (!hasTable(db, "interview_prep_questions")) {
     db.exec(`
       CREATE TABLE interview_prep_questions (
@@ -67,29 +66,13 @@ function migrate(db: Database.Database): void {
     `);
   }
 
-  if (!hasTable(db, "elevator_pitch_versions")) {
-    db.exec(`
-      CREATE TABLE elevator_pitch_versions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        setting TEXT NOT NULL,
-        who TEXT NOT NULL,
-        person_name TEXT NOT NULL,
-        role TEXT NOT NULL,
-        identity TEXT NOT NULL,
-        situation TEXT NOT NULL,
-        action TEXT NOT NULL,
-        result TEXT NOT NULL,
-        themes TEXT NOT NULL,
-        synthesis TEXT NOT NULL,
-        seeking TEXT NOT NULL,
-        closing_question TEXT NOT NULL,
-        source_question_id INTEGER REFERENCES interview_prep_questions(id) ON DELETE SET NULL
-      );
-    `);
+  // Elevator Pitch Builder (16eaa53) — removed, feature dropped. Drop the table
+  // from any DB file that still has it from before that removal.
+  if (hasTable(db, "elevator_pitch_versions")) {
+    db.exec("DROP TABLE elevator_pitch_versions;");
   }
 
-  // Stories (added later) — a standalone table, same story as the two above: a
+  // Stories (added later) — a standalone table, same story as the one above: a
   // DB file created before this commit never gets it, and useTrackerData's
   // boot-time Promise.all fails the first time it calls stories:list.
   if (!hasTable(db, "stories")) {
@@ -98,9 +81,19 @@ function migrate(db: Database.Database): void {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
-        tags TEXT NOT NULL
+        tags TEXT NOT NULL,
+        date TEXT,
+        to_date TEXT
       );
     `);
+  }
+
+  // Story date range (added later).
+  if (!hasColumn(db, "stories", "date")) {
+    db.exec("ALTER TABLE stories ADD COLUMN date TEXT;");
+  }
+  if (!hasColumn(db, "stories", "to_date")) {
+    db.exec("ALTER TABLE stories ADD COLUMN to_date TEXT;");
   }
 
   // Pasted resume text (added later). Replaces an earlier file-upload attempt —
@@ -121,6 +114,16 @@ function migrate(db: Database.Database): void {
   // application to "inbound" via the column default.
   if (!hasColumn(db, "applications", "source")) {
     db.exec("ALTER TABLE applications ADD COLUMN source TEXT NOT NULL DEFAULT 'inbound';");
+  }
+
+  // Linking a contact to an interview (added later).
+  if (!hasColumn(db, "interviews", "contact_id")) {
+    db.exec("ALTER TABLE interviews ADD COLUMN contact_id INTEGER REFERENCES contacts(id) ON DELETE SET NULL;");
+  }
+
+  // Prep questions to ask the interviewer (added later).
+  if (!hasColumn(db, "interviews", "questions_to_ask")) {
+    db.exec("ALTER TABLE interviews ADD COLUMN questions_to_ask TEXT;");
   }
 }
 

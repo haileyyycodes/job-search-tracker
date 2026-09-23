@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Input, Button, FieldLabel } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Input, Button, FieldLabel } from "@/components/ds";
 import { formatDateInput, todayFormatted, toDateInputValue } from "@/lib/date";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import type { Feedback } from "@/lib/types";
 
 interface FeedbackDialogProps {
@@ -17,6 +18,10 @@ export function FeedbackDialog({ feedback, onClose, onSave }: FeedbackDialogProp
   const [dateInput, setDateInput] = useState(feedback ? toDateInputValue(feedback.date) : "");
   const [submitted, setSubmitted] = useState(false);
 
+  const [initial] = useState({ text, dateInput });
+  const isDirty = text !== initial.text || dateInput !== initial.dateInput;
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const handleSave = () => {
     setSubmitted(true);
     if (!text.trim()) return;
@@ -26,13 +31,14 @@ export function FeedbackDialog({ feedback, onClose, onSave }: FeedbackDialogProp
   };
 
   return (
+    <>
     <Dialog
       open
       title={feedback ? "Edit feedback" : "Add feedback"}
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -74,5 +80,7 @@ export function FeedbackDialog({ feedback, onClose, onSave }: FeedbackDialogProp
         />
       </div>
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

@@ -75,8 +75,10 @@ CREATE TABLE interviews (
   date TEXT NOT NULL,
   style TEXT,
   categories TEXT,
+  questions_to_ask TEXT,
   questions_asked TEXT,
-  notes TEXT NOT NULL
+  notes TEXT NOT NULL,
+  contact_id INTEGER REFERENCES contacts(id) ON DELETE SET NULL
 );
 
 CREATE TABLE follow_ups (
@@ -139,25 +141,9 @@ CREATE TABLE stories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
-  tags TEXT NOT NULL
-);
-
-CREATE TABLE elevator_pitch_versions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  setting TEXT NOT NULL,
-  who TEXT NOT NULL,
-  person_name TEXT NOT NULL,
-  role TEXT NOT NULL,
-  identity TEXT NOT NULL,
-  situation TEXT NOT NULL,
-  action TEXT NOT NULL,
-  result TEXT NOT NULL,
-  themes TEXT NOT NULL,
-  synthesis TEXT NOT NULL,
-  seeking TEXT NOT NULL,
-  closing_question TEXT NOT NULL,
-  source_question_id INTEGER REFERENCES interview_prep_questions(id) ON DELETE SET NULL
+  tags TEXT NOT NULL,
+  date TEXT,
+  to_date TEXT
 );
 
 INSERT INTO goals (id) VALUES (1);

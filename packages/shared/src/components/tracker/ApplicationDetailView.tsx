@@ -1,11 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button, Card, IconButton, StatusTag, statusDotColor, TextLink } from "@/components/ds";
 import { applicationSourceLabels, groupInterviewsByDate, resumeTypeLabels, statusLabels } from "@/lib/data";
+import { ensureRichTextHtml, isRichTextEmpty, richTextHtmlToPlainText, sanitizeRichTextHtml } from "@/lib/richTextEditorHtml";
 import { StatusChangeDialog } from "./StatusChangeDialog";
 import { LogInterviewDialog } from "./LogInterviewDialog";
 import { LogFollowUpDialog } from "./LogFollowUpDialog";
 import { EditApplicationDialog } from "./EditApplicationDialog";
 import { FeedbackDialog } from "./FeedbackDialog";
+import { ConfirmDeleteInterviewDialog } from "./ConfirmDeleteInterviewDialog";
+import { ConfirmDeleteFollowUpDialog } from "./ConfirmDeleteFollowUpDialog";
+import { ConfirmDeleteNetworkingEventDialog } from "./ConfirmDeleteNetworkingEventDialog";
 import { formatSalaryRange, getSalaryMatch, salaryMatchColor, salaryMatchLabel } from "@/lib/salary";
 import { formatLocation } from "@/lib/location";
 import { companyName } from "@/lib/companies";
@@ -62,6 +66,31 @@ function SectionLabel({ children }: { children: ReactNode }) {
     >
       {children}
     </div>
+  );
+}
+
+function RowTextButton({ label, tone = "default", onClick }: { label: string; tone?: "default" | "danger"; onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        height: 26,
+        padding: "0 8px",
+        border: 0,
+        borderRadius: "var(--radius-s)",
+        background: hover ? (tone === "danger" ? "var(--red-100)" : "var(--bg-surface-hover)") : "transparent",
+        color: hover ? (tone === "danger" ? "var(--red-600)" : "var(--text-primary)") : "var(--text-tertiary)",
+        fontSize: 12.5,
+        fontWeight: 600,
+        cursor: "pointer",
+        flex: "none",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -273,7 +302,11 @@ export function ApplicationDetailView({
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
+  const [expandedInterviewIds, setExpandedInterviewIds] = useState<Set<number>>(new Set());
+  const [deletingInterview, setDeletingInterview] = useState<Interview | null>(null);
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
+  const [deletingFollowUp, setDeletingFollowUp] = useState<FollowUp | null>(null);
+  const [deletingNetworkingEvent, setDeletingNetworkingEvent] = useState<NetworkingEvent | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [resumeOpen, setResumeOpen] = useState(false);
@@ -503,7 +536,24 @@ export function ApplicationDetailView({
                   </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {group.interviews.map((iv) => (
+                  {group.interviews.map((iv) => {
+                    const interviewer = iv.contactId != null ? contacts.find((c) => c.id === iv.contactId) : undefined;
+                    const descriptionParts = [iv.questionsToAsk, iv.questionsAsked, iv.notes].filter(
+                      (v): v is string => !!v && !isRichTextEmpty(v)
+                    );
+                    const hasDescription = descriptionParts.length > 0;
+                    const expanded = expandedInterviewIds.has(iv.id);
+                    const previewText = descriptionParts
+                      .map((v) => richTextHtmlToPlainText(v).replace(/\s+/g, " ").trim())
+                      .join(" · ");
+                    const toggleExpanded = () =>
+                      setExpandedInterviewIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(iv.id)) next.delete(iv.id);
+                        else next.add(iv.id);
+                        return next;
+                      });
+                    return (
                     <div key={iv.id}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span style={{ font: "700 13px var(--font-body)", color: "var(--text-primary)" }}>
@@ -515,27 +565,29 @@ export function ApplicationDetailView({
                             </span>
                           )}
                         </span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                           {group.interviews.length === 1 && (
-                            <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)" }}>{iv.date}</span>
+                            <span style={{ font: "var(--text-caption)", color: "var(--text-tertiary)", marginRight: 4 }}>
+                              {iv.date}
+                            </span>
                           )}
-                          <IconButton
-                            aria-label="Edit interview"
-                            icon={<span>✎</span>}
-                            size="sm"
+                          <RowTextButton
+                            label="Edit"
                             onClick={() => {
                               setEditingInterview(iv);
                               setInterviewDialogOpen(true);
                             }}
                           />
-                          <IconButton
-                            aria-label="Delete interview"
-                            icon={<span>✕</span>}
-                            size="sm"
-                            onClick={() => onDeleteInterview(app.id, iv.id)}
-                          />
+                          <RowTextButton label="Delete" tone="danger" onClick={() => setDeletingInterview(iv)} />
                         </div>
                       </div>
+                      {interviewer && (
+                        <div style={{ marginTop: 4 }}>
+                          <TextLink onClick={() => onSelectContact(interviewer)} style={{ font: "var(--text-body-s)" }}>
+                            {interviewer.name}
+                          </TextLink>
+                        </div>
+                      )}
                       {iv.categories && iv.categories.length > 0 && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                           {iv.categories.map((c) => (
@@ -558,17 +610,60 @@ export function ApplicationDetailView({
                           ))}
                         </div>
                       )}
-                      {iv.questionsAsked && (
-                        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
-                          <span style={{ color: "var(--text-tertiary)" }}>Questions: </span>
-                          {iv.questionsAsked}
+                      {hasDescription && !expanded && (
+                        <div
+                          style={{
+                            font: "var(--text-body-s)",
+                            color: "var(--text-secondary)",
+                            marginTop: 6,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {previewText}
                         </div>
                       )}
-                      {iv.notes && (
-                        <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}>{iv.notes}</div>
+                      {hasDescription && expanded && (
+                        <>
+                          {iv.questionsToAsk && !isRichTextEmpty(iv.questionsToAsk) && (
+                            <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
+                              <span style={{ color: "var(--text-tertiary)" }}>Questions to ask:</span>
+                              <div
+                                className="rte-content"
+                                dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(ensureRichTextHtml(iv.questionsToAsk)) }}
+                              />
+                            </div>
+                          )}
+                          {iv.questionsAsked && !isRichTextEmpty(iv.questionsAsked) && (
+                            <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 6 }}>
+                              <span style={{ color: "var(--text-tertiary)" }}>Questions asked:</span>
+                              <div
+                                className="rte-content"
+                                dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(ensureRichTextHtml(iv.questionsAsked)) }}
+                              />
+                            </div>
+                          )}
+                          {iv.notes && !isRichTextEmpty(iv.notes) && (
+                            <div
+                              className="rte-content"
+                              style={{ font: "var(--text-body-s)", color: "var(--text-secondary)", marginTop: 4 }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(ensureRichTextHtml(iv.notes)) }}
+                            />
+                          )}
+                        </>
+                      )}
+                      {hasDescription && (
+                        <TextLink
+                          onClick={toggleExpanded}
+                          style={{ font: "700 12px var(--font-body)", display: "inline-block", marginTop: 6 }}
+                        >
+                          {expanded ? "See less" : "See more…"}
+                        </TextLink>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -605,7 +700,7 @@ export function ApplicationDetailView({
                           aria-label="Delete follow-up"
                           icon={<span>✕</span>}
                           size="sm"
-                          onClick={() => onDeleteFollowUp(app.id, f.id)}
+                          onClick={() => setDeletingFollowUp(f)}
                         />
                       )}
                     </div>
@@ -703,7 +798,7 @@ export function ApplicationDetailView({
                       aria-label="Delete networking event"
                       icon={<span>✕</span>}
                       size="sm"
-                      onClick={() => onDeleteNetworkingEvent(e.id)}
+                      onClick={() => setDeletingNetworkingEvent(e)}
                     />
                   </div>
                 </div>
@@ -751,11 +846,25 @@ export function ApplicationDetailView({
         interview={editingInterview ?? undefined}
         interviewCategories={interviewCategories}
         onCreateCategory={onCreateInterviewCategory}
+        contacts={contacts}
+        companies={companies}
+        onCreateContact={onCreateContact}
+        defaultCompanyId={String(app.companyId)}
         onClose={() => setInterviewDialogOpen(false)}
         onSave={(interview) => {
           if (editingInterview) onEditInterview(app.id, editingInterview.id, interview);
           else onLogInterview(app.id, interview);
           setInterviewDialogOpen(false);
+        }}
+      />
+    )}
+    {deletingInterview && (
+      <ConfirmDeleteInterviewDialog
+        interview={deletingInterview}
+        onClose={() => setDeletingInterview(null)}
+        onConfirm={() => {
+          onDeleteInterview(app.id, deletingInterview.id);
+          setDeletingInterview(null);
         }}
       />
     )}
@@ -769,6 +878,27 @@ export function ApplicationDetailView({
         onSave={(followUp) => {
           onLogFollowUp(app.id, followUp);
           setFollowUpDialogOpen(false);
+        }}
+      />
+    )}
+    {deletingFollowUp && (
+      <ConfirmDeleteFollowUpDialog
+        followUp={deletingFollowUp}
+        contact={contacts.find((c) => c.id === deletingFollowUp.contactId)}
+        onClose={() => setDeletingFollowUp(null)}
+        onConfirm={() => {
+          onDeleteFollowUp(app.id, deletingFollowUp.id);
+          setDeletingFollowUp(null);
+        }}
+      />
+    )}
+    {deletingNetworkingEvent && (
+      <ConfirmDeleteNetworkingEventDialog
+        event={deletingNetworkingEvent}
+        onClose={() => setDeletingNetworkingEvent(null)}
+        onConfirm={() => {
+          onDeleteNetworkingEvent(deletingNetworkingEvent.id);
+          setDeletingNetworkingEvent(null);
         }}
       />
     )}

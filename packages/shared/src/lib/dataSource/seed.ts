@@ -66,8 +66,10 @@ export interface Seed {
       date: string;
       style?: InterviewStyle;
       categories?: string[];
+      questionsToAsk?: string;
       questionsAsked?: string;
       notes: string;
+      contactId?: string;
     }>;
     followUps: Array<{ id: string; date: string; contactId: string; notes: string }>;
     feedback?: Feedback;
@@ -101,23 +103,8 @@ export interface Seed {
     title: string;
     content: string;
     tags: string[];
-  }>;
-  elevatorPitchVersions: Array<{
-    id: string;
-    name: string;
-    setting: string;
-    who: string;
-    personName: string;
-    role: string;
-    identity: string;
-    situation: string;
-    action: string;
-    result: string;
-    themes: string[];
-    synthesis: string;
-    seeking: string;
-    closingQuestion: string;
-    sourceQuestionId?: string;
+    date?: string;
+    toDate?: string;
   }>;
 }
 
@@ -132,7 +119,6 @@ export const emptySeed: Seed = {
   interviewCategories: [],
   interviewPrepQuestions: [],
   stories: [],
-  elevatorPitchVersions: [],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,7 +134,7 @@ export const emptySeed: Seed = {
 // so a refresh always reproduces the same data. seed.test.ts asserts coverage.
 // ─────────────────────────────────────────────────────────────────────────────
 
-type SeedRecords = Pick<Seed, "companies" | "contacts" | "applications" | "networkingEvents" | "elevatorPitchVersions">;
+type SeedRecords = Pick<Seed, "companies" | "contacts" | "applications" | "networkingEvents">;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const SEED_EPOCH = new Date(2026, 1, 1); // Feb 1, 2026 — day 0 for every generated date
@@ -577,7 +563,7 @@ const RECENT_APPLICATIONS: Seed["applications"] = [
       { status: "interviewing", at: seedDate(179) },
     ],
     interviews: [
-      { id: "ivr9", type: "Recruiter Screen", date: seedDate(177), notes: "Screen with Riley — very responsive throughout." },
+      { id: "ivr9", type: "Recruiter Screen", date: seedDate(177), notes: "Screen with Riley — very responsive throughout.", contactId: "c5" },
     ],
     followUps: [
       { id: "fur2", date: seedDate(186), contactId: "c5", notes: "Thanked them for the time and asked about next steps." },
@@ -766,75 +752,7 @@ function buildSeedRecords(): SeedRecords {
     { id: "ne10", contactIds: ["c5"], type: "Video call", date: seedDate(184), applicationId: "a59", notes: "Quick call with Riley about where the UI Engineer loop stands." },
   ];
 
-  const elevatorPitchVersions: Seed["elevatorPitchVersions"] = [
-    {
-      id: "ep1", name: "Career fair", setting: "Career fair booth, ~60 seconds, recruiter is standing",
-      who: "University / industry recruiter", personName: "", role: "Recruiter",
-      identity: "a design engineer who builds polished, accessible product UI end to end",
-      situation: "At my last role the design system was drifting and slowing every team down",
-      action: "I rebuilt it as a tokenized component library and moved teams onto it",
-      result: "UI bug reports dropped about 40% and features shipped noticeably faster",
-      themes: ["design systems", "accessibility", "developer experience"],
-      synthesis: "I care about the seam between design and engineering and I like owning it",
-      seeking: "a design-engineering or front-end platform role on a product team",
-      closingQuestion: "What does design–engineering collaboration look like on your teams?",
-      sourceQuestionId: "ipq35",
-    },
-    {
-      id: "ep2", name: "Recruiter phone screen", setting: "Scheduled 30-minute intro call",
-      who: "In-house recruiter", personName: "Riley", role: "Recruiter",
-      identity: "a full-stack product engineer with a design background",
-      situation: "Our onboarding flow had a 30% drop-off and nobody owned it",
-      action: "I took ownership, redesigned it, and instrumented every step",
-      result: "drop-off fell to 18% and it became the template for other flows",
-      themes: ["product sense", "ownership", "measurement"],
-      synthesis: "I like ambiguous, user-facing problems where I can both design and build the fix",
-      seeking: "a senior product engineering role with real design latitude",
-      closingQuestion: "How much say do engineers have in product and UX decisions here?",
-      sourceQuestionId: "ipq45",
-    },
-    {
-      id: "ep3", name: "Warm intro over coffee", setting: "Coffee with a friend-of-a-friend who works there",
-      who: "Engineer at a target company", personName: "Sam", role: "Staff Engineer",
-      identity: "someone who moves fluidly between Figma and the codebase",
-      situation: "A launch was blocked on a gnarly perf regression in our editor",
-      action: "I profiled it, found a re-render storm, and reworked the state model",
-      result: "interaction latency went from 400ms to under 60ms and we shipped on time",
-      themes: ["performance", "prototyping", "calm under pressure"],
-      synthesis: "I'm at my best turning a vague, high-stakes problem into a shipped fix",
-      seeking: "a design-engineering role where craft and performance both matter",
-      closingQuestion: "What's the hardest technical problem your team is chewing on right now?",
-      sourceQuestionId: "ipq15",
-    },
-    {
-      id: "ep4", name: "Conference hallway", setting: "Standing chat after a talk, ~90 seconds",
-      who: "Speaker / senior IC", personName: "Dana", role: "Head of Design",
-      identity: "a design engineer who ships the last 10% that makes UI feel finished",
-      situation: "Our component library looked fine but failed real accessibility audits",
-      action: "I led a focused sprint on focus management, ARIA, and keyboard paths",
-      result: "we went from about 20 audit failures to zero and kept it there with CI checks",
-      themes: ["accessibility", "attention to detail", "tooling"],
-      synthesis: "I think polish and accessibility are the same discipline, not extras",
-      seeking: "a team that treats front-end craft as a first-class engineering concern",
-      closingQuestion: "How does your org keep quality from eroding as it scales?",
-      sourceQuestionId: "ipq8",
-    },
-    {
-      id: "ep5", name: "LinkedIn message", setting: "Cold-ish DM to a hiring manager; written, three short lines",
-      who: "Hiring manager", personName: "Priya", role: "Engineering Manager",
-      identity: "a full-stack engineer who prototypes in code and cares about the user",
-      situation: "I saw your team is rebuilding the dashboard experience",
-      action: "I did exactly that at my current company — design, build, and measure",
-      result: "engagement on the new dashboard is up 25% quarter over quarter",
-      themes: ["initiative", "product engineering", "data"],
-      synthesis: "I'd rather build the thing and learn from real usage than debate it",
-      seeking: "a conversation about the dashboard role on your team",
-      closingQuestion: "Would you be open to a short call this week or next?",
-      sourceQuestionId: "ipq19",
-    },
-  ];
-
-  return { companies, contacts: SEED_CONTACTS, applications, networkingEvents, elevatorPitchVersions };
+  return { companies, contacts: SEED_CONTACTS, applications, networkingEvents };
 }
 
 const INTERVIEW_PREP_QUESTIONS: Seed["interviewPrepQuestions"] = [
@@ -890,20 +808,6 @@ const INTERVIEW_PREP_QUESTIONS: Seed["interviewPrepQuestions"] = [
     { id: "ipq40", category: "behavioral", section: "Curveballs Common at Senior Level", question: "Describe a time you scaled yourself out of a task by delegating or documenting.", answer: "", starred: false },
     { id: "ipq41", category: "behavioral", section: "Curveballs Common at Senior Level", question: "Tell me about a time you challenged the status quo on your team's process or tooling.", answer: "", starred: false },
     { id: "ipq42", category: "behavioral", section: "Curveballs Common at Senior Level", question: "Describe a time your work was misunderstood or undervalued. How did you handle it?", answer: "", starred: false },
-
-    // Background & Motivation
-    { id: "ipq43", category: "recruiter_screening", section: "Background & Motivation", question: "Walk me through your resume.", answer: "", starred: false },
-    { id: "ipq44", category: "recruiter_screening", section: "Background & Motivation", question: "Why are you looking to leave your current role?", answer: "", starred: false },
-    { id: "ipq45", category: "recruiter_screening", section: "Background & Motivation", question: "Why are you interested in this role and company specifically?", answer: "", starred: false },
-    { id: "ipq46", category: "recruiter_screening", section: "Background & Motivation", question: "What are you looking for in your next role that you're not getting now?", answer: "", starred: false },
-    // Logistics & Availability
-    { id: "ipq47", category: "recruiter_screening", section: "Logistics & Availability", question: "What's your notice period, or how soon could you start?", answer: "", starred: false },
-    { id: "ipq48", category: "recruiter_screening", section: "Logistics & Availability", question: "Are you authorized to work in this country without visa sponsorship, now or in the future?", answer: "", starred: false },
-    { id: "ipq49", category: "recruiter_screening", section: "Logistics & Availability", question: "What's your preference on remote, hybrid, or onsite work?", answer: "", starred: false },
-    // Compensation & Process
-    { id: "ipq50", category: "recruiter_screening", section: "Compensation & Process", question: "What compensation range are you targeting for this role?", answer: "", starred: false },
-    { id: "ipq51", category: "recruiter_screening", section: "Compensation & Process", question: "Are you interviewing elsewhere, and what's your timeline?", answer: "", starred: false },
-    { id: "ipq52", category: "recruiter_screening", section: "Compensation & Process", question: "Do you have any questions for me about the role or company?", answer: "", starred: false },
 ];
 
 const STORIES: Seed["stories"] = [

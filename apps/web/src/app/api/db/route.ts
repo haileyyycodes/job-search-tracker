@@ -6,7 +6,6 @@ import {
   type DsApplication,
   type DsCompany,
   type DsContact,
-  type DsElevatorPitchVersion,
   type DsGoals,
   type DsInterviewPrepQuestion,
   type DsNetworkingEvent,
@@ -15,7 +14,6 @@ import {
   type NewApplication,
   type NewCompany,
   type NewContact,
-  type NewElevatorPitchVersion,
   type NewFollowUp,
   type NewInterview,
   type NewInterviewPrepQuestion,
@@ -83,11 +81,6 @@ export const CHANNELS: Record<string, (ds: DataSource, args: unknown[]) => Promi
   "stories:add": (ds, [story]) => ds.addStory(story as NewStory),
   "stories:edit": (ds, [story]) => ds.editStory(story as DsStory),
   "stories:delete": (ds, [id]) => ds.deleteStory(id as number),
-
-  "elevatorPitch:list": (ds) => ds.getElevatorPitchVersions(),
-  "elevatorPitch:add": (ds, [version]) => ds.addElevatorPitchVersion(version as NewElevatorPitchVersion),
-  "elevatorPitch:edit": (ds, [version]) => ds.editElevatorPitchVersion(version as DsElevatorPitchVersion),
-  "elevatorPitch:delete": (ds, [id]) => ds.deleteElevatorPitchVersion(id as number),
 };
 
 /** Marker prefix HttpDataSource (packages/shared) looks for to reconstruct RestrictedDeleteError

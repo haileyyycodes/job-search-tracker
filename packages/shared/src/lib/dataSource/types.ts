@@ -56,8 +56,10 @@ export interface DsInterview {
   date: string;
   style?: InterviewStyle;
   categories?: string[];
+  questionsToAsk?: string;
   questionsAsked?: string;
   notes: string;
+  contactId?: number;
 }
 
 export interface DsFollowUp {
@@ -118,24 +120,8 @@ export interface DsStory {
   title: string;
   content: string;
   tags: string[];
-}
-
-export interface DsElevatorPitchVersion {
-  id: number;
-  name: string;
-  setting: string;
-  who: string;
-  personName: string;
-  role: string;
-  identity: string;
-  situation: string;
-  action: string;
-  result: string;
-  themes: string[];
-  synthesis: string;
-  seeking: string;
-  closingQuestion: string;
-  sourceQuestionId?: number;
+  date?: string;
+  toDate?: string;
 }
 
 export type DsGoals = Goals;
@@ -144,7 +130,6 @@ export type DsUserProfile = UserProfile;
 export type NewApplication = Omit<DsApplication, "id" | "interviews" | "followUps">;
 export type NewInterviewPrepQuestion = Omit<DsInterviewPrepQuestion, "id">;
 export type NewStory = Omit<DsStory, "id">;
-export type NewElevatorPitchVersion = Omit<DsElevatorPitchVersion, "id">;
 export type NewCompany = Omit<DsCompany, "id" | "locations"> & { locations?: DsCompanyLocation[] };
 export type NewContact = Omit<DsContact, "id">;
 export type NewInterview = Omit<DsInterview, "id">;
@@ -213,9 +198,4 @@ export interface DataSource {
   addStory(story: NewStory): Promise<DsStory>;
   editStory(story: DsStory): Promise<void>;
   deleteStory(id: number): Promise<void>;
-
-  getElevatorPitchVersions(): Promise<DsElevatorPitchVersion[]>;
-  addElevatorPitchVersion(version: NewElevatorPitchVersion): Promise<DsElevatorPitchVersion>;
-  editElevatorPitchVersion(version: DsElevatorPitchVersion): Promise<void>;
-  deleteElevatorPitchVersion(id: number): Promise<void>;
 }

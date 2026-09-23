@@ -8,7 +8,6 @@ interface SidebarItem {
   href: string;
   label: string;
   icon: string;
-  beta?: boolean;
 }
 
 const items: SidebarItem[] = [
@@ -17,32 +16,8 @@ const items: SidebarItem[] = [
   { href: "/companies", label: "Companies", icon: "▣" },
   { href: "/contacts", label: "Contacts", icon: "◎" },
   { href: "/networking", label: "Networking", icon: "⇄" },
-  { href: "/interview-prep", label: "Interview Prep", icon: "◈", beta: true },
+  { href: "/interview-prep", label: "Story Bank", icon: "◈" },
 ];
-
-function BetaBadge() {
-  return (
-    <span
-      style={{
-        marginLeft: "auto",
-        display: "inline-flex",
-        alignItems: "center",
-        height: 16,
-        padding: "0 6px",
-        borderRadius: "var(--radius-pill)",
-        background: "var(--status-interview-bg)",
-        color: "var(--status-interview-fg)",
-        font: "var(--text-caption)",
-        fontWeight: 700,
-        letterSpacing: "0.04em",
-        textTransform: "uppercase",
-        flexShrink: 0,
-      }}
-    >
-      beta
-    </span>
-  );
-}
 
 interface SidebarProps {
   userName: string;
@@ -53,13 +28,11 @@ function SidebarLink({
   active,
   icon,
   label,
-  beta,
 }: {
   href: string;
   active: boolean;
   icon: string;
   label: ReactNode;
-  beta?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -105,7 +78,6 @@ function SidebarLink({
     >
       <span style={{ width: 16, textAlign: "center" }}>{icon}</span>
       {label}
-      {beta ? <BetaBadge /> : null}
     </Link>
   );
 }
@@ -141,14 +113,7 @@ export function Sidebar({ userName }: SidebarProps) {
         Job Tracker
       </div>
       {items.map((it) => (
-        <SidebarLink
-          key={it.href}
-          href={it.href}
-          active={isActive(it.href)}
-          icon={it.icon}
-          label={it.label}
-          beta={it.beta}
-        />
+        <SidebarLink key={it.href} href={it.href} active={isActive(it.href)} icon={it.icon} label={it.label} />
       ))}
       <div
         style={{

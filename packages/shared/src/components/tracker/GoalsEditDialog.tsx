@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Input, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Input, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import type { Goals } from "@/lib/types";
 
 interface GoalsEditDialogProps {
@@ -23,6 +24,14 @@ export function GoalsEditDialog({ goals, onClose, onSave }: GoalsEditDialogProps
   );
   const [submitted, setSubmitted] = useState(false);
 
+  const [initial] = useState({ salaryMin, salaryMax, weeklyTarget, targetDateInput });
+  const isDirty =
+    salaryMin !== initial.salaryMin ||
+    salaryMax !== initial.salaryMax ||
+    weeklyTarget !== initial.weeklyTarget ||
+    targetDateInput !== initial.targetDateInput;
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const min = salaryMin.trim() ? Number(salaryMin) : undefined;
   const max = salaryMax.trim() ? Number(salaryMax) : undefined;
   const maxWithoutMin = max != null && min == null;
@@ -41,13 +50,14 @@ export function GoalsEditDialog({ goals, onClose, onSave }: GoalsEditDialogProps
   };
 
   return (
+    <>
     <Dialog
       open
       title="Edit goals"
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -85,5 +95,7 @@ export function GoalsEditDialog({ goals, onClose, onSave }: GoalsEditDialogProps
         <Input label="Target offer date" type="date" value={targetDateInput} onChange={setTargetDateInput} />
       </div>
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

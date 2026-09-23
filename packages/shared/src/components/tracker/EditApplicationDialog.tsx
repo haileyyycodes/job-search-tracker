@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { MAX_RICH_TEXT_CHARS } from "@/lib/richText";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { ApplicationFormFields, isApplicationFormValid } from "./ApplicationFormFields";
 import type { ApplicationFormValues } from "./ApplicationFormFields";
 import { companyName } from "@/lib/companies";
@@ -52,6 +53,10 @@ export function EditApplicationDialog({
   const [submitted, setSubmitted] = useState(false);
   const requireDateApplied = app.status !== "todo";
 
+  const [initialForm] = useState(form);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const handleSave = () => {
     setSubmitted(true);
     if (!isApplicationFormValid(form, requireDateApplied)) return;
@@ -84,15 +89,16 @@ export function EditApplicationDialog({
   };
 
   return (
+    <>
     <Dialog
       open
       title="Edit application"
       fullScreen
       disablePadding
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -112,5 +118,7 @@ export function EditApplicationDialog({
         onCreateCompany={onCreateCompany}
       />
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

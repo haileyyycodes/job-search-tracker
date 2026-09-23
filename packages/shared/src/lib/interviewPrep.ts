@@ -12,13 +12,8 @@ export interface InterviewPrepCategoryMeta {
 export const INTERVIEW_PREP_CATEGORIES: InterviewPrepCategoryMeta[] = [
   {
     slug: "behavioral",
-    label: "Behavioral",
+    label: "Common Questions & Answers",
     description: "Ownership, collaboration, conflict, and leadership stories.",
-  },
-  {
-    slug: "recruiter_screening",
-    label: "Recruiter Screening",
-    description: "Early-stage logistics, motivation, and fit questions.",
   },
 ];
 

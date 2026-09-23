@@ -1,20 +1,20 @@
 "use client";
 
 import { Dialog, Button } from "@/components/ds";
-import type { Story } from "@/lib/types";
+import type { NetworkingEvent } from "@/lib/types";
 
-interface ConfirmDeleteStoryDialogProps {
-  story: Story;
+interface ConfirmDeleteNetworkingEventDialogProps {
+  event: NetworkingEvent;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-/** Stories stand alone (no foreign keys), so deleting one never cascades — just confirm. */
-export function ConfirmDeleteStoryDialog({ story, onClose, onConfirm }: ConfirmDeleteStoryDialogProps) {
+/** Networking events stand alone (no foreign keys), so deleting one never cascades — just confirm. */
+export function ConfirmDeleteNetworkingEventDialog({ event, onClose, onConfirm }: ConfirmDeleteNetworkingEventDialogProps) {
   return (
     <Dialog
       open
-      title="Delete achievement?"
+      title="Delete networking event?"
       onClose={onClose}
       footer={
         <>
@@ -28,7 +28,7 @@ export function ConfirmDeleteStoryDialog({ story, onClose, onConfirm }: ConfirmD
       }
     >
       <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
-        Delete <strong>{story.title || "this achievement"}</strong>? This can&rsquo;t be undone.
+        Delete this <strong>{event.type}</strong> event from <strong>{event.date}</strong>? This can&rsquo;t be undone.
       </div>
     </Dialog>
   );

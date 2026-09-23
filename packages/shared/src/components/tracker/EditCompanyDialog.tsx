@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Button } from "@/components/ds";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { CompanyFormFields, isCompanyFormValid } from "./CompanyFormFields";
 import type { CompanyFormValues } from "./CompanyFormFields";
 import type { Company } from "@/lib/types";
@@ -25,6 +26,10 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
   });
   const [submitted, setSubmitted] = useState(false);
 
+  const [initialForm] = useState(form);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const handleSave = () => {
     setSubmitted(true);
     if (!isCompanyFormValid(form)) return;
@@ -42,13 +47,14 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
   };
 
   return (
+    <>
     <Dialog
       open
       title="Edit company"
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -59,5 +65,7 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
     >
       <CompanyFormFields form={form} setForm={setForm} submitted={submitted} />
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

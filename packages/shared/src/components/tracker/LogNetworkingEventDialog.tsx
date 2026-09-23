@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Select, Input, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Select, Input, Button } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { formatDateInput, todayFormatted, toDateInputValue } from "@/lib/date";
 import { networkingEventTypes } from "@/lib/data";
 import { companyName } from "@/lib/companies";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { ContactMultiPicker } from "./ContactMultiPicker";
 import type { NewContact } from "@/lib/dataSource/types";
 import type { Application, Company, Contact, NetworkingEvent } from "@/lib/types";
@@ -48,6 +49,16 @@ export function LogNetworkingEventDialog({
   const [notes, setNotes] = useState(event?.notes ?? "");
   const [submitted, setSubmitted] = useState(false);
 
+  const [initial] = useState({ contactIds, type, dateInput, applicationId, notes });
+  const isDirty =
+    type !== initial.type ||
+    dateInput !== initial.dateInput ||
+    applicationId !== initial.applicationId ||
+    notes !== initial.notes ||
+    contactIds.length !== initial.contactIds.length ||
+    contactIds.some((c, i) => c !== initial.contactIds[i]);
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
+
   const applicationOptions: SelectOption[] = [
     { value: "", label: "No application" },
     ...apps.map((a) => ({ value: String(a.id), label: `${companyName(a.companyId, companies)} — ${a.role}` })),
@@ -68,13 +79,14 @@ export function LogNetworkingEventDialog({
   };
 
   return (
+    <>
     <Dialog
       open
       title={event ? "Edit networking event" : "Log networking event"}
-      onClose={onClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -125,5 +137,7 @@ export function LogNetworkingEventDialog({
         </div>
       </div>
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

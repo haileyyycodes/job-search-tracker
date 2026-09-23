@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, TextLink } from "@/components/ds";
-import { AddInterviewPrepQuestionDialog } from "./AddInterviewPrepQuestionDialog";
+import { Button, RichTextEditor, TextLink } from "@/components/ds";
+import { AddInterviewPrepQuestionDialog, EditInterviewPrepQuestionDialog } from "./AddInterviewPrepQuestionDialog";
+import { ConfirmDeleteInterviewPrepQuestionDialog } from "./ConfirmDeleteInterviewPrepQuestionDialog";
 import { interviewPrepCategory } from "@/lib/interviewPrep";
+import { ensureRichTextHtml, isRichTextEmpty, richTextHtmlToPlainText, sanitizeRichTextHtml } from "@/lib/richTextEditorHtml";
 import type { NewInterviewPrepQuestion } from "@/lib/dataSource/types";
 import type { InterviewPrepQuestion } from "@/lib/types";
 
@@ -20,7 +22,7 @@ type FilterKey = "All" | "Not started" | "Drafted" | "Starred";
 const FILTERS: FilterKey[] = ["All", "Not started", "Drafted", "Starred"];
 
 function isDone(q: InterviewPrepQuestion): boolean {
-  return q.answer.trim().length > 0;
+  return !isRichTextEmpty(q.answer);
 }
 
 function matchesFilter(q: InterviewPrepQuestion, filter: FilterKey, query: string): boolean {
@@ -64,18 +66,23 @@ interface QuestionRowProps {
   onToggleOpen: () => void;
   onToggleStar: () => void;
   onEditAnswer: (answer: string) => void;
+  onEditMeta: () => void;
   onDelete: () => void;
 }
 
 /** Owns its own draft answer text so typing doesn't fight with the optimistic state update on every keystroke. */
-function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer, onDelete }: QuestionRowProps) {
-  const [answer, setAnswer] = useState(question.answer);
+function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer, onEditMeta, onDelete }: QuestionRowProps) {
+  const [answer, setAnswer] = useState(ensureRichTextHtml(question.answer));
   const [hover, setHover] = useState(false);
+  const [editHover, setEditHover] = useState(false);
   const [removeHover, setRemoveHover] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const done = isDone(question);
-  const words = answer.trim() ? answer.trim().split(/\s+/).length : 0;
+  const plainAnswer = richTextHtmlToPlainText(answer).trim();
+  const words = plainAnswer ? plainAnswer.split(/\s+/).length : 0;
 
   return (
+    <>
     <article
       style={{
         background: "var(--bg-surface)",
@@ -124,7 +131,7 @@ function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer,
                 textOverflow: "ellipsis",
               }}
             >
-              {question.answer}
+              {richTextHtmlToPlainText(question.answer).replace(/\s+/g, " ").trim()}
             </p>
           )}
         </div>
@@ -143,6 +150,35 @@ function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer,
         >
           {done ? "Drafted" : "Not started"}
         </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditMeta();
+          }}
+          onMouseEnter={(e) => {
+            e.stopPropagation();
+            setEditHover(true);
+          }}
+          onMouseLeave={(e) => {
+            e.stopPropagation();
+            setEditHover(false);
+          }}
+          title="Edit question and section"
+          aria-label="Edit question and section"
+          style={{
+            border: 0,
+            borderRadius: "var(--radius-s)",
+            background: editHover ? "var(--bg-surface-hover)" : "transparent",
+            cursor: "pointer",
+            fontSize: 13,
+            lineHeight: 1,
+            padding: 4,
+            flex: "none",
+            color: editHover ? "var(--text-secondary)" : "var(--text-tertiary)",
+          }}
+        >
+          ✎
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -201,25 +237,16 @@ function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer,
               Keep it to about 90 seconds spoken.
             </span>
           </div>
-          <textarea
+          <RichTextEditor
             value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            onBlur={() => {
-              if (answer !== question.answer) onEditAnswer(answer);
+            onChange={setAnswer}
+            onBlur={(html) => {
+              const sanitized = sanitizeRichTextHtml(html);
+              if (sanitized !== question.answer) onEditAnswer(sanitized);
             }}
+            ariaLabel="Answer"
             placeholder="Write your story — the situation, what you did, and how it landed."
-            style={{
-              width: "100%",
-              minHeight: 132,
-              resize: "vertical",
-              padding: "12px 14px",
-              border: "1px solid var(--border-default)",
-              borderRadius: 12,
-              background: "var(--bg-surface-sunken)",
-              fontSize: 14,
-              lineHeight: 1.6,
-              color: "var(--text-primary)",
-            }}
+            minHeight={460}
           />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
             <span style={{ font: "var(--text-mono-s)", fontSize: 11.5, color: "var(--text-tertiary)" }}>
@@ -227,7 +254,7 @@ function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer,
             </span>
             <div style={{ display: "flex", gap: 8 }}>
               <button
-                onClick={onDelete}
+                onClick={() => setConfirmingDelete(true)}
                 onMouseEnter={() => setRemoveHover(true)}
                 onMouseLeave={() => setRemoveHover(false)}
                 style={{
@@ -252,6 +279,17 @@ function QuestionRow({ question, open, onToggleOpen, onToggleStar, onEditAnswer,
         </div>
       )}
     </article>
+    {confirmingDelete && (
+      <ConfirmDeleteInterviewPrepQuestionDialog
+        question={question}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={() => {
+          setConfirmingDelete(false);
+          onDelete();
+        }}
+      />
+    )}
+    </>
   );
 }
 
@@ -265,7 +303,8 @@ export function InterviewPrepCategoryView({
 }: InterviewPrepCategoryViewProps) {
   const category = interviewPrepCategory(categorySlug);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [openId, setOpenId] = useState<number | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<InterviewPrepQuestion | null>(null);
+  const [openIds, setOpenIds] = useState<Set<number>>(new Set());
   const [filter, setFilter] = useState<FilterKey>("All");
   const [query, setQuery] = useState("");
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
@@ -302,7 +341,7 @@ export function InterviewPrepCategoryView({
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div style={{ padding: "20px 32px 18px", borderBottom: "1px solid var(--border-default)", background: "var(--bg-page)" }}>
         <TextLink onClick={onBack} style={{ font: "700 13px var(--font-body)", display: "inline-block", marginBottom: 8 }}>
-          ← Interview prep
+          ← Story Bank
         </TextLink>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24 }}>
           <div>
@@ -400,13 +439,26 @@ export function InterviewPrepCategoryView({
                       <QuestionRow
                         key={q.id}
                         question={q}
-                        open={openId === q.id}
-                        onToggleOpen={() => setOpenId((prev) => (prev === q.id ? null : q.id))}
+                        open={openIds.has(q.id)}
+                        onToggleOpen={() =>
+                          setOpenIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(q.id)) next.delete(q.id);
+                            else next.add(q.id);
+                            return next;
+                          })
+                        }
                         onToggleStar={() => onEditQuestion({ ...q, starred: !q.starred })}
                         onEditAnswer={(answer) => onEditQuestion({ ...q, answer })}
+                        onEditMeta={() => setEditingQuestion(q)}
                         onDelete={() => {
                           onDeleteQuestion(q.id);
-                          setOpenId((prev) => (prev === q.id ? null : prev));
+                          setOpenIds((prev) => {
+                            if (!prev.has(q.id)) return prev;
+                            const next = new Set(prev);
+                            next.delete(q.id);
+                            return next;
+                          });
                         }}
                       />
                     ))}
@@ -481,6 +533,15 @@ export function InterviewPrepCategoryView({
           categorySlug={categorySlug}
           onClose={() => setAddDialogOpen(false)}
           onSave={onAddQuestion}
+        />
+      )}
+
+      {editingQuestion && (
+        <EditInterviewPrepQuestionDialog
+          initialQuestion={editingQuestion.question}
+          initialSection={editingQuestion.section ?? ""}
+          onClose={() => setEditingQuestion(null)}
+          onSave={(question, section) => onEditQuestion({ ...editingQuestion, question, section })}
         />
       )}
     </div>

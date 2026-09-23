@@ -1,20 +1,20 @@
 "use client";
 
 import { Dialog, Button } from "@/components/ds";
-import type { Story } from "@/lib/types";
+import type { Interview } from "@/lib/types";
 
-interface ConfirmDeleteStoryDialogProps {
-  story: Story;
+interface ConfirmDeleteInterviewDialogProps {
+  interview: Interview;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-/** Stories stand alone (no foreign keys), so deleting one never cascades — just confirm. */
-export function ConfirmDeleteStoryDialog({ story, onClose, onConfirm }: ConfirmDeleteStoryDialogProps) {
+/** Interviews stand alone (no foreign keys), so deleting one never cascades — just confirm. */
+export function ConfirmDeleteInterviewDialog({ interview, onClose, onConfirm }: ConfirmDeleteInterviewDialogProps) {
   return (
     <Dialog
       open
-      title="Delete achievement?"
+      title="Delete interview?"
       onClose={onClose}
       footer={
         <>
@@ -28,7 +28,8 @@ export function ConfirmDeleteStoryDialog({ story, onClose, onConfirm }: ConfirmD
       }
     >
       <div style={{ font: "var(--text-body-s)", color: "var(--text-secondary)" }}>
-        Delete <strong>{story.title || "this achievement"}</strong>? This can&rsquo;t be undone.
+        Delete this <strong>{interview.type}</strong> interview from <strong>{interview.date}</strong>? Its notes and
+        questions will be lost. This can&rsquo;t be undone.
       </div>
     </Dialog>
   );

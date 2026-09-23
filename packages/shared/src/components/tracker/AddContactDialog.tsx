@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, Button } from "@/components/ds";
+import { Dialog, DiscardChangesDialog, Button } from "@/components/ds";
+import { useConfirmClose } from "@/lib/useConfirmClose";
 import { ContactFormFields, emptyContactForm, isContactFormValid } from "./ContactFormFields";
 import type { ContactFormValues } from "./ContactFormFields";
 import type { NewCompany, NewContact } from "@/lib/dataSource/types";
@@ -25,6 +26,9 @@ export function AddContactDialog({ open, onClose, onAdd, companies, onCreateComp
     onClose();
   };
 
+  const isDirty = JSON.stringify(form) !== JSON.stringify(emptyContactForm);
+  const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, resetAndClose);
+
   const handleSave = () => {
     setSubmitted(true);
     if (!isContactFormValid(form)) return;
@@ -44,13 +48,14 @@ export function AddContactDialog({ open, onClose, onAdd, companies, onCreateComp
   };
 
   return (
+    <>
     <Dialog
       open={open}
       title="Add contact"
-      onClose={resetAndClose}
+      onClose={requestClose}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={resetAndClose}>
+          <Button variant="secondary" size="sm" onClick={requestClose}>
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave}>
@@ -67,5 +72,7 @@ export function AddContactDialog({ open, onClose, onAdd, companies, onCreateComp
         onCreateCompany={onCreateCompany}
       />
     </Dialog>
+    <DiscardChangesDialog open={confirmOpen} onKeepEditing={cancelDiscard} onDiscard={confirmDiscard} />
+    </>
   );
 }

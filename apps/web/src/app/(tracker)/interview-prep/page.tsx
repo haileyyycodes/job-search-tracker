@@ -36,13 +36,11 @@ function InterviewPrepPageContent() {
 
   return (
     <>
-      <TopBar title="Interview Prep" subtitle="Store commonly asked questions and pre-write your answers." />
+      <TopBar title="Story Bank" subtitle="Store commonly asked questions and pre-write your answers." />
       <InterviewPrepView
         questions={data.interviewPrepQuestions}
-        pitchVersionCount={data.elevatorPitchVersions.length}
         storyCount={data.stories.length}
         onSelectCategory={(slug) => router.push(`/interview-prep?category=${slug}`)}
-        onSelectPitchBuilder={() => router.push("/interview-prep/pitch")}
         onSelectStories={() => router.push("/interview-prep/stories")}
       />
     </>
