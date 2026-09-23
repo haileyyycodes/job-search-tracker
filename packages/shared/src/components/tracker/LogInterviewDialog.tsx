@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Select, MultiSelect, Input, Button, RichTextEditor } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { interviewTypeOptions, interviewStyleOptions } from "@/lib/data";
@@ -50,7 +50,7 @@ export function LogInterviewDialog({
   const [questionsAsked, setQuestionsAsked] = useState(ensureRichTextHtml(interview?.questionsAsked ?? ""));
   const [notes, setNotes] = useState(ensureRichTextHtml(interview?.notes ?? ""));
 
-  const initial = useRef({ type, dateInput, style, categories, contactId, questionsToAsk, questionsAsked, notes }).current;
+  const [initial] = useState({ type, dateInput, style, categories, contactId, questionsToAsk, questionsAsked, notes });
   const isDirty =
     type !== initial.type ||
     dateInput !== initial.dateInput ||

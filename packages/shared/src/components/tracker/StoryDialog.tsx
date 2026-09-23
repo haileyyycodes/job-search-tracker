@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Button, Input, FieldLabel, RichTextEditor } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { ensureRichTextHtml, sanitizeRichTextHtml } from "@/lib/richTextEditorHtml";
@@ -45,7 +45,7 @@ export function StoryDialog({ story, onClose, onSubmit }: StoryDialogProps) {
   const [toDateInput, setToDateInput] = useState(toDateInputValue(story?.toDate ?? ""));
   const [submitted, setSubmitted] = useState(false);
 
-  const initial = useRef({ title, tags, content, dateInput, toDateInput }).current;
+  const [initial] = useState({ title, tags, content, dateInput, toDateInput });
   const isDirty =
     title !== initial.title ||
     tags !== initial.tags ||

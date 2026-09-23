@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Input, Button, FieldLabel } from "@/components/ds";
 import { formatDateInput, todayFormatted, toDateInputValue } from "@/lib/date";
 import { useConfirmClose } from "@/lib/useConfirmClose";
@@ -18,7 +18,7 @@ export function FeedbackDialog({ feedback, onClose, onSave }: FeedbackDialogProp
   const [dateInput, setDateInput] = useState(feedback ? toDateInputValue(feedback.date) : "");
   const [submitted, setSubmitted] = useState(false);
 
-  const initial = useRef({ text, dateInput }).current;
+  const [initial] = useState({ text, dateInput });
   const isDirty = text !== initial.text || dateInput !== initial.dateInput;
   const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
 

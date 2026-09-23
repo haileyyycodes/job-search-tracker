@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { MAX_RICH_TEXT_CHARS } from "@/lib/richText";
@@ -53,7 +53,7 @@ export function EditApplicationDialog({
   const [submitted, setSubmitted] = useState(false);
   const requireDateApplied = app.status !== "todo";
 
-  const initialForm = useRef(form).current;
+  const [initialForm] = useState(form);
   const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
   const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
 

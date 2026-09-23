@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Select, Input, Button } from "@/components/ds";
 import type { SelectOption } from "@/components/ds";
 import { formatDateInput, todayFormatted, toDateInputValue } from "@/lib/date";
@@ -49,7 +49,7 @@ export function LogNetworkingEventDialog({
   const [notes, setNotes] = useState(event?.notes ?? "");
   const [submitted, setSubmitted] = useState(false);
 
-  const initial = useRef({ contactIds, type, dateInput, applicationId, notes }).current;
+  const [initial] = useState({ contactIds, type, dateInput, applicationId, notes });
   const isDirty =
     type !== initial.type ||
     dateInput !== initial.dateInput ||

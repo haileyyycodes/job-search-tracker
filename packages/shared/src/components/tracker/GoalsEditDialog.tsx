@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Input, Button } from "@/components/ds";
 import { formatDateInput, toDateInputValue } from "@/lib/date";
 import { useConfirmClose } from "@/lib/useConfirmClose";
@@ -24,7 +24,7 @@ export function GoalsEditDialog({ goals, onClose, onSave }: GoalsEditDialogProps
   );
   const [submitted, setSubmitted] = useState(false);
 
-  const initial = useRef({ salaryMin, salaryMax, weeklyTarget, targetDateInput }).current;
+  const [initial] = useState({ salaryMin, salaryMax, weeklyTarget, targetDateInput });
   const isDirty =
     salaryMin !== initial.salaryMin ||
     salaryMax !== initial.salaryMax ||

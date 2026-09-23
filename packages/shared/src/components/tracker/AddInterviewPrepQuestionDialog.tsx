@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Button, Input } from "@/components/ds";
 import { useConfirmClose } from "@/lib/useConfirmClose";
 import type { NewInterviewPrepQuestion } from "@/lib/dataSource/types";
@@ -85,8 +85,7 @@ export function EditInterviewPrepQuestionDialog({
   const [section, setSection] = useState(initialSection);
   const [submitted, setSubmitted] = useState(false);
 
-  const initial = useRef({ initialQuestion, initialSection }).current;
-  const isDirty = question !== initial.initialQuestion || section !== initial.initialSection;
+  const isDirty = question !== initialQuestion || section !== initialSection;
   const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
 
   const handleSave = () => {

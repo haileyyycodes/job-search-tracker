@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DiscardChangesDialog, Button } from "@/components/ds";
 import { useConfirmClose } from "@/lib/useConfirmClose";
 import { CompanyFormFields, isCompanyFormValid } from "./CompanyFormFields";
@@ -26,7 +26,7 @@ export function EditCompanyDialog({ company, onClose, onSave }: EditCompanyDialo
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const initialForm = useRef(form).current;
+  const [initialForm] = useState(form);
   const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
   const { requestClose, confirmOpen, confirmDiscard, cancelDiscard } = useConfirmClose(isDirty, onClose);
 
