@@ -1,9 +1,11 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import { Editor, EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { DropdownSurface, isInsideDropdownSurface } from "./DropdownSurface";
+import { MenuItem } from "./MenuItem";
 
 interface RichTextEditorProps {
   value: string;
@@ -17,8 +19,8 @@ interface RichTextEditorProps {
   minHeight?: number;
 }
 
-/** Bold/italic/underline/strikethrough + bulleted/numbered lists — the toolbar surfaces
- * exactly what the schema allows. */
+/** Paragraph/heading (H1-H3) + bold/italic/underline/strikethrough + bulleted/numbered
+ * lists — the toolbar surfaces exactly what the schema allows. */
 export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel, minHeight = 240 }: RichTextEditorProps) {
   const lastKnownValue = useRef(value);
 
@@ -28,7 +30,7 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel
         blockquote: false,
         code: false,
         codeBlock: false,
-        heading: false,
+        heading: { levels: [1, 2, 3] },
         horizontalRule: false,
         link: false,
         dropcursor: false,
@@ -72,6 +74,13 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel
       strike: ctx.editor?.isActive("strike") ?? false,
       bulletList: ctx.editor?.isActive("bulletList") ?? false,
       orderedList: ctx.editor?.isActive("orderedList") ?? false,
+      blockType: (ctx.editor?.isActive("heading", { level: 1 })
+        ? "h1"
+        : ctx.editor?.isActive("heading", { level: 2 })
+          ? "h2"
+          : ctx.editor?.isActive("heading", { level: 3 })
+            ? "h3"
+            : "paragraph") as BlockType,
     }),
   });
 
@@ -100,6 +109,11 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel
           flex: "none",
         }}
       >
+        <BlockTypeDropdown editor={editor} blockType={formatState?.blockType ?? "paragraph"} />
+        <span
+          aria-hidden
+          style={{ width: 1, alignSelf: "stretch", margin: "2px 2px", background: "var(--border-default)" }}
+        />
         <ToolbarButton
           label="Bold"
           pressed={formatState?.bold ?? false}
@@ -167,6 +181,94 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, ariaLabel
       >
         <EditorContent editor={editor} />
       </div>
+    </div>
+  );
+}
+
+type BlockType = "paragraph" | "h1" | "h2" | "h3";
+
+const BLOCK_TYPE_OPTIONS: { value: BlockType; label: string }[] = [
+  { value: "paragraph", label: "Paragraph" },
+  { value: "h1", label: "Heading 1" },
+  { value: "h2", label: "Heading 2" },
+  { value: "h3", label: "Heading 3" },
+];
+
+interface BlockTypeDropdownProps {
+  editor: Editor | null;
+  blockType: BlockType;
+}
+
+/** Switches the current block between a plain paragraph and heading levels 1-3. */
+function BlockTypeDropdown({ editor, blockType }: BlockTypeDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const current = BLOCK_TYPE_OPTIONS.find((o) => o.value === blockType) ?? BLOCK_TYPE_OPTIONS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (anchorRef.current?.contains(e.target as Node)) return;
+      if (isInsideDropdownSurface(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [open]);
+
+  const setBlockType = (value: BlockType) => {
+    if (!editor) return;
+    const chain = editor.chain().focus();
+    if (value === "paragraph") {
+      chain.setParagraph().run();
+    } else {
+      chain.setHeading({ level: Number(value.slice(1)) as 1 | 2 | 3 }).run();
+    }
+    setOpen(false);
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        ref={anchorRef}
+        type="button"
+        title="Paragraph style"
+        aria-label="Paragraph style"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        disabled={!editor}
+        onClick={() => setOpen(!open)}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          height: 26,
+          padding: "0 8px",
+          border: 0,
+          borderRadius: "var(--radius-xs)",
+          fontSize: 13,
+          lineHeight: 1,
+          cursor: editor ? "pointer" : "not-allowed",
+          background: open ? "var(--blue-100)" : hover ? "var(--bg-surface-hover)" : "transparent",
+          color: !editor ? "var(--text-tertiary)" : open ? "var(--blue-700)" : "var(--text-secondary)",
+          transition: "background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard)",
+        }}
+      >
+        <span>{current.label}</span>
+        <span aria-hidden style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
+          ▾
+        </span>
+      </button>
+      <DropdownSurface open={open} anchorRef={anchorRef} minWidth={150}>
+        {BLOCK_TYPE_OPTIONS.map((o) => (
+          <MenuItem key={o.value} selected={o.value === blockType} onClick={() => setBlockType(o.value)}>
+            {o.label}
+          </MenuItem>
+        ))}
+      </DropdownSurface>
     </div>
   );
 }
